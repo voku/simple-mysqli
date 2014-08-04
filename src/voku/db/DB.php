@@ -1158,7 +1158,6 @@ Class DB
    */
   function __destruct()
   {
-
     // close the connection only if we don't save PHP-SESSION's in DB
     if ($this->session_to_db === false) {
       $this->close();
@@ -1200,7 +1199,15 @@ Class DB
     if (function_exists('mailToAdmin')) {
       mailToAdmin($subject, $htmlBody, $priority);
     } else {
-      //$this->
+
+      if ($priority == 3) {
+        $this->logger(array('debug', $subject . ' | ' . $htmlBody));
+      } else if ($priority > 3) {
+        $this->logger(array('error', $subject . ' | ' . $htmlBody));
+      } else if ($priority < 3) {
+        $this->logger(array('info', $subject . ' | ' . $htmlBody));
+      }
+
     }
   }
 

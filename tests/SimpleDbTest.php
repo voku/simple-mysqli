@@ -1,7 +1,6 @@
 <?php
 
 use voku\db\DB;
-use voku\helper\UTF8;
 
 class SimpleMySQLiTest extends PHPUnit_Framework_TestCase {
 

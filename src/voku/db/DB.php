@@ -541,8 +541,8 @@ Class DB
     } else {
 
       // for testing with dev-address
-      $noDev = (int)$_GET['noDev'];
-      $remoteAddr = $_SERVER['REMOTE_ADDR'];
+      $noDev = isset($_GET['noDev']) ? (int)$_GET['noDev'] : 0;
+      $remoteAddr =  isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : false;
 
       if
       (
@@ -550,6 +550,7 @@ Class DB
         (
               ($remoteAddr == '127.0.0.1')
           ||  ($remoteAddr == '::1')
+          ||  PHP_SAPI == 'cli'
         )
       ) {
         $return = true;

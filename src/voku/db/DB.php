@@ -1214,26 +1214,26 @@ Class DB
   /**
    * wrapper for a "Logger"-Class
    *
-   * @param $log array
+   * @param $log array [method, text, type] e.g.: array('error', 'this is a error', 'sql')
    */
   private function logger($log)
   {
     $logMethod = '';
     $logText = '';
+    $logType = '';
     $logClass = $this->logger_class_name;
 
-    if (count($log) == 2) {
+    if (count($log) >= 2) {
       $logMethod = $log[0];
       $logText = $log[1];
+      $logType = $log[2];
     }
 
     if ($logClass && class_exists($logClass)) {
       if ($logMethod && method_exists($logClass, $logMethod)) {
-        $logClass->{$logMethod}($logText);
+        $logClass::{$logMethod}($logText, $logType);
       }
     }
-
-
   }
 
 }

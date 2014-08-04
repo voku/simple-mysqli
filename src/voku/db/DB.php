@@ -1231,7 +1231,7 @@ Class DB
 
     if ($logClass && class_exists($logClass)) {
       if ($logMethod && method_exists($logClass, $logMethod)) {
-        $logClass::{$logMethod}($logText, $logType);
+        $logClass::$logMethod($logText, $logType);
       }
     }
   }

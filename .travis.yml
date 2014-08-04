@@ -8,7 +8,7 @@ php:
 
 before_script:
   - mysql -e 'CREATE DATABASE mysql_test;'
-  - mysql -e 'CREATE TABLE test_page ( page_id int(16) NOT NULL auto_increment, page_template varchar(255) NOT NULL default "tpl_default", page_type varchar(255) NOT NULL default "default") ENGINE=InnoDB DEFAULT CHARSET=utf8;'
+  - mysql -e 'CREATE TABLE test_page ( page_id int(16) NOT NULL auto_increment, page_template varchar(255) NOT NULL default \'tpl_default\', page_type varchar(255) NOT NULL default \'default\') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
   - composer self-update
   - composer install --no-interaction --prefer-source --dev
 

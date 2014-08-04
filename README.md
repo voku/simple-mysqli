@@ -1,82 +1,49 @@
-OBJ-MySQL
-=========
-[![Latest Stable Version](https://poser.pugx.org/entomb/obj_mysql/v/stable.png)](https://packagist.org/packages/entomb/obj_mysql)
-[![Total Downloads](https://poser.pugx.org/entomb/obj_mysql/downloads.png)](https://packagist.org/packages/entomb/obj_mysql)
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/entomb/obj-mysql/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+Simple MySQLi Class
+===================
 
 
-OBJ MySQL is a simple MySQL Abstraction Layer for PHP>5.2 that provides a simple and _secure_ interaction with your database using mysqli_* functions at its core.
+This is a simple MySQL Abstraction Layer for PHP>5.3 that provides a simple and _secure_ interaction with your database using mysqli_* functions at its core.
 
-OBJ-MySQL is perfect for small scale applications such as cron jobs, facebook canvas campaigns or micro frameworks or sites.
+This is perfect for small scale applications such as cron jobs, facebook canvas campaigns or micro frameworks or sites.
 
 _This project is under construction, any feedback would be appreciated_
 
 Author: [Jonathan Tavares](https://github.com/entomb)
-
-**checkout the [changelog](https://github.com/entomb/OBJ-MySQL/wiki/changelog) for info on the lattest changes**
-
+Author: [Lars Moelleken](http://github.com/voku)
 
 
-##Get OBJ_MySQL
-You can download it from here, or require it using [composer](https://packagist.org/packages/entomb/obj_mysql).
+##Get "Simple MySQLi"
+You can download it from here, or require it using [composer](https://packagist.org/packages/voku/simple-mysqli).
 ```json
 {
     "require": {
-		"entomb/obj_mysql": "dev-master"
+		"voku/simple-mysqli": "dev-master"
 	}
 }
 ```
 
-Or you can require it by cloning this repo
-
-```bash
-$ git clone https://github.com/entomb/OBJ-MySQL.git
-```
-
-if you are already using GIT on you project you can add it as a submodule
-
-```bash
-$ git submodule add https://github.com/entomb/OBJ-MySQL.git libs/db
-```
-
-
 ##Starting the driver
-To start the db driver you must include the main class file and pass the '$config' array described bellow.
-you can have multiple isntances of the Class each one with its own $config (one for Reads and one for Writes for example).
 
 ```php
-    //include de main OBJ_mysql class file
-    include("bin/OBJ_mysql.php");
+    require_once 'composer/autoload.php';
 
-    //configuration array
-    $config = array();
-    $config["hostname"]  = "YOUR_HOST";
-    $config["database"]  = "YOUR_DATABASE_NAME";
-    $config["username"]  = "USER_NAME";
-    $config["password"]  = "PASSWORD";
-
-    //other configurations
-    $config["port"]      = "PORT"; //defaults to 3306
-    $config["charset"]    = "CHARSET"; //defaults to UTF-8
-    $config["exit_on_error"] = "TRUE|FALSE"; //defaults to true
-    $config["allow_logging"] = "TRUE|FALSE"; //defaults to true
-
-    //class instantiation
-    $db = new OBJ_mysql($config);
+    $db = \voku\db\DB::getInstance('localhost', 'root', '', 'web30db1');
 
 ```
 
 
 
-##Using OBJ_MySQL
+##Using the "DB"-Class
 
 there are numerous ways of using this library, here are some examples of the most common methods
 
 ###Selecting and retrieving data from a table
 
 ```php
-  $Result = $db->query("SELECT * FROM users");
-  $Users  = $Result->fetchALL();
+  $db = \voku\db\DB::getInstance();
+
+  $result = $db->query("SELECT * FROM users");
+  $users  = $result->fetchALL();
 ```
 
 ###Inserting data on a table
@@ -86,10 +53,10 @@ they all work the same way: parsing arrays of key/value pairs and forming a safe
 
 the methods are:
 ```php
-  $db->insert( String $Table, Array $Data); //generates an INSERT query
-  $db->replace(String $Table, Array $Data); //generates an INSERT OR UPDATE query
-  $db->update( String $Table, Array $Data, Array $Where); //generates an UPDATE query
-  $db->delete( String $Table, Array $Where); //generates a DELETE query
+  $db->insert( String $table, Array $aata); //generates an INSERT query
+  $db->replace(String $table, Array $aata); //generates an INSERT OR UPDATE query
+  $db->update( String $table, Array $aata, Array $Where); //generates an UPDATE query
+  $db->delete( String $table, Array $Where); //generates a DELETE query
 ```
 
 All methods will return the resulting `mysqli_insert_id()` or true/false depending on context.
@@ -97,9 +64,9 @@ The correct approach if to allways check if they executed as success is allways 
 
 ```php
   $ok = $db->delete('users', array( 'user_id' => 9 ) );
-  if($ok){
+  if ($ok) {
     echo "user deleted!";
-  }else{
+  } else {
     echo "can't delete user!";
   }
 ```
@@ -134,7 +101,7 @@ Binding parameters is a good way of preventing mysql injections as the parameter
   }
 ```
 
-###Using the OBJ_mysql_result Class
+###Using the Result-Class
 
 After executing a `SELECT` query you receive a `OBJ_mysql_result` object that will help you manipulate the resultant data.
 there are diferent ways of accesing this data, check the examples bellow:
@@ -176,13 +143,13 @@ To iterate a resultset you can use any fetch() method listed above
   $Result = $db->query("SELECT * FROM users");
 
   //using while
-  while( $row = $Result->fetch() ){
+  while( $row = $Result->fetch() ) {
     echo $row->name;
     echo $row->email;
   }
 
   //using foreach
-  foreach( $Result->fetchAll() as $row ){
+  foreach( $Result->fetchAll() as $row ) {
     echo $row->name;
     echo $row->email;
   }
@@ -190,6 +157,8 @@ To iterate a resultset you can use any fetch() method listed above
 ```
 
 ####Logging and Errors
+
+// TODO
 
 Showing the query log. the log comes with the SQL executed, the execution time and the result row count (if any)
 ```php

@@ -1,23 +1,35 @@
 {
-    "name": "entomb/obj_mysql",
-    "type": "library",
-    "version": "1",
-    "description": "MySQL abstraction layer",
-    "keywords": ["mysql","dba","mysql abstraction layer", "msqli"],
-    "homepage": "https://github.com/entomb/OBJ-MySQL",
-    "license": "GPL 3.0",
-    "authors": [
-        {
-            "name": "Jonathan Tavares",
-            "email": "the.entomb@gmail.com",
-            "homepage": "https://github.com/entomb",
-            "role": "Developer"
-        }
-    ],
-    "require": {
-        "php": ">=5.2.0"
+  "name": "voku/simple-mysqli",
+  "description": "Simple MySQLi library",
+  "keywords": [
+    "php",
+    "mysqli",
+    "simple db",
+    "DB"
+  ],
+  "type": "library",
+  "homepage": "https://github.com/voku/simple-mysqli",
+  "license": "",
+  "authors": [
+    {
+      "name": "Jonathan Tavares",
+      "email": "the.entomb@gmail.com",
+      "homepage": "https://github.com/entomb",
+      "role": "Developer"
     },
-    "autoload": {
-        "classmap": ["bin/"]
+    {
+      "name": "Lars Moelleken",
+      "homepage": "http://www.moelleken.org/",
+      "role": "Developer"
     }
+  ],
+  "require": {
+    "php": ">=5.3.0",
+    "voku/portable-utf8": "dev-master"
+  },
+  "autoload": {
+    "psr-0": {
+      "voku": "src"
+    }
+  }
 }

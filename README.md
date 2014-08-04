@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/voku/simple-mysqli.svg?branch=master)](https://travis-ci.org/voku/simple-mysqli)
+
+
 Simple MySQLi Class
 ===================
 

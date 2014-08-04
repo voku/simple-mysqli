@@ -1223,7 +1223,12 @@ Class DB
     $logType = '';
     $logClass = $this->logger_class_name;
 
-    if (count($log) >= 2) {
+    $tmpCount = count($log);
+
+    if ($tmpCount == 2) {
+      $logMethod = $log[0];
+      $logText = $log[1];
+    } else if ($tmpCount == 3) {
       $logMethod = $log[0];
       $logText = $log[1];
       $logType = $log[2];

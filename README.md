@@ -172,6 +172,8 @@ Showing the query log. the log comes with the SQL executed, the execution time a
 
 to debug mysql errors:
 
+// TODO
+
 use `$db->errors()` to fetch all errors (returns false if no errors) or `$db->lastError()` for information on the last error.
 
 ```php

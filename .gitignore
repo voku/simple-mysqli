@@ -65,3 +65,7 @@ $RECYCLE.BIN/
 
 # KDE directory preferences
 .directory
+
+# composer
+vendor
+composer.lock

@@ -9,7 +9,7 @@
   ],
   "type": "library",
   "homepage": "https://github.com/voku/simple-mysqli",
-  "license": "",
+  "license": "GNU General Public License (GPL) v3.0",
   "authors": [
     {
       "name": "Jonathan Tavares",

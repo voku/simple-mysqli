@@ -15,7 +15,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase {
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test');
   }
 
-  function simple_test() {
+  function test_basic() {
 
     // insert
     $pageArray = array(

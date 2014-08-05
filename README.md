@@ -56,10 +56,10 @@ they all work the same way: parsing arrays of key/value pairs and forming a safe
 
 the methods are:
 ```php
-  $db->insert( String $table, Array $aata); //generates an INSERT query
-  $db->replace(String $table, Array $aata); //generates an INSERT OR UPDATE query
-  $db->update( String $table, Array $aata, Array $Where); //generates an UPDATE query
-  $db->delete( String $table, Array $Where); //generates a DELETE query
+  $db->insert( String $table, Array $aata );                //generates an INSERT query
+  $db->replace( String $table, Array $aata );               //generates an INSERT OR UPDATE query
+  $db->update( String $table, Array $aata, Array $where );  //generates an UPDATE query
+  $db->delete( String $table, Array $where );               //generates a DELETE query
 ```
 
 All methods will return the resulting `mysqli_insert_id()` or true/false depending on context.
@@ -77,14 +77,14 @@ The correct approach if to allways check if they executed as success is allways 
 **note**: all parameter values are sanitized before execution, you dont have to escape values beforehand.
 
 ```php
-  $new_user_id = $db->insert('users', array(
+  $newUserId = $db->insert('users', array(
                                 'name'  => "jothn",
                                 'email' => "johnsmith@email.com",
                                 'group' => 1,
                                 'active' => true,
                               )
                           );
-  if($new_user_id){
+  if ($newUserId) {
     echo "new user inserted with the id $new_user_id";
   }
 ```
@@ -95,11 +95,11 @@ The correct approach if to allways check if they executed as success is allways 
 Binding parameters is a good way of preventing mysql injections as the parameters are sanitized before execution.
 
 ```php
-  $Result = $db->query("SELECT * FROM users WHERE id_user = ? AND active = ? LIMIT 1",array(11,1));
-  if($Result){
-    $User = $Result->fetchArray();
+  $result = $db->query("SELECT * FROM users WHERE id_user = ? AND active = ? LIMIT 1",array(11,1));
+  if ($result) {
+    $User = $result->fetchArray();
     print_r($User);
-  }else{
+  } else {
     echo "user not found";
   }
 ```
@@ -111,23 +111,23 @@ there are diferent ways of accesing this data, check the examples bellow:
 
 ####Fetching all data
 ```php
-  $Result = $db->query("SELECT * FROM users");
-  $AllUsers = $Result->fetchAll();
+  $result = $db->query("SELECT * FROM users");
+  $allUsers = $result->fetchAll();
 ```
 Fetching all data works as `Object` or `Array` the `fetchAll()` method will return the default based on the `$_default_result_type` config.
 Other methods are:
 
 ```php
-$Row = $Result->fetch();        // Fetch a single result row as defined by the config (Array or Object)
-$Row = $Result->fetchArray();   // Fetch a single result row as Array
-$Row = $Result->fetchObject();  // Fetch a single result row as Object
+$row = $result->fetch();        // Fetch a single result row as defined by the config (Array or Object)
+$row = $result->fetchArray();   // Fetch a single result row as Array
+$row = $result->fetchObject();  // Fetch a single result row as Object
 
-$Data = $Result->fetchAll();        // Fetch all result data as defined by the config (Array or Object)
-$Data = $Result->fetchAllArray();   // Fetch all result data as Array
-$Data = $Result->fetchAllObject();  // Fetch all result data as Object
+$data = $result->fetchAll();        // Fetch all result data as defined by the config (Array or Object)
+$data = $result->fetchAllArray();   // Fetch all result data as Array
+$data = $result->fetchAllObject();  // Fetch all result data as Object
 
-$Data = $Result->fetchColumn(String $Column);           // Fetch a single column in a 1 dimention Array
-$Data = $Result->fetchArrayPair(String $key, String $Value);  // Fetch data as a key/value pair Array.
+$data = $result->fetchColumn(String $Column);           // Fetch a single column in a 1 dimention Array
+$data = $result->fetchArrayPair(String $key, String $Value);  // Fetch data as a key/value pair Array.
 
 ```
 ####Aliases
@@ -143,16 +143,16 @@ $Data = $Result->fetchArrayPair(String $key, String $Value);  // Fetch data as a
 To iterate a resultset you can use any fetch() method listed above
 
 ```php
-  $Result = $db->query("SELECT * FROM users");
+  $result = $db->query("SELECT * FROM users");
 
   //using while
-  while( $row = $Result->fetch() ) {
+  while( $row = $result->fetch() ) {
     echo $row->name;
     echo $row->email;
   }
 
   //using foreach
-  foreach( $Result->fetchAll() as $row ) {
+  foreach( $result->fetchAll() as $row ) {
     echo $row->name;
     echo $row->email;
   }

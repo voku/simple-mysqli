@@ -56,9 +56,9 @@ they all work the same way: parsing arrays of key/value pairs and forming a safe
 
 the methods are:
 ```php
-  $db->insert( String $table, Array $aata );                //generates an INSERT query
-  $db->replace( String $table, Array $aata );               //generates an INSERT OR UPDATE query
-  $db->update( String $table, Array $aata, Array $where );  //generates an UPDATE query
+  $db->insert( String $table, Array $data );                //generates an INSERT query
+  $db->replace( String $table, Array $data );               //generates an INSERT OR UPDATE query
+  $db->update( String $table, Array $data, Array $where );  //generates an UPDATE query
   $db->delete( String $table, Array $where );               //generates a DELETE query
 ```
 

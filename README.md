@@ -97,8 +97,8 @@ Binding parameters is a good way of preventing mysql injections as the parameter
 ```php
   $result = $db->query("SELECT * FROM users WHERE id_user = ? AND active = ? LIMIT 1",array(11,1));
   if ($result) {
-    $User = $result->fetchArray();
-    print_r($User);
+    $user = $result->fetchArray();
+    print_r($user);
   } else {
     echo "user not found";
   }

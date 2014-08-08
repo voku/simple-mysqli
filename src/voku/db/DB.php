@@ -505,7 +505,7 @@ Class DB
 
         $errorMsg = mysqli_error($this->link);
 
-        if ($errorMsg == 'DB server has gone away') {
+        if ($errorMsg == 'DB server has gone away' || $errorMsg == 'MySQL server has gone away') {
 
           // exit if we have more then 3 "DB server has gone away"-errors
           if ($reconnectCounter > 3) {
@@ -795,7 +795,7 @@ Class DB
 
             $errorMsg = mysqli_error($this->link);
 
-            if ($errorMsg == 'DB server has gone away') {
+            if ($errorMsg == 'DB server has gone away' || $errorMsg == 'MySQL server has gone away') {
 
               // exit if we have more then 3 "DB server has gone away"-errors
               if ($reconnectCounterMulti > 3) {
@@ -824,6 +824,18 @@ Class DB
 
       }
       while (mysqli_next_result($this->link));
+
+    } else {
+
+      $errorMsg =  mysqli_error($this->link);
+
+      if (checkForDev() === true) {
+        echo "Info: maybe you have to increase your 'max_allowed_packet = 30M' in the config: 'my.conf' \n<br />";
+        echo "Error:" . $errorMsg;
+      }
+
+      $this->mailToAdmin('SQL-Error in mysqli_multi_query', $errorMsg . ":\n<br />" . $sql);
+
     }
 
     return false;

@@ -823,7 +823,7 @@ Class DB
         }
 
       }
-      while (mysqli_next_result($this->link));
+      while (mysqli_more_results($this->link) === true ? mysqli_next_result($this->link) : false);
 
     } else {
 

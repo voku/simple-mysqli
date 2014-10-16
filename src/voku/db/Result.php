@@ -236,14 +236,14 @@ Class Result
    *
    * @return array of mysql-objects
    */
-  public function fetchAllObject()
+  public function fetchAllObject($class = '', $params = array())
   {
     $data = array();
 
     if (!$this->is_empty()) {
       $this->reset();
 
-      while ($row = mysqli_fetch_object($this->_result)) {
+      while ($row = mysqli_fetch_object($this->_result, $class, $params)) {
         $data[] = $row;
       }
     }

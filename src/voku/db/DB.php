@@ -788,12 +788,12 @@ Class DB
         if (is_object($result) && $result !== null) {
           $result[] = new Result($sql, $resultTmpInner);
         } else {
+          $errorMsg = mysqli_error($this->link);
+          
           // is the query successful
-          if ($resultTmpInner === true) {
+          if ($resultTmpInner === true || !$errorMsg) {
             $result[] = true;
           } else {
-
-            $errorMsg = mysqli_error($this->link);
 
             if ($errorMsg == 'DB server has gone away' || $errorMsg == 'MySQL server has gone away') {
 

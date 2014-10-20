@@ -189,9 +189,15 @@ Class Result
    *
    * @return bool|null|object
    */
-  public function fetchObject($class = 'stdClass', $params = array())
+  public function fetchObject($class = '', $params = '')
   {
-    return ($row = mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
+    if ($class && $params) {
+      return ($row = mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
+    } else if ($class) {
+      return ($row = mysqli_fetch_object($this->_result, $class)) ? $row : false;
+    } else {
+      return ($row = mysqli_fetch_object($this->_result)) ? $row : false;
+    }
   }
 
   /**
@@ -242,15 +248,29 @@ Class Result
    *
    * @return array of mysql-objects
    */
-  public function fetchAllObject($class = 'stdClass', $params = array())
+  public function fetchAllObject($class = '', $params = '')
   {
     $data = array();
 
     if (!$this->is_empty()) {
       $this->reset();
 
-      while ($row = mysqli_fetch_object($this->_result, $class, $params)) {
-        $data[] = $row;
+      if ($class && $params) {
+
+      }
+
+      if ($class && $params) {
+        while ($row = mysqli_fetch_object($this->_result, $class, $params)) {
+          $data[] = $row;
+        }
+      } else if ($class) {
+        while ($row = mysqli_fetch_object($this->_result, $class)) {
+          $data[] = $row;
+        }
+      } else {
+        while ($row = mysqli_fetch_object($this->_result)) {
+          $data[] = $row;
+        }
       }
     }
 

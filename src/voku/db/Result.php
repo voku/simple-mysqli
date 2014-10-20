@@ -184,11 +184,14 @@ Class Result
   /**
    * fetchObject
    *
+   * @param string $class
+   * @param array  $params
+   *
    * @return bool|null|object
    */
-  public function fetchObject()
+  public function fetchObject($class = 'stdClass', $params = array())
   {
-    return ($row = mysqli_fetch_object($this->_result)) ? $row : false;
+    return ($row = mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
   }
 
   /**
@@ -234,9 +237,12 @@ Class Result
   /**
    * fetchAllObject
    *
+   * @param string $class
+   * @param array  $params
+   *
    * @return array of mysql-objects
    */
-  public function fetchAllObject($class = '', $params = array())
+  public function fetchAllObject($class = 'stdClass', $params = array())
   {
     $data = array();
 

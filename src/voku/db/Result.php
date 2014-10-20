@@ -185,7 +185,7 @@ Class Result
    * fetchObject
    *
    * @param string $class
-   * @param array  $params
+   * @param string $params
    *
    * @return bool|null|object
    */
@@ -244,9 +244,9 @@ Class Result
    * fetchAllObject
    *
    * @param string $class
-   * @param array  $params
+   * @param string $params
    *
-   * @return array of mysql-objects
+   * @return array
    */
   public function fetchAllObject($class = '', $params = '')
   {

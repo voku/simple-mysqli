@@ -256,10 +256,6 @@ Class Result
       $this->reset();
 
       if ($class && $params) {
-
-      }
-
-      if ($class && $params) {
         while ($row = mysqli_fetch_object($this->_result, $class, $params)) {
           $data[] = $row;
         }

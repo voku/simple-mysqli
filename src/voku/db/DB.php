@@ -22,7 +22,7 @@ Class DB
   /**
    * @var bool
    */
-  protected $exit_on_error = false;
+  protected $exit_on_error = true;
 
   /**
    * @var bool
@@ -129,6 +129,7 @@ Class DB
    * @param boolean $echo_on_error
    * @param string  $logger_class_name
    * @param string  $logger_level 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'
+   * @param boolean $session_to_db
    */
   private function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db)
   {
@@ -141,36 +142,49 @@ Class DB
     }
 
     $this->mysqlDefaultTimeFunctions = array(
-        'CURDATE()',	          // Returns the current date
-        'CURRENT_DATE()',       // CURRENT_DATE	| Synonyms for CURDATE()
-        'CURRENT_TIME()',       // CURRENT_TIME	| Synonyms for CURTIME()
-        'CURRENT_TIMESTAMP()',  // CURRENT_TIMESTAMP | Synonyms for NOW()
-        'CURTIME()',            // Returns the current time
-        'LOCALTIME()',          // Synonym for NOW()
-        'LOCALTIMESTAMP()',	    // Synonym for NOW()
-        'NOW()',	              // Returns the current date and time
-        'SYSDATE()',            // Returns the time at which the function executes
-        'UNIX_TIMESTAMP()',     // Returns a UNIX timestamp
-        'UTC_DATE()',	          // Returns the current UTC date
-        'UTC_TIME()',	          // Returns the current UTC time
-        'UTC_TIMESTAMP()'       // Returns the current UTC date and time
+      // Returns the current date
+      'CURDATE()',
+      // CURRENT_DATE	| Synonyms for CURDATE()
+      'CURRENT_DATE()',
+      // CURRENT_TIME	| Synonyms for CURTIME()
+      'CURRENT_TIME()',
+      // CURRENT_TIMESTAMP | Synonyms for NOW()
+      'CURRENT_TIMESTAMP()',
+      // Returns the current time
+      'CURTIME()',
+      // Synonym for NOW()
+      'LOCALTIME()',
+      // Synonym for NOW()
+      'LOCALTIMESTAMP()',
+      // Returns the current date and time
+      'NOW()',
+      // Returns the time at which the function executes
+      'SYSDATE()',
+      // Returns a UNIX timestamp
+      'UNIX_TIMESTAMP()',
+      // Returns the current UTC date
+      'UTC_DATE()',
+      // Returns the current UTC time
+      'UTC_TIME()',
+      // Returns the current UTC date and time
+      'UTC_TIMESTAMP()'
     );
   }
 
   /**
    * load the config
    *
-   * @param string    $hostname
-   * @param string    $username
-   * @param string    $password
-   * @param string    $database
-   * @param int       $port
-   * @param string    $charset e.g.: utf8
-   * @param boolean   $exit_on_error
-   * @param boolean   $echo_on_error
-   * @param string    $logger_class_name
-   * @param string    $logger_level
-   * @parmm boolean   $session_to_db
+   * @param $hostname
+   * @param $username
+   * @param $password
+   * @param $database
+   * @param $port
+   * @param $charset
+   * @param $exit_on_error
+   * @param $echo_on_error
+   * @param $logger_class_name
+   * @param $logger_level
+   * @param $session_to_db
    *
    * @return bool
    */
@@ -212,10 +226,10 @@ Class DB
   {
 
     if (
-            !$this->hostname
-        ||  !$this->username
-        ||  !$this->database
-        ||  (!$this->password && $this->password != '')
+      !$this->hostname
+      || !$this->username
+      || !$this->database
+      || (!$this->password && $this->password != '')
     ) {
 
       if (!$this->hostname) {
@@ -258,11 +272,11 @@ Class DB
     $this->socket = @ini_get('mysqli.default_socket');
 
     $this->link = @mysqli_connect(
-        $this->hostname,
-        $this->username,
-        $this->password,
-        $this->database,
-        $this->port
+      $this->hostname,
+      $this->username,
+      $this->password,
+      $this->database,
+      $this->port
     );
 
     if (!$this->link) {
@@ -293,7 +307,12 @@ Class DB
   private function _displayError($e, $force_exit_after_error = null)
   {
 
-    $this->logger(array('error', '<strong>' . date("d. m. Y G:i:s") . ' (sql-error):</strong> ' . $e . '<br>'));
+    $this->logger(
+      array(
+        'error',
+        '<strong>' . date("d. m. Y G:i:s") . ' (sql-error):</strong> ' . $e . '<br>'
+      )
+    );
 
     if ($this->checkForDev() === true) {
       $this->_errors[] = $e;
@@ -326,14 +345,33 @@ Class DB
   }
 
   /**
- * set_charset
- *
- * @param string $charset
- */
-  public function set_charset($charset)
+   * wrapper for a "Logger"-Class
+   *
+   * @param $log array [method, text, type] e.g.: array('error', 'this is a error', 'sql')
+   */
+  private function logger($log)
   {
-    $this->charset = $charset;
-    mysqli_set_charset($this->link, $charset);
+    $logMethod = '';
+    $logText = '';
+    $logType = '';
+    $logClass = $this->logger_class_name;
+
+    $tmpCount = count($log);
+
+    if ($tmpCount == 2) {
+      $logMethod = $log[0];
+      $logText = $log[1];
+    } else if ($tmpCount == 3) {
+      $logMethod = $log[0];
+      $logText = $log[1];
+      $logType = $log[2];
+    }
+
+    if ($logClass && class_exists($logClass)) {
+      if ($logMethod && method_exists($logClass, $logMethod)) {
+        $logClass::$logMethod($logText, $logType);
+      }
+    }
   }
 
   /*
@@ -352,6 +390,68 @@ Class DB
    * @param boolean $session_to_db
    *
    * @return DB
+   */
+
+  /**
+   * check for developer
+   *
+   * @return bool
+   */
+  private function checkForDev()
+  {
+    $return = false;
+
+    if (function_exists('checkForDev')) {
+      $return = checkForDev();
+    } else {
+
+      // for testing with dev-address
+      $noDev = isset($_GET['noDev']) ? (int)$_GET['noDev'] : 0;
+      $remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : false;
+
+      if
+      (
+        ($noDev != 1) &&
+        (
+          ($remoteAddr == '127.0.0.1')
+          || ($remoteAddr == '::1')
+          || PHP_SAPI == 'cli'
+        )
+      ) {
+        $return = true;
+      }
+    }
+
+    return $return;
+  }
+
+  /**
+   * set_charset
+   *
+   * @param string $charset
+   */
+  public function set_charset($charset)
+  {
+    $this->charset = $charset;
+    mysqli_set_charset($this->link, $charset);
+  }
+
+  /**
+   * getInstance()
+   *
+   * @param string $hostname
+   * @param string $username
+   * @param string $password
+   * @param string $database
+   * @param int    $port
+   * @param string $charset
+   * @param bool   $exit_on_error
+   * @param bool   $echo_on_error
+   * @param string $logger_class_name
+   * @param string $logger_level
+   * @param bool   $session_to_db
+   *
+   * @return \voku\db\DB
    */
   public static function getInstance($hostname = '', $username = '', $password = '', $database = '', $port = '', $charset = '', $exit_on_error = '', $echo_on_error = '', $logger_class_name = '', $logger_level = '', $session_to_db = '')
   {
@@ -533,33 +633,6 @@ Class DB
     return false;
   }
 
-  private function checkForDev() {
-    $return = false;
-
-    if (function_exists('checkForDev')) {
-      $return = checkForDev();
-    } else {
-
-      // for testing with dev-address
-      $noDev = isset($_GET['noDev']) ? (int)$_GET['noDev'] : 0;
-      $remoteAddr =  isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : false;
-
-      if
-      (
-        ($noDev != 1) &&
-        (
-              ($remoteAddr == '127.0.0.1')
-          ||  ($remoteAddr == '::1')
-          ||  PHP_SAPI == 'cli'
-        )
-      ) {
-        $return = true;
-      }
-    }
-
-    return $return;
-  }
-
   /**
    * _parseQueryParams
    *
@@ -572,7 +645,7 @@ Class DB
   {
 
     // is there anything to parse?
-    if (strpos($sql, '?') === false) {
+    if (UTF8::strpos($sql, '?') === false) {
       return $sql;
     }
 
@@ -585,14 +658,7 @@ Class DB
     $parsed_sql = str_replace('?', $parse_key, $sql);
 
     $k = 0;
-    while (strpos($parsed_sql, $parse_key) > 0) {
-
-      // DEBUG
-      /*
-        if (checkForDev() === true) {
-          echo $params[$k] . "\n<br>";
-        }
-       */
+    while (UTF8::strpos($parsed_sql, $parse_key) > 0) {
 
       $value = $this->secure($params[$k]);
       $parsed_sql = preg_replace("/$parse_key/", $value, $parsed_sql, 1);
@@ -643,9 +709,6 @@ Class DB
    */
   public function escape($str = '', $stripe_non_utf8 = true, $html_entity_decode = true)
   {
-
-    // DEBUG
-    //dump($this);
 
     if (is_int($str) || is_bool($str)) {
       return intval((int)$str);
@@ -728,7 +791,13 @@ Class DB
 
     $info = 'time => ' . round($duration, 5) . ' - ' . 'results => ' . $results . ' - ' . 'SQL => ' . UTF8::htmlentities($sql);
 
-    $this->logger(array('debug', '<strong>' . date("d. m. Y G:i:s") . ' (' . $file . ' line: ' . $line . '):</strong> ' . $info . '<br>', 'sql'));
+    $this->logger(
+      array(
+        'debug',
+        '<strong>' . date("d. m. Y G:i:s") . ' (' . $file . ' line: ' . $line . '):</strong> ' . $info . '<br>',
+        'sql'
+      )
+    );
 
     return true;
   }
@@ -751,6 +820,45 @@ Class DB
   public function insert_id()
   {
     return mysqli_insert_id($this->link);
+  }
+
+  /**
+   * send a error mail to the admin / dev
+   *
+   * @param     $subject
+   * @param     $htmlBody
+   * @param int $priority
+   */
+  private function mailToAdmin($subject, $htmlBody, $priority = 3)
+  {
+    if (function_exists('mailToAdmin')) {
+      mailToAdmin($subject, $htmlBody, $priority);
+    } else {
+
+      if ($priority == 3) {
+        $this->logger(
+          array(
+            'debug',
+            $subject . ' | ' . $htmlBody
+          )
+        );
+      } else if ($priority > 3) {
+        $this->logger(
+          array(
+            'error',
+            $subject . ' | ' . $htmlBody
+          )
+        );
+      } else if ($priority < 3) {
+        $this->logger(
+          array(
+            'info',
+            $subject . ' | ' . $htmlBody
+          )
+        );
+      }
+
+    }
   }
 
   /**
@@ -789,7 +897,7 @@ Class DB
           $result[] = new Result($sql, $resultTmpInner);
         } else {
           $errorMsg = mysqli_error($this->link);
-          
+
           // is the query successful
           if ($resultTmpInner === true || !$errorMsg) {
             $result[] = true;
@@ -827,9 +935,9 @@ Class DB
 
     } else {
 
-      $errorMsg =  mysqli_error($this->link);
+      $errorMsg = mysqli_error($this->link);
 
-      if (checkForDev() === true) {
+      if ($this->checkForDev() === true) {
         echo "Info: maybe you have to increase your 'max_allowed_packet = 30M' in the config: 'my.conf' \n<br />";
         echo "Error:" . $errorMsg;
       }
@@ -917,7 +1025,6 @@ Class DB
    */
   public function insert($table, $data = array())
   {
-
     $table = trim($table);
 
     if (strlen($table) == 0) {
@@ -996,7 +1103,7 @@ Class DB
   }
 
   /**
-   * Quote e.g. a table name string
+   * Quote && Escape e.g. a table name string
    *
    * @param string $str
    *
@@ -1004,7 +1111,7 @@ Class DB
    */
   public function quote_string($str)
   {
-    return "`" . $str . "`";
+    return "`" . $this->escape($str) . "`";
   }
 
   /**
@@ -1080,7 +1187,7 @@ Class DB
     $SET = $this->_parseArrayPair($data);
 
     if (is_string($where)) {
-      $WHERE = ($where);
+      $WHERE = $this->escape($where);
     } else if (is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, "AND");
     } else {
@@ -1112,7 +1219,7 @@ Class DB
     }
 
     if (is_string($where)) {
-      $WHERE = ($where);
+      $WHERE = $this->escape($where);
     } else if (is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, "AND");
     } else {
@@ -1142,7 +1249,7 @@ Class DB
     }
 
     if (is_string($where)) {
-      $WHERE = ($where);
+      $WHERE = $this->escape($where);
     } else if (is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {
@@ -1197,60 +1304,6 @@ Class DB
    */
   private function __clone()
   {
-  }
-
-  /**
-   * send a error mail to the admin / dev
-   *
-   * @param     $subject
-   * @param     $htmlBody
-   * @param int $priority
-   */
-  private function mailToAdmin($subject, $htmlBody, $priority = 3)
-  {
-    if (function_exists('mailToAdmin')) {
-      mailToAdmin($subject, $htmlBody, $priority);
-    } else {
-
-      if ($priority == 3) {
-        $this->logger(array('debug', $subject . ' | ' . $htmlBody));
-      } else if ($priority > 3) {
-        $this->logger(array('error', $subject . ' | ' . $htmlBody));
-      } else if ($priority < 3) {
-        $this->logger(array('info', $subject . ' | ' . $htmlBody));
-      }
-
-    }
-  }
-
-  /**
-   * wrapper for a "Logger"-Class
-   *
-   * @param $log array [method, text, type] e.g.: array('error', 'this is a error', 'sql')
-   */
-  private function logger($log)
-  {
-    $logMethod = '';
-    $logText = '';
-    $logType = '';
-    $logClass = $this->logger_class_name;
-
-    $tmpCount = count($log);
-
-    if ($tmpCount == 2) {
-      $logMethod = $log[0];
-      $logText = $log[1];
-    } else if ($tmpCount == 3) {
-      $logMethod = $log[0];
-      $logText = $log[1];
-      $logType = $log[2];
-    }
-
-    if ($logClass && class_exists($logClass)) {
-      if ($logMethod && method_exists($logClass, $logMethod)) {
-        $logClass::$logMethod($logText, $logType);
-      }
-    }
   }
 
 }

@@ -65,8 +65,8 @@ Class Result
 
     foreach ($data as $_row) {
       if (
-          isset($_row[$key]) &&
-          isset($_row[$value])
+        isset($_row[$key]) &&
+        isset($_row[$value])
       ) {
         $_key = $_row[$key];
         $_value = $_row[$value];

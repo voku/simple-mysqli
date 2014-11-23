@@ -2,7 +2,8 @@
 
 use voku\db\DB;
 
-class SimpleMySQLiTest extends PHPUnit_Framework_TestCase {
+class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
+{
 
   /**
    * @var DB
@@ -11,11 +12,13 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase {
 
   public $tableName = 'test_page';
 
-  public function __construct() {
+  public function __construct()
+  {
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test');
   }
 
-  function test_basic() {
+  function test_basic()
+  {
 
     // insert
     $pageArray = array(
@@ -31,7 +34,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase {
 
     // update
     $pageArray = array(
-        'page_template' => 'tpl_update'
+      'page_template' => 'tpl_update'
     );
     $this->db->update($this->tableName, $pageArray, "page_id = $tmpId");
 

@@ -32,12 +32,12 @@ Class DB
   /**
    * @var string
    */
-  protected $css_mysql_box_border = '3px solid orange';
+  protected $css_mysql_box_border = '3px solid red';
 
   /**
    * @var string
    */
-  protected $css_mysql_box_bg = '#FFCC66';
+  protected $css_mysql_box_bg = '#FFCCCC';
 
   /**
    * @var \mysqli
@@ -220,7 +220,7 @@ Class DB
   }
 
   /**
-   * show config error and exit()
+   * show config error and throw a exception
    */
   public function showConfigError()
   {
@@ -233,23 +233,19 @@ Class DB
     ) {
 
       if (!$this->hostname) {
-        echo 'no sql-hostname';
-        exit();
+        throw new \Exception('no sql-hostname');
       }
 
       if (!$this->username) {
-        echo 'no sql-username';
-        exit();
+        throw new \Exception('no sql-username');
       }
 
       if (!$this->database) {
-        echo 'no sql-database';
-        exit();
+        throw new \Exception('no sql-database');
       }
 
       if (!$this->password) {
-        echo 'no sql-password';
-        exit();
+        throw new \Exception('no sql-password');
       }
 
       return false;
@@ -301,8 +297,10 @@ Class DB
   /**
    * _displayError
    *
-   * @param string $e
-   * @param null   $force_exit_after_error
+   * @param      $e
+   * @param null $force_exit_after_error
+   *
+   * @throws \Exception
    */
   private function _displayError($e, $force_exit_after_error = null)
   {
@@ -332,13 +330,13 @@ Class DB
       }
 
       if ($force_exit_after_error === true) {
-        exit();
+        throw new \Exception($e);
       } else if ($force_exit_after_error === false) {
         // nothing
       } else if ($force_exit_after_error === null) {
         // default
         if ($this->exit_on_error === true) {
-          exit();
+          throw new \Exception($e);
         }
       }
     }

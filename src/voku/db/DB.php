@@ -233,22 +233,22 @@ Class DB
     ) {
 
       if (!$this->hostname) {
-        var_dump('no sql-hostname');
+        echo 'no sql-hostname';
         exit();
       }
 
       if (!$this->username) {
-        var_dump('no sql-username');
+        echo 'no sql-username';
         exit();
       }
 
       if (!$this->database) {
-        var_dump('no sql-database');
+        echo 'no sql-database';
         exit();
       }
 
       if (!$this->password) {
-        var_dump('no sql-password');
+        echo 'no sql-password';
         exit();
       }
 

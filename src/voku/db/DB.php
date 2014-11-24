@@ -864,9 +864,10 @@ Class DB
   /**
    * run a sql-multi-query
    *
-   * @param $sql
+   * @param string $sql
    *
    * @return bool
+   * @throws \Exception
    */
   public function multi_query($sql)
   {
@@ -908,7 +909,7 @@ Class DB
               // exit if we have more then 3 "DB server has gone away"-errors
               if ($reconnectCounterMulti > 3) {
                 $this->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
-                exit();
+                throw new \Exception($errorMsg);
               } else {
                 $this->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
 

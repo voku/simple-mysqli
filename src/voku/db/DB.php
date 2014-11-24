@@ -551,6 +551,8 @@ Class DB
    *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
    *                                      "true" by e.g. "DROP"-queries<br />
    *                                      "false" on error
+   *
+   * @throws \Exception
    */
   public function query($sql = '', $params = false)
   {
@@ -608,7 +610,7 @@ Class DB
           // exit if we have more then 3 "DB server has gone away"-errors
           if ($reconnectCounter > 3) {
             $this->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
-            exit();
+            throw new \Exception($errorMsg);
           } else {
             $this->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
 

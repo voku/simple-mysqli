@@ -25,6 +25,12 @@ You can download it from here, or require it using [composer](https://packagist.
 }
 ```
 
+##Install via "composer require"
+```shell
+composer require voku/simple-mysqli
+```
+
+
 ##Starting the driver
 
 ```php

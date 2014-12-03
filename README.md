@@ -36,7 +36,10 @@ composer require voku/simple-mysqli
 ```php
     require_once 'composer/autoload.php';
 
-    $db = \voku\db\DB::getInstance('localhost', 'root', '', 'web30db1');
+    $db = \voku\db\DB::getInstance('yourDbHost', 'yourDbUser', 'yourDbPassword', 'yourDbName');
+    
+    // example
+    // $db = \voku\db\DB::getInstance('localhost', 'root', '', 'test');
 
 ```
 

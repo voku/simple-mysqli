@@ -17,7 +17,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test');
   }
 
-  function test_basic()
+  function testBasics()
   {
 
     // insert
@@ -44,4 +44,16 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals('tpl_update', $tmpPage->page_template);
   }
 
+  public function testQry()
+  {
+    $result = $this->db->qry("SELECT * FROM " . $this->db->escape($this->tableName));
+    $this->assertEquals('tpl_update', ($result[0]['page_template']));
+
+    $result = $this->db->qry("UPDATE " . $this->db->escape($this->tableName) . "
+      SET
+        page_template = 'tpl_test'
+      WHERE page_id = ?
+    ", 1);
+    $this->assertEquals(1, ($result));
+  }
 }

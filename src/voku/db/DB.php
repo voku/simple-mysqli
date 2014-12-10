@@ -226,10 +226,10 @@ Class DB
   {
 
     if (
-      !$this->hostname
-      || !$this->username
-      || !$this->database
-      || (!$this->password && $this->password != '')
+        !$this->hostname
+        || !$this->username
+        || !$this->database
+        || (!$this->password && $this->password != '')
     ) {
 
       if (!$this->hostname) {
@@ -268,11 +268,11 @@ Class DB
     $this->socket = @ini_get('mysqli.default_socket');
 
     $this->link = @mysqli_connect(
-      $this->hostname,
-      $this->username,
-      $this->password,
-      $this->database,
-      $this->port
+        $this->hostname,
+        $this->username,
+        $this->password,
+        $this->database,
+        $this->port
     );
 
     if (!$this->link) {
@@ -298,18 +298,18 @@ Class DB
    * _displayError
    *
    * @param      $e
-   * @param null $force_exit_after_error
+   * @param null $force_exception_after_error
    *
    * @throws \Exception
    */
-  private function _displayError($e, $force_exit_after_error = null)
+  private function _displayError($e, $force_exception_after_error = null)
   {
 
     $this->logger(
-      array(
-        'error',
-        '<strong>' . date("d. m. Y G:i:s") . ' (sql-error):</strong> ' . $e . '<br>'
-      )
+        array(
+            'error',
+            '<strong>' . date("d. m. Y G:i:s") . ' (sql-error):</strong> ' . $e . '<br>'
+        )
     );
 
     if ($this->checkForDev() === true) {
@@ -329,11 +329,11 @@ Class DB
         ';
       }
 
-      if ($force_exit_after_error === true) {
+      if ($force_exception_after_error === true) {
         throw new \Exception($e);
-      } else if ($force_exit_after_error === false) {
+      } else if ($force_exception_after_error === false) {
         // nothing
-      } else if ($force_exit_after_error === null) {
+      } else if ($force_exception_after_error === null) {
         // default
         if ($this->exit_on_error === true) {
           throw new \Exception($e);
@@ -409,12 +409,12 @@ Class DB
 
       if
       (
-        ($noDev != 1) &&
-        (
-          ($remoteAddr == '127.0.0.1')
-          || ($remoteAddr == '::1')
-          || PHP_SAPI == 'cli'
-        )
+          ($noDev != 1) &&
+          (
+              ($remoteAddr == '127.0.0.1')
+              || ($remoteAddr == '::1')
+              || PHP_SAPI == 'cli'
+          )
       ) {
         $return = true;
       }
@@ -480,6 +480,59 @@ Class DB
     }
 
     return $instance[$connection];
+  }
+
+  /**
+   * execute a sql-query and
+   * return the result-array for select-statements
+   *
+   * -----------------------
+   *
+   * e.g.:
+   *  $retcode = DB::qry("UPDATE user_extension
+   *    SET
+   *      user_name='?'
+   *    WHERE user_uid_fk='?'
+   *  ",
+   *    $userName,
+   *    (int)$uid
+   *  );
+   *
+   * -----------------------
+   *
+   * @param $query
+   *
+   * @return array|bool|int|\voku\db\Result
+   * @throws \Exception
+   */
+  public static function qry($query)
+  {
+    $db = DB::getInstance();
+
+    $args = func_get_args();
+    $query = array_shift($args);
+    $query = str_replace("?", "%s", $query);
+    $args = array_map(
+        array(
+            $db,
+            'escape'
+        ), $args
+    );
+    array_unshift($args, $query);
+    $query = call_user_func_array('sprintf', $args);
+    $result = $db->query($query);
+
+    if ($result instanceof Result) {
+      $return = $result->fetchAllArray();
+    } else {
+      $return = $result;
+    }
+
+    if ($return || is_array($return)) {
+      return $return;
+    } else {
+      return false;
+    }
   }
 
   /**
@@ -792,11 +845,11 @@ Class DB
     $info = 'time => ' . round($duration, 5) . ' - ' . 'results => ' . $results . ' - ' . 'SQL => ' . UTF8::htmlentities($sql);
 
     $this->logger(
-      array(
-        'debug',
-        '<strong>' . date("d. m. Y G:i:s") . ' (' . $file . ' line: ' . $line . '):</strong> ' . $info . '<br>',
-        'sql'
-      )
+        array(
+            'debug',
+            '<strong>' . date("d. m. Y G:i:s") . ' (' . $file . ' line: ' . $line . '):</strong> ' . $info . '<br>',
+            'sql'
+        )
     );
 
     return true;
@@ -837,24 +890,24 @@ Class DB
 
       if ($priority == 3) {
         $this->logger(
-          array(
-            'debug',
-            $subject . ' | ' . $htmlBody
-          )
+            array(
+                'debug',
+                $subject . ' | ' . $htmlBody
+            )
         );
       } else if ($priority > 3) {
         $this->logger(
-          array(
-            'error',
-            $subject . ' | ' . $htmlBody
-          )
+            array(
+                'error',
+                $subject . ' | ' . $htmlBody
+            )
         );
       } else if ($priority < 3) {
         $this->logger(
-          array(
-            'info',
-            $subject . ' | ' . $htmlBody
-          )
+            array(
+                'info',
+                $subject . ' | ' . $htmlBody
+            )
         );
       }
 

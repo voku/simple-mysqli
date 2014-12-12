@@ -746,7 +746,14 @@ Class DB
       $var = (int)$var;
     } else if (is_array($var)) {
       $var = null;
-    } else {
+    } else if (($var instanceof \DateTime)) {
+      try {
+        $var = "'" . $this->escape($var->format('Y-m-d h:m:i')) . "'";
+      } catch (\Exception $e) {
+        $var = null;
+      }
+    }
+    else {
       $var = "'" . $this->escape(trim($var)) . "'";
     }
 
@@ -1127,6 +1134,10 @@ Class DB
 
         if (strpos($_key, "IN") !== false) {
           $_connector = 'IN';
+        }
+
+        if (strpos($_key, '<>') !== false) {
+          $_connector = "<>";
         }
 
         if (strpos($_key, '>') !== false && strpos($_key, '=') === false) {

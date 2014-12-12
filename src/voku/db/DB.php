@@ -1128,12 +1128,48 @@ Class DB
       foreach ($arrayPair as $_key => $_value) {
         $_connector = '=';
 
+        if (strpos($_key, 'NOT') !== false) {
+          $_connector = 'NOT';
+        }
+
         if (strpos($_key, 'IS') !== false) {
           $_connector = 'IS';
         }
 
+        if (strpos($_key, 'IS NOT') !== false) {
+          $_connector = 'IS NOT';
+        }
+
         if (strpos($_key, "IN") !== false) {
           $_connector = 'IN';
+        }
+
+        if (strpos($_key, "NOT IN") !== false) {
+          $_connector = 'NOT IN';
+        }
+
+        if (strpos($_key, 'BETWEEN') !== false) {
+          $_connector = 'BETWEEN';
+        }
+
+        if (strpos($_key, 'NOT BETWEEN') !== false) {
+          $_connector = 'NOT BETWEEN';
+        }
+
+        if (strpos($_key, 'EXISTS') !== false) {
+          $_connector = 'EXISTS';
+        }
+
+        if (strpos($_key, 'NOT EXISTS') !== false) {
+          $_connector = 'NOT EXISTS';
+        }
+
+        if (strpos($_key, 'LIKE') !== false) {
+          $_connector = 'LIKE';
+        }
+
+        if (strpos($_key, 'NOT LIKE') !== false) {
+          $_connector = 'NOT LIKE';
         }
 
         if (strpos($_key, '>') !== false && strpos($_key, '=') === false) {
@@ -1154,14 +1190,6 @@ Class DB
 
         if (strpos($_key, '<>') !== false) {
           $_connector = "<>";
-        }
-
-        if (strpos($_key, 'LIKE') !== false) {
-          $_connector = 'LIKE';
-        }
-
-        if (strpos($_key, 'NOT LIKE') !== false) {
-          $_connector = 'NOT LIKE';
         }
 
         $pairs[] = " " . $this->quote_string(trim(str_replace($_connector, '', $_key))) . " " . $_connector . " " . $this->secure($_value) . " \n";

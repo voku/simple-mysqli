@@ -746,7 +746,14 @@ Class DB
       $var = (int)$var;
     } else if (is_array($var)) {
       $var = null;
-    } else {
+    } else if (($var instanceof \DateTime)) {
+      try {
+        $var = "'" . $this->escape($var->format('Y-m-d h:m:i')) . "'";
+      } catch (\Exception $e) {
+        $var = null;
+      }
+    }
+    else {
       $var = "'" . $this->escape(trim($var)) . "'";
     }
 

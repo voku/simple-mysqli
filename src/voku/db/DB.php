@@ -432,6 +432,7 @@ Class DB
   {
     $this->charset = $charset;
     mysqli_set_charset($this->link, $charset);
+    mysqli_query($this->link, "SET NAMES " . $charset);
   }
 
   /**
@@ -503,6 +504,7 @@ Class DB
    * @param $query
    *
    * @return array|bool|int|\voku\db\Result
+   * @deprecated
    * @throws \Exception
    */
   public static function qry($query)
@@ -698,7 +700,7 @@ Class DB
   {
 
     // is there anything to parse?
-    if (UTF8::strpos($sql, '?') === false) {
+    if (strpos($sql, '?') === false) {
       return $sql;
     }
 
@@ -711,7 +713,7 @@ Class DB
     $parsed_sql = str_replace('?', $parse_key, $sql);
 
     $k = 0;
-    while (UTF8::strpos($parsed_sql, $parse_key) > 0) {
+    while (strpos($parsed_sql, $parse_key) > 0) {
 
       $value = $this->secure($params[$k]);
       $parsed_sql = preg_replace("/$parse_key/", $value, $parsed_sql, 1);
@@ -1147,7 +1149,11 @@ Class DB
           $_connector = 'LIKE';
         }
 
-        $pairs[] = " " . $this->quote_string(str_replace($_connector, '', $_key)) . " " . $_connector . " " . $this->secure($_value) . " \n";
+        if (strpos($_key, 'NOT LIKE') !== false) {
+          $_connector = 'NOT LIKE';
+        }
+
+        $pairs[] = " " . $this->quote_string(trim(str_replace($_connector, '', $_key))) . " " . $_connector . " " . $this->secure($_value) . " \n";
       }
 
       $sql = implode($glue, $pairs);
@@ -1215,9 +1221,9 @@ Class DB
   /**
    * update
    *
-   * @param string $table
-   * @param array  $data
-   * @param string $where
+   * @param string       $table
+   * @param array        $data
+   * @param array|string $where
    *
    * @return bool|int|Result
    */
@@ -1256,8 +1262,8 @@ Class DB
   /**
    * delete
    *
-   * @param string $table
-   * @param        $where
+   * @param string       $table
+   * @param string|array $where
    *
    * @return bool|int|Result
    */
@@ -1288,8 +1294,8 @@ Class DB
   /**
    * select
    *
-   * @param string $table
-   * @param string $where
+   * @param string       $table
+   * @param string|array $where
    *
    * @return bool|int|Result
    */

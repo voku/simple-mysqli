@@ -42,6 +42,23 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchObject();
     $this->assertEquals('tpl_update', $tmpPage->page_template);
+
+    $data = array(
+        'page_id'       => 2,
+        'page_template' => 'tpl_test',
+        'page_type'     => 'öäü123'
+    );
+    $tmpId = $this->db->replace($this->tableName, $data);
+
+    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $tmpPage = $result->fetchObject();
+    $this->assertEquals('tpl_test', $tmpPage->page_template);
+
+    $deleteId = $this->db->delete($this->tableName, array('page_id' => $tmpId));
+    $this->assertEquals(1, $deleteId);
+
+    $result = $this->db->select($this->tableName, array('page_id' => 2));
+    $this->assertEquals(0, $result->num_rows);
   }
 
   public function testQry()
@@ -55,9 +72,11 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
     $this->assertEquals(1, ($result));
 
-    $result = $this->db->qry("SELECT * FROM " . $this->db->escape($this->tableName) . "
+    $result = $this->db->qry(
+        "SELECT * FROM " . $this->db->escape($this->tableName) . "
       WHERE page_id = 1
-    ");
+    "
+    );
     $this->assertEquals('tpl_test', ($result[0]['page_template']));
 
   }
@@ -85,9 +104,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertGreaterThan(1, $resultInsert);
 
     $where = array(
-        'page_type =' => 'öäü',
+        'page_type ='        => 'öäü',
         'page_type NOT LIKE' => '%öäü123',
-        'page_id =' => $resultInsert,
+        'page_id ='          => $resultInsert,
     );
 
     $resultSelect = $this->db->select($this->tableName, $where);
@@ -95,13 +114,25 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
 
     $where = array(
-        'page_type =' => 'öäü',
+        'page_type ='  => 'öäü',
         'page_type <>' => 'öäü123',
-        'page_id =' => $resultInsert,
+        'page_id ='    => $resultInsert,
+    );
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->fetchAllArray();
+    $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
+
+    $where = array(
+        'page_type LIKE'     => 'öäü',
+        'page_type NOT LIKE' => 'öäü123',
+        'page_id ='          => $resultInsert,
     );
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchAllArray();
     $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
   }
+
+
 }

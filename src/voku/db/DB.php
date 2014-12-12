@@ -644,7 +644,7 @@ Class DB
 
         if (preg_match('/^\s*"?(INSERT|UPDATE|DELETE|REPLACE)\s+/i', $sql)) {
 
-          // it is an "INSERT"
+          // it is an "INSERT" || "REPLACE"
           if ($this->insert_id() > 0) {
             return (int)$this->insert_id();
           }

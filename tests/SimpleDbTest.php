@@ -93,5 +93,15 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchAllArray();
     $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
+
+    $where = array(
+        'page_type =' => 'öäü',
+        'page_type <>' => 'öäü123',
+        'page_id =' => $resultInsert,
+    );
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->fetchAllArray();
+    $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
   }
 }

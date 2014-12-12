@@ -1136,6 +1136,10 @@ Class DB
           $_connector = 'IN';
         }
 
+        if (strpos($_key, '<>') !== false) {
+          $_connector = "<>";
+        }
+
         if (strpos($_key, '>') !== false && strpos($_key, '=') === false) {
           $_connector = ">";
         }

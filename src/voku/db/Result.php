@@ -51,6 +51,28 @@ Class Result
   }
 
   /**
+   * @return string
+   */
+  public function getDefaultResultType()
+  {
+    return $this->_default_result_type;
+  }
+
+  /**
+   * you can set the default result-type to 'object' or 'array'
+   *
+   * used for "fetch()" and "fetchAll()"
+   *
+   * @param string $default_result_type
+   */
+  public function setDefaultResultType($default_result_type = 'object')
+  {
+    if ($default_result_type == 'object' || $default_result_type == 'array') {
+      $this->_default_result_type = $default_result_type;
+    }
+  }
+
+  /**
    * fetch array-pair
    *
    * both "key" and "value" must exists in the fetched data
@@ -173,17 +195,19 @@ Class Result
   /**
    * fetch (object -> not a array by default)
    *
+   * @param $reset
+   *
    * @return array|bool|null|object
    */
-  public function fetch()
+  public function fetch($reset = false)
   {
 
     if ($this->_default_result_type == 'object') {
-      return $this->fetchObject();
+      return $this->fetchObject('', '', $reset);
     }
 
     if ($this->_default_result_type == 'array') {
-      return $this->fetchArray();
+      return $this->fetchArray($reset);
     }
 
     return false;
@@ -194,11 +218,16 @@ Class Result
    *
    * @param string $class
    * @param string $params
+   * @param bool   $reset
    *
    * @return bool|null|object
    */
-  public function fetchObject($class = '', $params = '')
+  public function fetchObject($class = '', $params = '', $reset = false)
   {
+    if (!$this->is_empty() && $reset === true) {
+      $this->reset();
+    }
+
     if ($class && $params) {
       return ($row = mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
     } else if ($class) {
@@ -211,10 +240,17 @@ Class Result
   /**
    * fetchArray
    *
+   * @param bool $reset
+   *
    * @return array|bool|null
    */
-  public function fetchArray()
+  public function fetchArray($reset = false)
   {
+    if (!$this->is_empty() && $reset === true
+    ) {
+      $this->reset();
+    }
+
     return ($row = mysqli_fetch_assoc($this->_result)) ? $row : false;
   }
 

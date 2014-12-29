@@ -267,4 +267,42 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $columnResult = $resultSelect->fetchObject();
     $this->assertEquals('tpl_test_new7', $columnResult->page_template);
   }
+
+  public function testDefaultResultType()
+  {
+    $data = array(
+        'page_template' => 'tpl_test_new8',
+        'page_type'     => 'öäü'
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert = $this->db->insert($this->tableName, $data);
+    $this->assertGreaterThan(1, $resultInsert);
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
+
+    // array
+    $resultSelect->setDefaultResultType('array');
+
+    $columnResult = $resultSelect->fetch(true);
+    $this->assertEquals('tpl_test_new8', $columnResult['page_template']);
+
+    $columnResult = $resultSelect->fetchAll();
+    $this->assertEquals('tpl_test_new8', $columnResult[0]['page_template']);
+
+    $columnResult = $resultSelect->fetchAllArray();
+    $this->assertEquals('tpl_test_new8', $columnResult[0]['page_template']);
+
+    // object
+    $resultSelect->setDefaultResultType('object');
+
+    $columnResult = $resultSelect->fetch(true);
+    $this->assertEquals('tpl_test_new8', $columnResult->page_template);
+
+    $columnResult = $resultSelect->fetchAll();
+    $this->assertEquals('tpl_test_new8', $columnResult[0]->page_template);
+
+    $columnResult = $resultSelect->fetchAllObject();
+    $this->assertEquals('tpl_test_new8', $columnResult[0]->page_template);
+  }
 }

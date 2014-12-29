@@ -265,7 +265,13 @@ Class DB
       return true;
     }
 
-    $this->socket = @ini_get('mysqli.default_socket');
+    if (!$this->socket) {
+      $this->socket = @ini_get('mysqli.default_socket');
+    }
+
+    if (!$this->port) {
+      $this->port = @ini_get('mysqli.default_port');
+    }
 
     $this->link = @mysqli_connect(
         $this->hostname,
@@ -409,10 +415,11 @@ Class DB
 
       if
       (
-          ($noDev != 1) &&
+          $noDev != 1
+          &&
           (
-              ($remoteAddr == '127.0.0.1')
-              || ($remoteAddr == '::1')
+              $remoteAddr == '127.0.0.1'
+              || $remoteAddr == '::1'
               || PHP_SAPI == 'cli'
           )
       ) {
@@ -442,13 +449,13 @@ Class DB
    * @param string $username
    * @param string $password
    * @param string $database
-   * @param int    $port
+   * @param int|string $port
    * @param string $charset
-   * @param bool   $exit_on_error
-   * @param bool   $echo_on_error
+   * @param bool|string $exit_on_error
+   * @param bool|string $echo_on_error
    * @param string $logger_class_name
    * @param string $logger_level
-   * @param bool   $session_to_db
+   * @param bool|string $session_to_db
    *
    * @return \voku\db\DB
    */
@@ -1013,6 +1020,14 @@ Class DB
   }
 
   /**
+   * alias for "beginTransaction()"
+   */
+  public function startTransaction()
+  {
+    $this->beginTransaction();
+  }
+
+  /**
    * Begins a transaction, by turning off auto commit
    *
    * @return true or false indicating success of transaction
@@ -1047,6 +1062,22 @@ Class DB
   }
 
   /**
+   * rollback in a transaction
+   */
+  public function rollback() {
+    // init
+    $return = false;
+
+    if ($this->_in_transaction === true) {
+      $return = mysqli_rollback($this->link);
+      mysqli_autocommit($this->link, true);
+      $this->_in_transaction = false;
+    }
+
+    return $return;
+  }
+
+  /**
    * Ends a transaction and commits if no errors, then ends autocommit
    *
    * @return true or false indicating success of transactions
@@ -1058,7 +1089,7 @@ Class DB
       mysqli_commit($this->link);
       $return = true;
     } else {
-      mysqli_rollback($this->link);
+      $this->rollback();
       $return = false;
     }
 
@@ -1127,72 +1158,73 @@ Class DB
 
       foreach ($arrayPair as $_key => $_value) {
         $_connector = '=';
+        $_key_upper = strtoupper($_key);
 
-        if (strpos($_key, 'NOT') !== false) {
+        if (strpos($_key_upper, ' NOT') !== false) {
           $_connector = 'NOT';
         }
 
-        if (strpos($_key, 'IS') !== false) {
+        if (strpos($_key_upper, ' IS') !== false) {
           $_connector = 'IS';
         }
 
-        if (strpos($_key, 'IS NOT') !== false) {
+        if (strpos($_key_upper, ' IS NOT') !== false) {
           $_connector = 'IS NOT';
         }
 
-        if (strpos($_key, "IN") !== false) {
+        if (strpos($_key_upper, " IN") !== false) {
           $_connector = 'IN';
         }
 
-        if (strpos($_key, "NOT IN") !== false) {
+        if (strpos($_key_upper, " NOT IN") !== false) {
           $_connector = 'NOT IN';
         }
 
-        if (strpos($_key, 'BETWEEN') !== false) {
+        if (strpos($_key_upper, ' BETWEEN') !== false) {
           $_connector = 'BETWEEN';
         }
 
-        if (strpos($_key, 'NOT BETWEEN') !== false) {
+        if (strpos($_key_upper, ' NOT BETWEEN') !== false) {
           $_connector = 'NOT BETWEEN';
         }
 
-        if (strpos($_key, 'EXISTS') !== false) {
+        if (strpos($_key_upper, ' EXISTS') !== false) {
           $_connector = 'EXISTS';
         }
 
-        if (strpos($_key, 'NOT EXISTS') !== false) {
+        if (strpos($_key_upper, ' NOT EXISTS') !== false) {
           $_connector = 'NOT EXISTS';
         }
 
-        if (strpos($_key, 'LIKE') !== false) {
+        if (strpos($_key_upper, ' LIKE') !== false) {
           $_connector = 'LIKE';
         }
 
-        if (strpos($_key, 'NOT LIKE') !== false) {
+        if (strpos($_key_upper, ' NOT LIKE') !== false) {
           $_connector = 'NOT LIKE';
         }
 
-        if (strpos($_key, '>') !== false && strpos($_key, '=') === false) {
+        if (strpos($_key_upper, ' >') !== false && strpos($_key_upper, ' =') === false) {
           $_connector = ">";
         }
 
-        if (strpos($_key, '<') !== false && strpos($_key, '=') === false) {
+        if (strpos($_key_upper, ' <') !== false && strpos($_key_upper, ' =') === false) {
           $_connector = "<";
         }
 
-        if (strpos($_key, '>=') !== false) {
+        if (strpos($_key_upper, ' >=') !== false) {
           $_connector = '>=';
         }
 
-        if (strpos($_key, '<=') !== false) {
+        if (strpos($_key_upper, ' <=') !== false) {
           $_connector = '<=';
         }
 
-        if (strpos($_key, '<>') !== false) {
+        if (strpos($_key_upper, ' <>') !== false) {
           $_connector = "<>";
         }
 
-        $pairs[] = " " . $this->quote_string(trim(str_replace($_connector, '', $_key))) . " " . $_connector . " " . $this->secure($_value) . " \n";
+        $pairs[] = " " . $this->quote_string(trim(str_ireplace($_connector, '', $_key))) . " " . $_connector . " " . $this->secure($_value) . " \n";
       }
 
       $sql = implode($glue, $pairs);

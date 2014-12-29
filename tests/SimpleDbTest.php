@@ -14,7 +14,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function __construct()
   {
-    $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test');
+    $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
   }
 
   function testBasics()
@@ -134,5 +134,47 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
   }
 
+  public function testTransaction()
+  {
 
+    $data = array(
+        'page_template' => 'tpl_test_new3',
+        'page_type'     => 'öäü'
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert = $this->db->insert($this->tableName, $data);
+    $this->assertGreaterThan(1, $resultInsert);
+
+    // start - test a transaction
+    $this->db->beginTransaction();
+
+    $data = array(
+        'page_type' => 'lall'
+    );
+    $where = array(
+        'page_id' => $resultInsert
+    );
+    $this->db->update($this->tableName, $data, $where);
+
+    $data = array(
+        'page_type' => 'lall',
+        'page_lall' => 'öäü'        // this will produce a mysql-error and a mysqli-rollback
+  );
+    $where = array(
+        'page_id' => $resultInsert
+    );
+    $this->db->update($this->tableName, $data, $where);
+
+    // end - test a transaction
+    $this->db->endTransaction();
+
+    $where = array(
+        'page_id' => $resultInsert,
+    );
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->fetchAllArray();
+    $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
+  }
 }

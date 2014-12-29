@@ -51,7 +51,14 @@ Class Result
   }
 
   /**
-   * fetchArrayPair
+   * fetch array-pair
+   *
+   * both "key" and "value" must exists in the fetched data
+   * the key will be the new key of the result-array
+   *
+   * e.g.:
+   *    fetchArrayPair('some_id', 'some_value');
+   *    // array(127 => 'some value', 128 => 'some other value')
    *
    * @param string $key
    * @param string $value
@@ -60,21 +67,22 @@ Class Result
    */
   public function fetchArrayPair($key, $value)
   {
-    $ArrayPair = array();
+    $arrayPair = array();
     $data = $this->fetchAllArray();
 
     foreach ($data as $_row) {
       if (
-        isset($_row[$key]) &&
+        isset($_row[$key])
+        &&
         isset($_row[$value])
       ) {
         $_key = $_row[$key];
         $_value = $_row[$value];
-        $ArrayPair[$_key] = $_value;
+        $arrayPair[$_key] = $_value;
       }
     }
 
-    return $ArrayPair;
+    return $arrayPair;
   }
 
   /**

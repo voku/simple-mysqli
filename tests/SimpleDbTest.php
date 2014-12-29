@@ -40,8 +40,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // check (select)
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
-    $tmpPage = $result->fetchObject();
-    $this->assertEquals('tpl_update', $tmpPage->page_template);
+    $tmpPage = $result->fetchAllObject();
+    $this->assertEquals('tpl_update', $tmpPage[0]->page_template);
 
     $data = array(
         'page_id'       => 2,
@@ -51,8 +51,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $tmpId = $this->db->replace($this->tableName, $data);
 
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
-    $tmpPage = $result->fetchObject();
-    $this->assertEquals('tpl_test', $tmpPage->page_template);
+    $tmpPage = $result->fetchAllObject();
+    $this->assertEquals('tpl_test', $tmpPage[0]->page_template);
 
     $deleteId = $this->db->delete($this->tableName, array('page_id' => $tmpId));
     $this->assertEquals(1, $deleteId);
@@ -120,8 +120,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
 
     $resultSelect = $this->db->select($this->tableName, $where);
-    $resultSelectArray = $resultSelect->fetchArray();
-    $this->assertEquals('öäü', $resultSelectArray['page_type']);
+    $resultSelectArray = $resultSelect->fetchArrayPair('page_type', 'page_type');
+    $this->assertEquals('öäü', $resultSelectArray['öäü']);
 
     $where = array(
         'page_type LIKE'     => 'öäü',
@@ -217,6 +217,22 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
     $resultSelect = $this->db->select($this->tableName, $where);
     $this->assertEquals(0, $resultSelect->num_rows);
+  }
+
+  public function testFetchColumn()
+  {
+    $data = array(
+        'page_template' => 'tpl_test_new5',
+        'page_type'     => 'öäü'
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert = $this->db->insert($this->tableName, $data);
+    $this->assertGreaterThan(1, $resultInsert);
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
+    $columnResult = $resultSelect->fetchColumn('page_type');
+    $this->assertEquals('öäü', $columnResult[0]);
   }
 
 }

@@ -251,4 +251,20 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $columnResultDecode = json_decode($columnResult, true);
     $this->assertEquals('tpl_test_new6', $columnResultDecode[0]['page_template']);
   }
+
+  public function testFetchObject()
+  {
+    $data = array(
+        'page_template' => 'tpl_test_new7',
+        'page_type'     => 'öäü'
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert = $this->db->insert($this->tableName, $data);
+    $this->assertGreaterThan(1, $resultInsert);
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
+    $columnResult = $resultSelect->fetchObject();
+    $this->assertEquals('tpl_test_new7', $columnResult->page_template);
+  }
 }

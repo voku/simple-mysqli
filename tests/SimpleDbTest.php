@@ -110,8 +110,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
 
     $resultSelect = $this->db->select($this->tableName, $where);
-    $resultSelectArray = $resultSelect->fetchAllArray();
-    $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
+    $resultSelectArray = $resultSelect->fetchArray();
+    $this->assertEquals('öäü', $resultSelectArray['page_type']);
 
     $where = array(
         'page_type ='  => 'öäü',
@@ -120,8 +120,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
 
     $resultSelect = $this->db->select($this->tableName, $where);
-    $resultSelectArray = $resultSelect->fetchAllArray();
-    $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
+    $resultSelectArray = $resultSelect->fetchArray();
+    $this->assertEquals('öäü', $resultSelectArray['page_type']);
 
     $where = array(
         'page_type LIKE'     => 'öäü',
@@ -130,8 +130,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
 
     $resultSelect = $this->db->select($this->tableName, $where);
-    $resultSelectArray = $resultSelect->fetchAllArray();
-    $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
+    $resultSelectArray = $resultSelect->fetchArray();
+    $this->assertEquals('öäü', $resultSelectArray['page_type']);
   }
 
   public function testTransaction()

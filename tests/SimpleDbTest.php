@@ -177,4 +177,46 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultSelectArray = $resultSelect->fetchAllArray();
     $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
   }
+
+  public function testRollback()
+  {
+    // start - test a transaction
+    $this->db->beginTransaction();
+
+    $data = array(
+        'page_template' => 'tpl_test_new4',
+        'page_type'     => 'öäü'
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert = $this->db->insert($this->tableName, $data);
+    $this->assertGreaterThan(1, $resultInsert);
+
+    $data = array(
+        'page_type' => 'lall'
+    );
+    $where = array(
+        'page_id' => $resultInsert
+    );
+    $this->db->update($this->tableName, $data, $where);
+
+    $data = array(
+        'page_type' => 'lall',
+        'page_lall' => 'öäü'        // this will produce a mysql-error and a mysqli-rollback
+    );
+    $where = array(
+        'page_id' => $resultInsert
+    );
+    $this->db->update($this->tableName, $data, $where);
+
+    // end - test a transaction, with a rollback!
+    $this->db->rollback();
+
+    $where = array(
+        'page_id' => $resultInsert,
+    );
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $this->assertEquals(0, $resultSelect->num_rows);
+  }
+
 }

@@ -232,7 +232,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
     $columnResult = $resultSelect->fetchColumn('page_template');
-    $this->assertEquals('tpl_test_new5', $columnResult[0]);
+    $this->assertEquals('tpl_test_new5', $columnResult);
   }
 
   public function testJson()

@@ -342,7 +342,7 @@ Class Result
    *
    * @param $key
    *
-   * @return array
+   * @return string
    */
   public function getColumn($key)
   {
@@ -354,7 +354,7 @@ Class Result
    *
    * @param string $column
    *
-   * @return array
+   * @return string
    */
   public function fetchColumn($column = '')
   {
@@ -363,7 +363,7 @@ Class Result
 
     foreach ($data as $_row) {
       if (isset($_row[$column])) {
-        $columnData[] = $_row[$column];
+        $columnData = $_row[$column];
       }
     }
 

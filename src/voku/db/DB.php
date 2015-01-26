@@ -545,7 +545,7 @@ Class DB
   }
 
   /**
-   * prevent from being unserialized
+   * __wakeup
    *
    * @return void
    */
@@ -616,7 +616,7 @@ Class DB
    *
    * @throws \Exception
    */
-  public function query($sql = '', $params = false)
+  public function query($sql = '', $params = false, $useCache = false, $cacheTTL = 3600)
   {
     static $reconnectCounter;
 
@@ -634,6 +634,21 @@ Class DB
       $sql = $this->_parseQueryParams($sql, $params);
     }
 
+    if ($useCache === true) {
+      $cache = new \voku\cache\Cache();
+
+      if (
+          $cache->getCacheIsReady() === true
+          &&
+          $cache->existsItem("sql-" . md5($sql))
+      ) {
+        return $cache->getItem("sql-" . md5($sql));
+      }
+
+    } else {
+      $cache = false;
+    }
+
     $this->query_count++;
 
     $query_start_time = microtime(true);
@@ -643,8 +658,20 @@ Class DB
     $this->_logQuery($sql, $query_duration, (int)$this->affected_rows());
 
     if ($result instanceof \mysqli_result && $result !== null) {
+
       // return query result object
-      return new Result($sql, $result);
+      $return = new Result($sql, $result);
+
+      if (
+          $useCache === true
+          && $cache instanceof \voku\cache\Cache
+          && $cache->getCacheIsReady() === true
+      ) {
+        $cache->setItem("sql-" . md5($sql), $return, $cacheTTL);
+      }
+
+      return $return;
+
     } else {
       // is the query successful
       if ($result === true) {

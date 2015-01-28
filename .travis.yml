@@ -13,4 +13,4 @@ before_script:
   - composer install --no-interaction --prefer-source --dev
 
 script:
-  - phpunit --coverage-text --verbose
+  - phpunit --bootstrap tests/bootstrap.php --coverage-text --verbose

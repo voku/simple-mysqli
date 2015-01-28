@@ -38,16 +38,20 @@ Class Result
    */
   public function __construct($sql = '', $result = null)
   {
+    $this->sql = $sql;
 
     if ($result === null) {
       return false;
     }
 
-    $this->sql = $sql;
-    $this->_result = $result;
-    $this->num_rows = $this->_result->num_rows;
+    if ($result instanceof \mysqli_result) {
+      $this->_result = $result;
+      $this->num_rows = $this->_result->num_rows;
 
-    return true;
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -116,7 +120,11 @@ Class Result
   {
     $data = array();
 
-    if (!$this->is_empty()) {
+    if (
+        !$this->is_empty()
+        &&
+        $this->_result
+    ) {
       $this->reset();
 
       while ($row = mysqli_fetch_assoc($this->_result)) {
@@ -144,7 +152,11 @@ Class Result
    */
   public function reset()
   {
-    if (!$this->is_empty()) {
+    if (
+        !$this->is_empty()
+        &&
+        $this->_result
+    ) {
       mysqli_data_seek($this->_result, 0);
     }
 
@@ -179,7 +191,9 @@ Class Result
    */
   public function free()
   {
-    mysqli_free_result($this->_result);
+    if ($this->_result) {
+      mysqli_free_result($this->_result);
+    }
   }
 
   /**
@@ -224,17 +238,21 @@ Class Result
    */
   public function fetchObject($class = '', $params = '', $reset = false)
   {
-    if (!$this->is_empty() && $reset === true) {
+    if ($reset === true) {
       $this->reset();
     }
 
-    if ($class && $params) {
-      return ($row = mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
-    } else if ($class) {
-      return ($row = mysqli_fetch_object($this->_result, $class)) ? $row : false;
-    } else {
-      return ($row = mysqli_fetch_object($this->_result)) ? $row : false;
+    if ($this->_result) {
+      if ($class && $params) {
+        return ($row = mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
+      } else if ($class) {
+        return ($row = mysqli_fetch_object($this->_result, $class)) ? $row : false;
+      } else {
+        return ($row = mysqli_fetch_object($this->_result)) ? $row : false;
+      }
     }
+
+    return false;
   }
 
   /**
@@ -246,12 +264,15 @@ Class Result
    */
   public function fetchArray($reset = false)
   {
-    if (!$this->is_empty() && $reset === true
-    ) {
+    if ($reset === true) {
       $this->reset();
     }
 
-    return ($row = mysqli_fetch_assoc($this->_result)) ? $row : false;
+    if ($this->_result) {
+      return ($row = mysqli_fetch_assoc($this->_result)) ? $row : false;
+    } else {
+      return false;
+    }
   }
 
   /**
@@ -296,7 +317,11 @@ Class Result
   {
     $data = array();
 
-    if (!$this->is_empty()) {
+    if (
+        !$this->is_empty()
+        &&
+        $this->_result
+    ) {
       $this->reset();
 
       if ($class && $params) {

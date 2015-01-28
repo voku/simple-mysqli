@@ -636,13 +636,14 @@ Class DB
 
     if ($useCache === true) {
       $cache = new \voku\cache\Cache();
+      $cacheKey = "sql-" . md5($sql);
 
       if (
           $cache->getCacheIsReady() === true
           &&
-          $cache->existsItem("sql-" . md5($sql))
+          $cache->existsItem($cacheKey)
       ) {
-        return $cache->getItem("sql-" . md5($sql));
+        return $cache->getItem($cacheKey);
       }
 
     } else {
@@ -664,10 +665,11 @@ Class DB
 
       if (
           $useCache === true
-          && $cache instanceof \voku\cache\Cache
+          && isset($cacheKey)
+          && $cache !== false
           && $cache->getCacheIsReady() === true
       ) {
-        $cache->setItem("sql-" . md5($sql), $return, $cacheTTL);
+        $cache->setItem($cacheKey, $return, $cacheTTL);
       }
 
       return $return;
@@ -782,7 +784,7 @@ Class DB
       $var = null;
     } else if (($var instanceof \DateTime)) {
       try {
-        $var = "'" . $this->escape($var->format('Y-m-d h:m:i')) . "'";
+        $var = "'" . $this->escape($var->format('Y-m-d h:m:i'), false, false) . "'";
       } catch (\Exception $e) {
         $var = null;
       }
@@ -812,7 +814,7 @@ Class DB
       return floatval(str_replace(',', '.', $str));
     } else if (is_array($str)) {
       foreach ($str as $key => $value) {
-        $str[$this->escape($key)] = $this->escape($value);
+        $str[$this->escape($key, $stripe_non_utf8, $html_entity_decode)] = $this->escape($value, $stripe_non_utf8, $html_entity_decode);
       }
 
       return (array)$str;
@@ -1269,7 +1271,7 @@ Class DB
    */
   public function quote_string($str)
   {
-    return "`" . $this->escape($str) . "`";
+    return "`" . $this->escape($str, false, false) . "`";
   }
 
   /**
@@ -1345,7 +1347,7 @@ Class DB
     $SET = $this->_parseArrayPair($data);
 
     if (is_string($where)) {
-      $WHERE = $this->escape($where);
+      $WHERE = $this->escape($where, false, false);
     } else if (is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, "AND");
     } else {
@@ -1377,7 +1379,7 @@ Class DB
     }
 
     if (is_string($where)) {
-      $WHERE = $this->escape($where);
+      $WHERE = $this->escape($where, false, false);
     } else if (is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, "AND");
     } else {
@@ -1407,7 +1409,7 @@ Class DB
     }
 
     if (is_string($where)) {
-      $WHERE = $this->escape($where);
+      $WHERE = $this->escape($where, false, false);
     } else if (is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {

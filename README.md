@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/voku/simple-mysqli.svg?branch=master)](https://travis-ci.org/voku/simple-mysqli)
+[![Coverage Status](https://coveralls.io/repos/voku/simple-mysqli/badge.svg)](https://coveralls.io/r/voku/simple-mysqli)
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/f1ad7660-6b85-4e1e-a7a3-8489b96b64f8/mini.png)](https://insight.sensiolabs.com/projects/f1ad7660-6b85-4e1e-a7a3-8489b96b64f8)
 [![Total Downloads](https://poser.pugx.org/voku/simple-mysqli/downloads.svg)](https://packagist.org/packages/voku/simple-mysqli)
 

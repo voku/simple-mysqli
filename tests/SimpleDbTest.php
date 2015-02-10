@@ -329,6 +329,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     }
     $this->assertEquals(true, $return);
 
+    $queryCount = $this->db->query_count;
+
     $sql = "SELECT * FROM " . $this->tableName;
     $result = $this->db->execSQL($sql, true);
     if (count($result) > 0) {
@@ -337,6 +339,6 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
       $return = false;
     }
     $this->assertEquals(true, $return);
-    $this->assertEquals(2, $this->db->query_count);
+    $this->assertEquals($queryCount, $this->db->query_count);
   }
 }

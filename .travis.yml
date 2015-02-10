@@ -10,7 +10,11 @@ before_script:
   - mysql -e 'CREATE DATABASE mysql_test;'
   - mysql -e 'USE mysql_test; CREATE TABLE test_page ( page_id int(16) NOT NULL auto_increment, page_template varchar(255), page_type varchar(255), PRIMARY KEY (page_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8;'
   - composer self-update
-  - composer install --no-interaction --prefer-source --dev
+  - composer install --no-interaction --prefer-source
 
 script:
-  - phpunit --bootstrap tests/bootstrap.php --coverage-text --verbose
+  - mkdir -p build/logs
+  - php vendor/bin/phpunit -c phpunit.xml
+
+after_script:
+  - php vendor/bin/coveralls -v

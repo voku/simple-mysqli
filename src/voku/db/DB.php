@@ -2,6 +2,7 @@
 
 namespace voku\db;
 
+use voku\cache\Cache;
 use voku\helper\UTF8;
 
 require_once 'Result.php';
@@ -545,6 +546,58 @@ Class DB
   }
 
   /**
+   * can handel select/insert/update/delete queries
+   *
+   * @param string $query    sql-query
+   * @param bool   $useCache use cache?
+   * @param int    $cacheTTL cache-ttl
+   *
+   * @return bool|int|array         "array" by "<b>SELECT</b>"-queries<br />
+   *                                "int" (insert_id) by "<b>INSERT</b>"-queries<br />
+   *                                "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                                "true" by e.g. "DROP"-queries<br />
+   *                                "false" on error
+   *
+   */
+  public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
+  {
+    $db = DB::getInstance();
+    if ($useCache === true) {
+      $cache = new Cache();
+
+      if (
+          $cache->getCacheIsReady() === true
+          && $cache->existsItem("sql-" . md5($query))
+      ) {
+        return $cache->getItem("sql-" . md5($query));
+      }
+
+    } else {
+      $cache = false;
+    }
+
+    $result = $db->query($query);
+
+    if ($result instanceof Result) {
+
+      $return = $result->fetchAllArray();
+
+      if (
+          $useCache === true
+          && $cache instanceof Cache
+          && $cache->getCacheIsReady() === true
+      ) {
+        $cache->setItem("sql-" . md5($query), $return, $cacheTTL);
+      }
+
+    } else {
+      $return = $result;
+    }
+
+    return $return;
+  }
+
+  /**
    * __wakeup
    *
    * @return void
@@ -616,7 +669,7 @@ Class DB
    *
    * @throws \Exception
    */
-  public function query($sql = '', $params = false, $useCache = false, $cacheTTL = 3600)
+  public function query($sql = '', $params = false)
   {
     static $reconnectCounter;
 
@@ -634,43 +687,21 @@ Class DB
       $sql = $this->_parseQueryParams($sql, $params);
     }
 
-    if ($useCache === true) {
-      $cache = new \voku\cache\Cache();
-      $cacheKey = "sql-" . md5($sql);
-
-      if (
-          $cache->getCacheIsReady() === true
-          &&
-          $cache->existsItem($cacheKey)
-      ) {
-        return $cache->getItem($cacheKey);
-      }
-
-    } else {
-      $cache = false;
-    }
-
-    $this->query_count++;
-
     $query_start_time = microtime(true);
     $result = mysqli_query($this->link, $sql);
     $query_duration = microtime(true) - $query_start_time;
+    $this->query_count++;
 
-    $this->_logQuery($sql, $query_duration, (int)$this->affected_rows());
+    $resultCount = 0;
+    if ($result instanceof \mysqli_result) {
+      $resultCount = (int)$result->num_rows;
+    }
+    $this->_logQuery($sql, $query_duration, $resultCount);
 
-    if ($result instanceof \mysqli_result && $result !== null) {
+    if ($result !== null && $result instanceof \mysqli_result) {
 
       // return query result object
       $return = new Result($sql, $result);
-
-      if (
-          $useCache === true
-          && isset($cacheKey)
-          && $cache !== false
-          && $cache->getCacheIsReady() === true
-      ) {
-        $cache->setItem($cacheKey, $return, $cacheTTL);
-      }
 
       return $return;
 
@@ -854,9 +885,9 @@ Class DB
   /**
    * _logQuery
    *
-   * @param $sql
-   * @param $duration
-   * @param $results
+   * @param String $sql sql-query
+   * @param int $duration
+   * @param int $results result counter
    *
    * @return bool
    */
@@ -871,6 +902,8 @@ Class DB
     $file = '';
     $line = '';
     $referrer = debug_backtrace();
+
+    var_dump($referrer);
 
     foreach ($referrer as $key => $ref) {
 

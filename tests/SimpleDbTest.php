@@ -1,6 +1,7 @@
 <?php
 
 use voku\db\DB;
+use voku\db\Result;
 
 class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 {
@@ -304,5 +305,38 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $columnResult = $resultSelect->fetchAllObject();
     $this->assertEquals('tpl_test_new8', $columnResult[0]->page_template);
+  }
+
+  public function testCache()
+  {
+    $_GET['testCache'] = 1;
+
+    $sql = "SELECT * FROM " . $this->tableName;
+    $result = $this->db->execSQL($sql, false);
+    if (count($result) > 0) {
+      $return = true;
+    } else {
+      $return = false;
+    }
+    $this->assertEquals(true, $return);
+
+    $sql = "SELECT * FROM " . $this->tableName;
+    $result = $this->db->execSQL($sql, true);
+    if (count($result) > 0) {
+      $return = true;
+    } else {
+      $return = false;
+    }
+    $this->assertEquals(true, $return);
+
+    $sql = "SELECT * FROM " . $this->tableName;
+    $result = $this->db->execSQL($sql, true);
+    if (count($result) > 0) {
+      $return = true;
+    } else {
+      $return = false;
+    }
+    $this->assertEquals(true, $return);
+    $this->assertEquals(2, $this->db->query_count);
   }
 }

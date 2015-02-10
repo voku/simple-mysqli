@@ -903,8 +903,6 @@ Class DB
     $line = '';
     $referrer = debug_backtrace();
 
-    var_dump($referrer);
-
     foreach ($referrer as $key => $ref) {
 
       if ($ref['function'] == '_logQuery') {

@@ -432,15 +432,27 @@ Class DB
   }
 
   /**
-   * set_charset
+   * set charset
    *
    * @param string $charset
+   *
+   * @return bool|\mysqli_result
    */
   public function set_charset($charset)
   {
     $this->charset = $charset;
     mysqli_set_charset($this->link, $charset);
-    mysqli_query($this->link, "SET NAMES " . $charset);
+    return mysqli_query($this->link, "SET NAMES " . $charset);
+  }
+
+  /**
+   * get charset
+   *
+   * @return string
+   */
+  public function get_charset()
+  {
+    return $this->charset;
   }
 
   /**
@@ -701,9 +713,7 @@ Class DB
     if ($result !== null && $result instanceof \mysqli_result) {
 
       // return query result object
-      $return = new Result($sql, $result);
-
-      return $return;
+      return new Result($sql, $result);
 
     } else {
       // is the query successful

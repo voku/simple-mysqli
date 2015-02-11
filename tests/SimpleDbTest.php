@@ -13,12 +13,27 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public $tableName = 'test_page';
 
-  public function __construct()
+  public function setUp()
   {
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
   }
 
-  function testBasics()
+  public function testGetInstance()
+  {
+    $db = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
+
+    $this->assertEquals(true, $db instanceof DB);
+  }
+
+  public function testCharset()
+  {
+    $this->assertEquals('utf8', $this->db->get_charset());
+    $return = $this->db->set_charset('utf8');
+    $this->assertEquals(true, $return);
+    $this->assertEquals('utf8', $this->db->get_charset());
+  }
+
+  public function testBasics()
   {
 
     // insert

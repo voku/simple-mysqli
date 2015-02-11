@@ -48,27 +48,38 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $tmpId = $this->db->insert($this->tableName, $pageArray);
 
     // insert - false
-    $this->db->insert($this->tableName);
+    $false = $this->db->insert($this->tableName);
+    $this->assertEquals(false, $false);
 
     // insert - false
-    $this->db->insert('', $pageArray);
+    $false = $this->db->insert('', $pageArray);
+    $this->assertEquals(false, $false);
 
     // check (select)
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchObject();
     $this->assertEquals('tpl_new', $tmpPage->page_template);
 
-    // update
+    // update - true
     $pageArray = array(
         'page_template' => 'tpl_update'
     );
     $this->db->update($this->tableName, $pageArray, "page_id = $tmpId");
+
+    // update - false
+    $false = $this->db->update($this->tableName, array(), "page_id = $tmpId");
+    $this->assertEquals(false, $false);
+
+    // update - false
+    $false = $this->db->update('', $pageArray, "page_id = $tmpId");
+    $this->assertEquals(false, $false);
 
     // check (select)
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchAllObject();
     $this->assertEquals('tpl_update', $tmpPage[0]->page_template);
 
+    // replace - true
     $data = array(
         'page_id'       => 2,
         'page_template' => 'tpl_test',
@@ -76,15 +87,37 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
     $tmpId = $this->db->replace($this->tableName, $data);
 
+    // replace - false
+    $false = $this->db->replace($this->tableName);
+    $this->assertEquals(false, $false);
+
+    // replace - false
+    $false = $this->db->replace('', $data);
+    $this->assertEquals(false, $false);
+
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchAllObject();
     $this->assertEquals('tpl_test', $tmpPage[0]->page_template);
 
+    // delete - true
     $deleteId = $this->db->delete($this->tableName, array('page_id' => $tmpId));
     $this->assertEquals(1, $deleteId);
 
+    // delete - false
+    $false = $this->db->delete('', array('page_id' => $tmpId));
+    $this->assertEquals(false, $false);
+
+    // select - true
     $result = $this->db->select($this->tableName, array('page_id' => 2));
     $this->assertEquals(0, $result->num_rows);
+
+    // select - true
+    $result = $this->db->select($this->tableName);
+    $this->assertEquals(true, $result->num_rows > 0);
+
+    // select - false
+    $false = $this->db->select('', array('page_id' => 2));
+    $this->assertEquals(false, $false);
   }
 
   public function testQry()
@@ -213,6 +246,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   public function testGetErrors()
   {
     // INFO: run all previous tests and generate some errors
+
+    $error = $this->db->lastError();
+    $this->assertEquals(true, is_string($error));
+    $this->assertContains('Unknown column \'page_lall\' in \'field list', $error);
 
     $errors = $this->db->getErrors();
     $this->assertEquals(true, is_array($errors));

@@ -1104,6 +1104,8 @@ Class DB
    */
   public function beginTransaction()
   {
+    $this->clearErrors();
+
     if ($this->inTransaction() === true) {
       $this->_displayError("Error mysql server already in transaction!", true);
 
@@ -1301,6 +1303,28 @@ Class DB
     }
 
     return $sql;
+  }
+
+  /**
+   * get errors
+   *
+   * @return array
+   */
+  public function getErrors()
+  {
+    return $this->_errors;
+  }
+
+  /**
+   * clear errors
+   *
+   * @return bool
+   */
+  public function clearErrors()
+  {
+    $this->_errors = array();
+
+    return true;
   }
 
   /**

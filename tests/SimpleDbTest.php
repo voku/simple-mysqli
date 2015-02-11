@@ -20,9 +20,13 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testGetInstance()
   {
-    $db = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
 
-    $this->assertEquals(true, $db instanceof DB);
+    $this->assertEquals(true, $db_1 instanceof DB);
+
+    $db_2 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
+
+    $this->assertEquals(true, $db_2 instanceof DB);
   }
 
   public function testCharset()
@@ -36,12 +40,18 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   public function testBasics()
   {
 
-    // insert
+    // insert - true
     $pageArray = array(
         'page_template' => 'tpl_new',
         'page_type'     => 'lall'
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);
+
+    // insert - false
+    $this->db->insert($this->tableName);
+
+    // insert - false
+    $this->db->insert('', $pageArray);
 
     // check (select)
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
@@ -95,6 +105,12 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
     $this->assertEquals('tpl_test', ($result[0]['page_template']));
 
+    $result = $this->db->qry(
+        "SELECT * FROM " . $this->db->escape($this->tableName) . "
+      WHERE page_id_lall = 1
+    "
+    );
+    $this->assertEquals(false, $result);
   }
 
   public function testConnector()
@@ -150,7 +166,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals('öäü', $resultSelectArray['page_type']);
   }
 
-  public function testTransaction()
+  public function testTransactionFalse()
   {
 
     $data = array(
@@ -192,6 +208,59 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchAllArray();
     $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
+  }
+
+  public function testGetErrors()
+  {
+    // INFO: run all previous tests and generate some errors
+
+    $errors = $this->db->getErrors();
+    $this->assertEquals(true, is_array($errors));
+    $this->assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);
+  }
+
+  public function testTransactionTrue()
+  {
+
+    $data = array(
+        'page_template' => 'tpl_test_new3',
+        'page_type'     => 'öäü'
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert = $this->db->insert($this->tableName, $data);
+    $this->assertGreaterThan(1, $resultInsert);
+
+    // start - test a transaction
+    $this->db->beginTransaction();
+
+    $data = array(
+        'page_type' => 'lall'
+    );
+    $where = array(
+        'page_id' => $resultInsert
+    );
+    $this->db->update($this->tableName, $data, $where);
+
+    $data = array(
+        'page_type' => 'lall',
+        'page_template' => 'öäü'
+    );
+    $where = array(
+        'page_id' => $resultInsert
+    );
+    $this->db->update($this->tableName, $data, $where);
+
+    // end - test a transaction
+    $this->db->endTransaction();
+
+    $where = array(
+        'page_id' => $resultInsert,
+    );
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->fetchAllArray();
+    $this->assertEquals('lall', $resultSelectArray[0]['page_type']);
   }
 
   public function testRollback()
@@ -322,6 +391,67 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals('tpl_test_new8', $columnResult[0]->page_template);
   }
 
+  public function testGetAllTables()
+  {
+    $tableArray = $this->db->getAllTables();
+
+    $return = false;
+    foreach ($tableArray as $table) {
+      if (in_array($this->tableName, $table) === true) {
+        $return = true;
+        break;
+      }
+    }
+
+    $this->assertEquals(true, $return);
+  }
+
+  public function testPing()
+  {
+    $ping = $this->db->ping();
+    $this->assertEquals(true, $ping);
+  }
+
+  public function testExecSQL()
+  {
+    $sql = "INSERT INTO " . $this->tableName . "
+      SET
+        page_template_lall = '" . $this->db->escape('tpl_test_new7') . "',
+        page_type = " . $this->db->secure('öäü') . "
+    ";
+    $return = $this->db->execSQL($sql);
+    $this->assertEquals(false, $return);
+
+    $sql = "INSERT INTO " . $this->tableName . "
+      SET
+        page_template = '" . $this->db->escape('tpl_test_new7') . "',
+        page_type = " . $this->db->secure('öäü') . "
+    ";
+    $return = $this->db->execSQL($sql);
+    $this->assertEquals(true, $return);
+  }
+
+  public function testQuery()
+  {
+    $sql = "INSERT INTO " . $this->tableName . "
+      SET
+        page_template = ?,
+        page_type = ?
+    ";
+    $return = $this->db->query($sql, array('tpl_test_new15', 1));
+
+    $this->assertEquals(true, $return);
+
+    $sql = "INSERT INTO " . $this->tableName . "
+      SET
+        page_template_lall = ?,
+        page_type = ?
+    ";
+    $return = $this->db->query($sql, array('tpl_test_new15', 1));
+
+    $this->assertEquals(false, $return);
+  }
+
   public function testCache()
   {
     $_GET['testCache'] = 1;
@@ -355,5 +485,12 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     }
     $this->assertEquals(true, $return);
     $this->assertEquals($queryCount, $this->db->query_count);
+  }
+
+  public function testClose()
+  {
+    $this->assertEquals(true, $this->db->isReady());
+    $this->db->close();
+    $this->assertEquals(false, $this->db->isReady());
   }
 }

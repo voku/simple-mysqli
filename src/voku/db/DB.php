@@ -1016,6 +1016,9 @@ Class DB
       return false;
     }
 
+    // init
+    $errorMsg = '';
+
     if (strlen($sql) == 0) {
       $this->_displayError('Can\'t execute an empty Query', false);
 
@@ -1086,7 +1089,11 @@ Class DB
 
     }
 
-    return false;
+    if (!$errorMsg) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   /**

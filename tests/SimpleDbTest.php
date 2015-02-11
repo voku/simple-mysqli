@@ -453,6 +453,32 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(true, $ping);
   }
 
+  public function testMultiQuery()
+  {
+    $sql = "
+    INSERT INTO " . $this->tableName . "
+      SET
+        page_template = 'lall1',
+        page_type = 'test1';
+    INSERT INTO " . $this->tableName . "
+      SET
+        page_template = 'lall2',
+        page_type = 'test2';
+    INSERT INTO " . $this->tableName . "
+      SET
+        page_template = 'lall3',
+        page_type = 'test3';
+    ";
+
+    // multi_query - true
+    $result = $this->db->multi_query($sql);
+    $this->assertEquals(true, $result);
+
+    // multi_query - false
+    $false = $this->db->multi_query('');
+    $this->assertEquals(false, $false);
+  }
+
   public function testExecSQL()
   {
     $sql = "INSERT INTO " . $this->tableName . "

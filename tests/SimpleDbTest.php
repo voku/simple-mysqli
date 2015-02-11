@@ -2,6 +2,7 @@
 
 use voku\db\DB;
 use voku\db\Result;
+use voku\helper\UTF8;
 
 class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 {
@@ -495,6 +496,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testExecSQL()
   {
+    // execSQL - false
     $sql = "INSERT INTO " . $this->tableName . "
       SET
         page_template_lall = '" . $this->db->escape('tpl_test_new7') . "',
@@ -503,13 +505,32 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $return = $this->db->execSQL($sql);
     $this->assertEquals(false, $return);
 
+    // execSQL - true
     $sql = "INSERT INTO " . $this->tableName . "
       SET
         page_template = '" . $this->db->escape('tpl_test_new7') . "',
         page_type = " . $this->db->secure('öäü') . "
     ";
     $return = $this->db->execSQL($sql);
-    $this->assertEquals(true, $return);
+    $this->assertEquals(true, is_int($return));
+    $this->assertEquals(true, $return > 0);
+  }
+
+  public function testUtf8Query()
+  {
+    $sql = "INSERT INTO " . $this->tableName . "
+      SET
+        page_template = '" . $this->db->escape(UTF8::urldecode('D%26%23xFC%3Bsseldorf')) . "',
+        page_type = '" . UTF8::urldecode('DÃ¼sseldorf') . "'
+    ";
+    $return = $this->db->execSQL($sql);
+    $this->assertEquals(true, is_int($return));
+    $this->assertEquals(true, $return > 0);
+
+    $data = $this->db->select($this->tableName, 'page_id=' . (int) $return);
+    $dataArray = $data->fetchArray();
+    $this->assertEquals('Düsseldorf', $dataArray['page_template']);
+    $this->assertEquals('Düsseldorf', $dataArray['page_type']);
   }
 
   public function testQuery()

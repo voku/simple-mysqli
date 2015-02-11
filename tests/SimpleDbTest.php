@@ -21,12 +21,16 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   public function testGetInstance()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
-
     $this->assertEquals(true, $db_1 instanceof DB);
 
     $db_2 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
-
     $this->assertEquals(true, $db_2 instanceof DB);
+
+    $true = $this->db->connect();
+    $this->assertEquals(true, $true);
+
+    $true = $this->db->reconnect();
+    $this->assertEquals(true, $true);
   }
 
   public function testCharset()
@@ -470,22 +474,44 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testQuery()
   {
+    // query - true
     $sql = "INSERT INTO " . $this->tableName . "
       SET
         page_template = ?,
         page_type = ?
     ";
-    $return = $this->db->query($sql, array('tpl_test_new15', 1));
-
+    $return = $this->db->query($sql, array(1.1, 1));
     $this->assertEquals(true, $return);
 
+    // query - true
+    $sql = "INSERT INTO " . $this->tableName . "
+      SET
+        page_template = ?,
+        page_type = ?
+    ";
+    $return = $this->db->query($sql, array('dateTest', new DateTime()));
+    $this->assertEquals(true, $return);
+
+    // query - false
+    $sql = "INSERT INTO " . $this->tableName . "
+      SET
+        page_template = ?,
+        page_type = ?
+    ";
+    $return = $this->db->query($sql, array(true, array('test'))); // array('test') => null
+    $this->assertEquals(false, $return);
+
+    // query - false
     $sql = "INSERT INTO " . $this->tableName . "
       SET
         page_template_lall = ?,
         page_type = ?
     ";
     $return = $this->db->query($sql, array('tpl_test_new15', 1));
+    $this->assertEquals(false, $return);
 
+    // query - false
+    $return = $this->db->query('', array('tpl_test_new15', 1));
     $this->assertEquals(false, $return);
   }
 

@@ -673,7 +673,7 @@ Class DB
    * @param array|boolean $params         a "array" of sql-query-parameters
    *                                      "false" if you don't need any parameter
    *
-   * @return bool|int|Result  "Result" by "<b>SELECT</b>"-queries<br />
+   * @return bool|int|Result              "Result" by "<b>SELECT</b>"-queries<br />
    *                                      "int" (insert_id) by "<b>INSERT</b>"-queries<br />
    *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
    *                                      "true" by e.g. "DROP"-queries<br />
@@ -1005,7 +1005,11 @@ Class DB
    *
    * @param string $sql
    *
-   * @return bool
+   * @return bool|Result[]                "Result"-Array by "<b>SELECT</b>"-queries<br />
+   *                                      "boolean" by only "<b>INSERT</b>"-queries<br />
+   *                                      "boolean" by only (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                                      "boolean" by only by e.g. "DROP"-queries<br />
+   *
    * @throws \Exception
    */
   public function multi_query($sql)
@@ -1015,9 +1019,6 @@ Class DB
     if (!$this->isReady()) {
       return false;
     }
-
-    // init
-    $errorMsg = '';
 
     if (strlen($sql) == 0) {
       $this->_displayError('Can\'t execute an empty Query', false);
@@ -1031,12 +1032,18 @@ Class DB
 
     $this->_logQuery($sql, $query_duration, 0);
 
+    $returnTheResult = false;
     $result = array();
     if ($resultTmp) {
       do {
         $resultTmpInner = mysqli_store_result($this->link);
 
-        if (is_object($result) && $result !== null) {
+        if (
+            null !== $resultTmpInner
+            &&
+            $resultTmpInner instanceof \mysqli_result
+        ) {
+          $returnTheResult = true;
           $result[] = new Result($sql, $resultTmpInner);
         } else {
           $errorMsg = mysqli_error($this->link);
@@ -1045,6 +1052,7 @@ Class DB
           if ($resultTmpInner === true || !$errorMsg) {
             $result[] = true;
           } else {
+            $result[] = false;
 
             if ($errorMsg == 'DB server has gone away' || $errorMsg == 'MySQL server has gone away') {
 
@@ -1067,12 +1075,6 @@ Class DB
             }
           }
         }
-
-        // free mem
-        if ($resultTmpInner instanceof \mysqli_result) {
-          mysqli_free_result($resultTmpInner);
-        }
-
       }
       while (mysqli_more_results($this->link) === true ? mysqli_next_result($this->link) : false);
 
@@ -1086,10 +1088,14 @@ Class DB
       }
 
       $this->mailToAdmin('SQL-Error in mysqli_multi_query', $errorMsg . ":\n<br />" . $sql);
-
     }
 
-    if (!$errorMsg) {
+    // return the result only if there was a "SELECT"-query
+    if ($returnTheResult === true) {
+      return $result;
+    }
+
+    if (!in_array(false, $result)) {
       return true;
     } else {
       return false;

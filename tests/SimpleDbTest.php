@@ -469,10 +469,24 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_template = 'lall3',
         page_type = 'test3';
     ";
-
     // multi_query - true
     $result = $this->db->multi_query($sql);
     $this->assertEquals(true, $result);
+
+    $sql = "
+    SELECT * FROM " . $this->tableName . ";
+    SELECT * FROM " . $this->tableName . ";
+    ";
+    // multi_query - true
+    $result = $this->db->multi_query($sql);
+    $this->assertEquals(true, is_array($result));
+    foreach ($result as $resultForEach) {
+      /* @var $resultForEach Result */
+      $tmpArray = $resultForEach->fetchArray();
+
+      $this->assertEquals(true, is_array($tmpArray));
+      $this->assertEquals(true, count($tmpArray) > 0);
+    }
 
     // multi_query - false
     $false = $this->db->multi_query('');

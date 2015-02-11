@@ -191,7 +191,7 @@ Class Result
    */
   public function free()
   {
-    if ($this->_result) {
+    if ($this->_result && $this->_result instanceof \mysqli_result) {
       mysqli_free_result($this->_result);
     }
   }

@@ -575,7 +575,7 @@ Class DB
   {
     $db = DB::getInstance();
     if ($useCache === true) {
-      $cache = new Cache();
+      $cache = new Cache(null, null, false, $useCache);
 
       if (
           $cache->getCacheIsReady() === true

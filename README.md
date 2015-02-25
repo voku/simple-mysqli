@@ -121,7 +121,7 @@ Binding parameters is a good way of preventing mysql injections as the parameter
 ###Using the Result-Class
 
 After executing a `SELECT` query you receive a `Result` object that will help you manipulate the resultant data.
-there are diferent ways of accesing this data, check the examples bellow:
+there are different ways of accessing this data, check the examples bellow:
 
 ####Fetching all data
 ```php

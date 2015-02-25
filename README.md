@@ -70,10 +70,10 @@ they all work the same way: parsing arrays of key/value pairs and forming a safe
 
 the methods are:
 ```php
-  $db->insert( String $table, Array $data );                //generates an INSERT query
-  $db->replace( String $table, Array $data );               //generates an INSERT OR UPDATE query
-  $db->update( String $table, Array $data, Array $where );  //generates an UPDATE query
-  $db->delete( String $table, Array $where );               //generates a DELETE query
+  $db->insert( String $table, Array $data );                // generates an INSERT query
+  $db->replace( String $table, Array $data );               // generates an REPLACE query
+  $db->update( String $table, Array $data, Array $where );  // generates an UPDATE query
+  $db->delete( String $table, Array $where );               // generates a DELETE query
 ```
 
 All methods will return the resulting `mysqli_insert_id()` or true/false depending on context.

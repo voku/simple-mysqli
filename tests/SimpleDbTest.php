@@ -19,6 +19,39 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', '3306', 'utf8', false, false);
   }
 
+  public function testEchoOnError1()
+  {
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+    $this->assertEquals(true, $db_1 instanceof DB);
+
+    // insert - false
+    $false = $db_1->insert($this->tableName, array());
+    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
+    $this->expectOutputRegex('/(.)*empty-data-for-INSERT(.)*/');
+    $this->assertEquals(false, $false);
+  }
+
+  public function testEchoOnError2()
+  {
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+    $this->assertEquals(true, $db_1 instanceof DB);
+
+    // sql - false
+    $false = $db_1->query();
+    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
+    $this->expectOutputRegex('/(.)*Can\'t execute an empty Query(.)*/');
+    $this->assertEquals(false, $false);
+
+    // close db-connection
+    $this->assertEquals(true, $this->db->isReady());
+    $this->db->close();
+    $this->assertEquals(false, $this->db->isReady());
+
+    // insert - false
+    $false = $db_1->query("INSERT INTO lall SET false=1");
+    $this->assertEquals(false, $false);
+  }
+
   /**
    * @expectedException Exception invalid-table-name
    */
@@ -49,37 +82,6 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(false, $false);
   }
 
-  public function testEchoOnError1()
-  {
-    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-    $this->assertEquals(true, $db_1 instanceof DB);
-
-    // insert - false
-    $false = $db_1->insert($this->tableName, array());
-    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
-    $this->expectOutputRegex('/(.)*empty-data-for-INSERT(.)*/');
-    $this->assertEquals(false, $false);
-  }
-
-  public function testEchoOnError2()
-  {
-    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-    $this->assertEquals(true, $db_1 instanceof DB);
-
-    // sql - false
-    $false = $db_1->query();
-    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
-    $this->expectOutputRegex('/(.)*Can\'t execute an empty Query(.)*/');
-    $this->assertEquals(false, $false);
-
-    // close db-connection
-    $db_1->close();
-
-    // insert - false
-    $false = $db_1->query("INSERT INTO lall SET false=1");
-    $this->assertEquals(false, $false);
-  }
-
   public function testGetInstance()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
@@ -90,6 +92,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $db_3 = DB::getInstance('localhost', 'root', '', 'mysql_test', null, '', true, false);
     $this->assertEquals(true, $db_3 instanceof DB);
+
+    $db_4 = DB::getInstance();
+    $this->assertEquals(true, $db_4 instanceof DB);
 
     $true = $this->db->connect();
     $this->assertEquals(true, $true);
@@ -709,12 +714,5 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // check cache
     $this->assertEquals($queryCount, $this->db->query_count);
-  }
-
-  public function testClose()
-  {
-    $this->assertEquals(true, $this->db->isReady());
-    $this->db->close();
-    $this->assertEquals(false, $this->db->isReady());
   }
 }

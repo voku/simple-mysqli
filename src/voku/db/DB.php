@@ -372,24 +372,6 @@ Class DB
     }
   }
 
-  /*
-   * get a instance of this SQL-Class
-   *
-   * @param string  $hostname
-   * @param string  $username
-   * @param string  $password
-   * @param string  $database
-   * @param int     $port
-   * @param string  $charset
-   * @param boolean $exit_on_error
-   * @param boolean $echo_on_error
-   * @param string  $logger_class_name
-   * @param string  $logger_level
-   * @param boolean $session_to_db
-   *
-   * @return DB
-   */
-
   /**
    * check for developer
    *
@@ -412,8 +394,10 @@ Class DB
           &&
           (
               $remoteAddr == '127.0.0.1'
-              || $remoteAddr == '::1'
-              || PHP_SAPI == 'cli'
+              ||
+              $remoteAddr == '::1'
+              ||
+              PHP_SAPI == 'cli'
           )
       ) {
         $return = true;
@@ -482,7 +466,7 @@ Class DB
       }
     }
 
-    $connection = md5($hostname . $username . $password . $database . $port . $charset);
+    $connection = md5($hostname . $username . $password . $database . $port . $charset . (int)$exit_on_error . (int)$echo_on_error . $logger_class_name . $logger_level . (int)$session_to_db);
 
     if (!isset($instance[$connection])) {
       $instance[$connection] = new self($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db);
@@ -818,7 +802,8 @@ Class DB
     } else if (($var instanceof \DateTime)) {
       try {
         $var = "'" . $this->escape($var->format('Y-m-d h:m:i'), false, false) . "'";
-      } catch (\Exception $e) {
+      }
+      catch (\Exception $e) {
         $var = null;
       }
     } else {

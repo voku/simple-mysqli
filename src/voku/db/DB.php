@@ -202,6 +202,12 @@ Class DB
 
     if ($port) {
       $this->port = (int)$port;
+    } else {
+      $this->port = @ini_get('mysqli.default_port');
+    }
+
+    if (!$this->socket) {
+      $this->socket = @ini_get('mysqli.default_socket');
     }
 
     if ($exit_on_error === true || $exit_on_error === false) {
@@ -245,11 +251,9 @@ Class DB
       if (!$this->database) {
         throw new \Exception('no sql-database');
       }
-
-      return false;
-    } else {
-      return true;
     }
+
+    return true;
   }
 
   /**
@@ -261,14 +265,6 @@ Class DB
   {
     if ($this->isReady()) {
       return true;
-    }
-
-    if (!$this->socket) {
-      $this->socket = @ini_get('mysqli.default_socket');
-    }
-
-    if (!$this->port) {
-      $this->port = @ini_get('mysqli.default_port');
     }
 
     $this->link = @mysqli_connect(

@@ -27,6 +27,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $db_2 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
     $this->assertEquals(true, $db_2 instanceof DB);
 
+    $db_3 = DB::getInstance('localhost', 'root', '', 'mysql_test', null, '', true, false);
+    $this->assertEquals(true, $db_3 instanceof DB);
+
     $true = $this->db->connect();
     $this->assertEquals(true, $true);
 

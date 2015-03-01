@@ -241,15 +241,15 @@ Class DB
     ) {
 
       if (!$this->hostname) {
-        throw new \Exception('no sql-hostname');
+        throw new \Exception('no-sql-hostname');
       }
 
       if (!$this->username) {
-        throw new \Exception('no sql-username');
+        throw new \Exception('no-sql-username');
       }
 
       if (!$this->database) {
-        throw new \Exception('no sql-database');
+        throw new \Exception('no-sql-database');
       }
     }
 

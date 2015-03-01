@@ -49,6 +49,37 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(false, $false);
   }
 
+  public function testEchoOnError1()
+  {
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+    $this->assertEquals(true, $db_1 instanceof DB);
+
+    // insert - false
+    $false = $db_1->insert($this->tableName, array());
+    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
+    $this->expectOutputRegex('/(.)*empty-data-for-INSERT(.)*/');
+    $this->assertEquals(false, $false);
+  }
+
+  public function testEchoOnError2()
+  {
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+    $this->assertEquals(true, $db_1 instanceof DB);
+
+    // sql - false
+    $false = $db_1->query();
+    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
+    $this->expectOutputRegex('/(.)*Can\'t execute an empty Query(.)*/');
+    $this->assertEquals(false, $false);
+
+    // close db-connection
+    $db_1->close();
+
+    // insert - false
+    $false = $db_1->query("INSERT INTO lall SET false=1");
+    $this->assertEquals(false, $false);
+  }
+
   public function testGetInstance()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
@@ -63,12 +94,15 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $true = $this->db->connect();
     $this->assertEquals(true, $true);
 
-    $true = $this->db->reconnect();
+    $true = $this->db->reconnect(false);
+    $this->assertEquals(true, $true);
+
+    $true = $this->db->reconnect(true);
     $this->assertEquals(true, $true);
   }
 
   /**
-   * @expectedException Exception sql-hostname
+   * @expectedException Exception no-sql-hostname
    */
   public function testGetInstanceHostnameException()
   {
@@ -76,7 +110,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   }
 
   /**
-   * @expectedException Exception sql-username
+   * @expectedException Exception no-sql-username
    */
   public function testGetInstanceUsernameException()
   {
@@ -84,7 +118,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   }
 
   /**
-   * @expectedException Exception sql-database
+   * @expectedException Exception no-sql-database
    */
   public function testGetInstanceDatabaseException()
   {

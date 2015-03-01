@@ -16,7 +16,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function setUp()
   {
-    $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
+    $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', '3306', 'utf8', false, false);
   }
 
   public function testGetInstance()
@@ -32,6 +32,30 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $true = $this->db->reconnect();
     $this->assertEquals(true, $true);
+  }
+
+  /**
+   * @expectedException Exception sql-hostname
+   */
+  public function testGetInstanceHostnameException()
+  {
+    DB::getInstance('', 'root', '', 'mysql_test', '3306', 'utf8', false, false);
+  }
+
+  /**
+   * @expectedException Exception sql-username
+   */
+  public function testGetInstanceUsernameException()
+  {
+    DB::getInstance('localhost', '', '', 'mysql_test', '3306', 'utf8', false, false);
+  }
+
+  /**
+   * @expectedException Exception sql-database
+   */
+  public function testGetInstanceDatabaseException()
+  {
+    DB::getInstance('localhost', 'root', '', '', '3306', 'utf8', false, false);
   }
 
   public function testCharset()
@@ -580,6 +604,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   {
     $_GET['testCache'] = 1;
 
+    // no-cache
     $sql = "SELECT * FROM " . $this->tableName;
     $result = $this->db->execSQL($sql, false);
     if (count($result) > 0) {
@@ -589,6 +614,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     }
     $this->assertEquals(true, $return);
 
+    // set cache
     $sql = "SELECT * FROM " . $this->tableName;
     $result = $this->db->execSQL($sql, true);
     if (count($result) > 0) {
@@ -600,6 +626,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $queryCount = $this->db->query_count;
 
+    // use cache
     $sql = "SELECT * FROM " . $this->tableName;
     $result = $this->db->execSQL($sql, true);
     if (count($result) > 0) {
@@ -608,6 +635,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
       $return = false;
     }
     $this->assertEquals(true, $return);
+
+    // check cache
     $this->assertEquals($queryCount, $this->db->query_count);
   }
 

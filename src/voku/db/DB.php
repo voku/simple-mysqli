@@ -191,13 +191,13 @@ Class DB
    */
   private function _loadConfig($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db)
   {
-    $this->hostname = $hostname;
-    $this->username = $username;
-    $this->password = $password;
-    $this->database = $database;
+    $this->hostname = (string)$hostname;
+    $this->username = (string)$username;
+    $this->password = (string)$password;
+    $this->database = (string)$database;
 
     if ($charset) {
-      $this->charset = $charset;
+      $this->charset = (string)$charset;
     }
 
     if ($port) {
@@ -205,17 +205,17 @@ Class DB
     }
 
     if ($exit_on_error === true || $exit_on_error === false) {
-      $this->exit_on_error = $exit_on_error;
+      $this->exit_on_error = (boolean)$exit_on_error;
     }
 
     if ($echo_on_error === true || $echo_on_error === false) {
-      $this->echo_on_error = $echo_on_error;
+      $this->echo_on_error = (boolean)$echo_on_error;
     }
 
-    $this->logger_class_name = $logger_class_name;
-    $this->logger_level = $logger_level;
+    $this->logger_class_name = (string)$logger_class_name;
+    $this->logger_level = (string)$logger_level;
 
-    $this->session_to_db = $session_to_db;
+    $this->session_to_db = (boolean)$session_to_db;
 
     return $this->showConfigError();
   }
@@ -228,9 +228,10 @@ Class DB
 
     if (
         !$this->hostname
-        || !$this->username
-        || !$this->database
-        || (!$this->password && $this->password != '')
+        ||
+        !$this->username
+        ||
+        !$this->database
     ) {
 
       if (!$this->hostname) {
@@ -243,10 +244,6 @@ Class DB
 
       if (!$this->database) {
         throw new \Exception('no sql-database');
-      }
-
-      if (!$this->password) {
-        throw new \Exception('no sql-password');
       }
 
       return false;
@@ -476,12 +473,12 @@ Class DB
     /**
      * @var $instance DB[]
      */
-    static $instance;
+    static $instance = array();
 
     /**
      * @var $firstInstance DB
      */
-    static $firstInstance;
+    static $firstInstance = null;
 
     if ($hostname . $username . $password . $database . $port . $charset == '') {
       if (null !== $firstInstance) {
@@ -491,7 +488,7 @@ Class DB
 
     $connection = md5($hostname . $username . $password . $database . $port . $charset);
 
-    if (null === $instance[$connection]) {
+    if (!isset($instance[$connection])) {
       $instance[$connection] = new self($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db);
 
       if (null === $firstInstance) {
@@ -499,7 +496,7 @@ Class DB
       }
     }
 
-    return $instance[$connection];
+    return isset($instance[$connection]) ? $instance[$connection] : false;
   }
 
   /**

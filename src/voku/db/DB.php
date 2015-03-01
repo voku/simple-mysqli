@@ -175,17 +175,17 @@ Class DB
   /**
    * load the config
    *
-   * @param $hostname
-   * @param $username
-   * @param $password
-   * @param $database
-   * @param $port
-   * @param $charset
-   * @param $exit_on_error
-   * @param $echo_on_error
-   * @param $logger_class_name
-   * @param $logger_level
-   * @param $session_to_db
+   * @param string  $hostname
+   * @param string  $username
+   * @param string  $password
+   * @param string  $database
+   * @param int     $port
+   * @param string  $charset
+   * @param boolean $exit_on_error
+   * @param boolean $echo_on_error
+   * @param string  $logger_class_name
+   * @param string  $logger_level
+   * @param boolean $session_to_db
    *
    * @return bool
    */
@@ -304,8 +304,8 @@ Class DB
   /**
    * _displayError
    *
-   * @param      $e
-   * @param null $force_exception_after_error
+   * @param string       $e
+   * @param null|boolean $force_exception_after_error
    *
    * @throws \Exception
    */
@@ -352,7 +352,7 @@ Class DB
   /**
    * wrapper for a "Logger"-Class
    *
-   * @param $log array [method, text, type] e.g.: array('error', 'this is a error', 'sql')
+   * @param array $log [method, text, type] e.g.: array('error', 'this is a error', 'sql')
    */
   private function logger($log)
   {
@@ -414,8 +414,7 @@ Class DB
       $noDev = isset($_GET['noDev']) ? (int)$_GET['noDev'] : 0;
       $remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : false;
 
-      if
-      (
+      if (
           $noDev != 1
           &&
           (
@@ -458,16 +457,16 @@ Class DB
   /**
    * getInstance()
    *
-   * @param string $hostname
-   * @param string $username
-   * @param string $password
-   * @param string $database
-   * @param int|string $port
-   * @param string $charset
+   * @param string      $hostname
+   * @param string      $username
+   * @param string      $password
+   * @param string      $database
+   * @param int|string  $port
+   * @param string      $charset
    * @param bool|string $exit_on_error
    * @param bool|string $echo_on_error
-   * @param string $logger_class_name
-   * @param string $logger_level
+   * @param string      $logger_class_name
+   * @param string      $logger_level
    * @param bool|string $session_to_db
    *
    * @return \voku\db\DB
@@ -826,11 +825,11 @@ Class DB
     } else if (($var instanceof \DateTime)) {
       try {
         $var = "'" . $this->escape($var->format('Y-m-d h:m:i'), false, false) . "'";
-      } catch (\Exception $e) {
+      }
+      catch (\Exception $e) {
         $var = null;
       }
-    }
-    else {
+    } else {
       $var = "'" . $this->escape(trim($var)) . "'";
     }
 
@@ -895,9 +894,9 @@ Class DB
   /**
    * _logQuery
    *
-   * @param String $sql sql-query
-   * @param int $duration
-   * @param int $results result counter
+   * @param String $sql     sql-query
+   * @param int    $duration
+   * @param int    $results result counter
    *
    * @return bool
    */
@@ -964,9 +963,9 @@ Class DB
   /**
    * send a error mail to the admin / dev
    *
-   * @param     $subject
-   * @param     $htmlBody
-   * @param int $priority
+   * @param string $subject
+   * @param string $htmlBody
+   * @param int    $priority
    */
   private function mailToAdmin($subject, $htmlBody, $priority = 3)
   {
@@ -1113,7 +1112,7 @@ Class DB
   /**
    * Begins a transaction, by turning off auto commit
    *
-   * @return true or false indicating success of transaction
+   * @return boolean this will return true or false indicating success of transaction
    */
   public function beginTransaction()
   {
@@ -1123,7 +1122,7 @@ Class DB
       $this->_displayError("Error mysql server already in transaction!", true);
 
       return false;
-    } else if (mysqli_connect_errno($this->link)) {
+    } else if (mysqli_connect_errno()) {
       $this->_displayError("Error connecting to mysql server: " . mysqli_connect_error(), true);
 
       return false;
@@ -1149,7 +1148,8 @@ Class DB
   /**
    * rollback in a transaction
    */
-  public function rollback() {
+  public function rollback()
+  {
     // init
     $return = false;
 
@@ -1165,7 +1165,7 @@ Class DB
   /**
    * Ends a transaction and commits if no errors, then ends autocommit
    *
-   * @return true or false indicating success of transactions
+   * @return boolean this will return true or false indicating success of transactions
    */
   public function endTransaction()
   {

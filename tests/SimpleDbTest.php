@@ -145,6 +145,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(true, $result->num_rows > 0);
 
     // select - false
+    $false = $this->db->select($this->tableName, null);
+    $this->assertEquals(false, $false);
+
+    // select - false
     $false = $this->db->select('', array('page_id' => 2));
     $this->assertEquals(false, $false);
   }

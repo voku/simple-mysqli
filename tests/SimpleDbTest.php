@@ -19,6 +19,36 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', '3306', 'utf8', false, false);
   }
 
+  /**
+   * @expectedException Exception invalid-table-name
+   */
+  public function testExitOnError1()
+  {
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
+    $this->assertEquals(true, $db_1 instanceof DB);
+
+    // insert - false
+    $pageArray = array(
+        'page_template' => 'tpl_new',
+        'page_type'     => 'lall'
+    );
+    $false = $db_1->insert('', $pageArray);
+    $this->assertEquals(false, $false);
+  }
+
+  /**
+   * @expectedException Exception empty-data-for-INSERT
+   */
+  public function testExitOnError2()
+  {
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
+    $this->assertEquals(true, $db_1 instanceof DB);
+
+    // insert - false
+    $false = $db_1->insert($this->tableName, array());
+    $this->assertEquals(false, $false);
+  }
+
   public function testGetInstance()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);

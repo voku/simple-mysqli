@@ -1199,13 +1199,13 @@ Class DB
     $table = trim($table);
 
     if (strlen($table) == 0) {
-      $this->_displayError("invalid table name");
+      $this->_displayError("invalid-table-name");
 
       return false;
     }
 
     if (count($data) == 0) {
-      $this->_displayError("empty data for INSERT");
+      $this->_displayError("empty-data-for-INSERT");
 
       return false;
     }

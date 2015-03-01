@@ -349,7 +349,7 @@ Class DB
   /**
    * wrapper for a "Logger"-Class
    *
-   * @param array $log [method, text, type] e.g.: array('error', 'this is a error', 'sql')
+   * @param string[] $log [method, text, type] e.g.: array('error', 'this is a error', 'sql')
    */
   private function logger($log)
   {
@@ -822,8 +822,7 @@ Class DB
     } else if (($var instanceof \DateTime)) {
       try {
         $var = "'" . $this->escape($var->format('Y-m-d h:m:i'), false, false) . "'";
-      }
-      catch (\Exception $e) {
+      } catch (\Exception $e) {
         $var = null;
       }
     } else {

@@ -99,6 +99,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $true = $this->db->connect();
     $this->assertEquals(true, $true);
 
+    $true = $this->db->connect();
+    $this->assertEquals(true, $true);
+
     $true = $this->db->reconnect(false);
     $this->assertEquals(true, $true);
 
@@ -172,6 +175,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(false, $false);
 
     // update - false
+    $false = $this->db->update($this->tableName, $pageArray, "");
+    $this->assertEquals(false, $false);
+
+    // update - false
     $false = $this->db->update('', $pageArray, "page_id = $tmpId");
     $this->assertEquals(false, $false);
 
@@ -207,6 +214,21 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     // delete - false
     $false = $this->db->delete('', array('page_id' => $tmpId));
     $this->assertEquals(false, $false);
+
+    // insert - true
+    $pageArray = array(
+        'page_template' => 'tpl_new',
+        'page_type'     => 'lall'
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+
+    // delete - false
+    $false = $this->db->delete($this->tableName, "");
+    $this->assertEquals(false, $false);
+
+    // delete - true
+    $false = $this->db->delete($this->tableName, "page_id = " . $this->db->escape($tmpId));
+    $this->assertEquals(true, $false);
 
     // select - true
     $result = $this->db->select($this->tableName, array('page_id' => 2));
@@ -286,6 +308,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $where = array(
         'page_type ='  => 'öäü',
         'page_type <>' => 'öäü123',
+        'page_id >' => 0,
+        'page_id >=' => 0,
+        'page_id <' => 1000000,
+        'page_id <=' => 1000000,
         'page_id ='    => $resultInsert,
     );
 

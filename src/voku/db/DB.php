@@ -788,7 +788,7 @@ Class DB
     if (is_string($var)) {
 
       if (!in_array($var, $this->mysqlDefaultTimeFunctions)) {
-        $var = "'" . $this->escape(trim($var)) . "'";
+        $var = "'" . trim($this->escape(trim(trim($var), "'")), "'") . "'";
       }
 
     } else if (is_int($var)) {
@@ -807,7 +807,7 @@ Class DB
         $var = null;
       }
     } else {
-      $var = "'" . $this->escape(trim($var)) . "'";
+      $var = "'" . trim($this->escape(trim(trim($var), "'")), "'") . "'";
     }
 
     return $var;
@@ -1250,14 +1250,6 @@ Class DB
           $_connector = 'NOT BETWEEN';
         }
 
-        if (strpos($_key_upper, ' EXISTS') !== false) {
-          $_connector = 'EXISTS';
-        }
-
-        if (strpos($_key_upper, ' NOT EXISTS') !== false) {
-          $_connector = 'NOT EXISTS';
-        }
-
         if (strpos($_key_upper, ' LIKE') !== false) {
           $_connector = 'LIKE';
         }
@@ -1286,7 +1278,37 @@ Class DB
           $_connector = "<>";
         }
 
-        $pairs[] = " " . $this->quote_string(trim(str_ireplace($_connector, '', $_key))) . " " . $_connector . " " . $this->secure($_value) . " \n";
+        if (
+            is_array($_value)
+            &&
+            (
+                $_connector == 'NOT IN'
+                ||
+                $_connector == 'IN'
+            )
+        ) {
+          foreach ($_value as $oldKey => $oldValue) {
+            $_value[$oldKey] = $this->secure($oldValue);
+          }
+          $_value = '(' . implode(',', $_value) . ')';
+        } else if (
+            is_array($_value)
+            &&
+            (
+                $_connector == 'NOT BETWEEN'
+                ||
+                $_connector == 'BETWEEN'
+            )
+        ) {
+          foreach ($_value as $oldKey => $oldValue) {
+            $_value[$oldKey] = $this->secure($oldValue);
+          }
+          $_value = '(' . implode(' AND ', $_value) . ')';
+        } else {
+          $_value = $this->secure($_value);
+        }
+
+        $pairs[] = " " . $this->quote_string(trim(str_ireplace($_connector, '', $_key))) . " " . $_connector . " " . $_value . " \n";
       }
 
       $sql = implode($glue, $pairs);

@@ -95,6 +95,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $db_4 = DB::getInstance();
     $this->assertEquals(true, $db_4 instanceof DB);
+    $db_4_serial = serialize($db_4);
+    unset($db_4);
+    $db_4 = unserialize($db_4_serial);
+    $this->assertEquals(true, $db_4 instanceof DB);
 
     $true = $this->db->connect();
     $this->assertEquals(true, $true);
@@ -179,6 +183,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(false, $false);
 
     // update - false
+    $false = $this->db->update($this->tableName, $pageArray, null);
+    $this->assertEquals(false, $false);
+
+    // update - false
     $false = $this->db->update('', $pageArray, "page_id = $tmpId");
     $this->assertEquals(false, $false);
 
@@ -224,6 +232,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // delete - false
     $false = $this->db->delete($this->tableName, "");
+    $this->assertEquals(false, $false);
+
+    // delete - false
+    $false = $this->db->delete($this->tableName, null);
     $this->assertEquals(false, $false);
 
     // delete - true
@@ -308,10 +320,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $where = array(
         'page_type ='  => 'öäü',
         'page_type <>' => 'öäü123',
-        'page_id >' => 0,
-        'page_id >=' => 0,
-        'page_id <' => 1000000,
-        'page_id <=' => 1000000,
+        'page_id >'    => 0,
+        'page_id >='   => 0,
+        'page_id <'    => 1000000,
+        'page_id <='   => 1000000,
         'page_id ='    => $resultInsert,
     );
 
@@ -342,8 +354,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultInsert = $this->db->insert($this->tableName, $data);
     $this->assertGreaterThan(1, $resultInsert);
 
-    // start - test a transaction
-    $this->db->beginTransaction();
+    // start - test a transaction - true
+    $beginTransaction = $this->db->beginTransaction();
+    $this->assertEquals(true, $beginTransaction);
 
     $data = array(
         'page_type' => 'lall'
@@ -355,8 +368,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $data = array(
         'page_type' => 'lall',
-        'page_lall' => 'öäü'        // this will produce a mysql-error and a mysqli-rollback
-  );
+        'page_lall' => 'öäü'
+        // this will produce a mysql-error and a mysqli-rollback
+    );
     $where = array(
         'page_id' => $resultInsert
     );
@@ -411,7 +425,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->db->update($this->tableName, $data, $where);
 
     $data = array(
-        'page_type' => 'lall',
+        'page_type'     => 'lall',
         'page_template' => 'öäü'
     );
     $where = array(
@@ -455,7 +469,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $data = array(
         'page_type' => 'lall',
-        'page_lall' => 'öäü'        // this will produce a mysql-error and a mysqli-rollback
+        'page_lall' => 'öäü'
+        // this will produce a mysql-error and a mysqli-rollback
     );
     $where = array(
         'page_id' => $resultInsert
@@ -470,6 +485,21 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
     $resultSelect = $this->db->select($this->tableName, $where);
     $this->assertEquals(0, $resultSelect->num_rows);
+  }
+
+  /**
+   * @expectedException Exception
+   * @expectedExceptionMessage Error mysql server already in transaction!
+   */
+  public function testTransactionException()
+  {
+    // start - test a transaction - true
+    $beginTransaction = $this->db->beginTransaction();
+    $this->assertEquals(true, $beginTransaction);
+
+    // start - test a transaction - false
+    $beginTransaction = $this->db->beginTransaction();
+    $this->assertEquals(false, $beginTransaction);
   }
 
   public function testFetchColumn()
@@ -620,6 +650,37 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(false, $false);
   }
 
+  public function testConnector2()
+  {
+    // select - true
+    $where = array(
+        'page_type ='        => 'öäü',
+        'page_type NOT LIKE' => '%öäü123',
+        'page_id >='         => 0,
+        'page_id NOT BETWEEN' => array('99997', '99999'),
+        'page_id NOT IN'     => array(
+            'test',
+            'test123'
+        ),
+        'page_type IN'       => array(
+            'öäü',
+            '123',
+            'abc'
+        )
+    );
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $this->assertNotEquals(false, $resultSelect);
+    $this->assertEquals(true, ($resultSelect->num_rows > 0));
+
+    // select - false
+    $where = array(
+        'page_type IS NOT' => 'lall',
+        'page_type IS' => 'öäü'
+    );
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $this->assertEquals(false, $resultSelect);
+  }
+
   public function testExecSQL()
   {
     // execSQL - false
@@ -653,7 +714,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(true, is_int($return));
     $this->assertEquals(true, $return > 0);
 
-    $data = $this->db->select($this->tableName, 'page_id=' . (int) $return);
+    $data = $this->db->select($this->tableName, 'page_id=' . (int)$return);
     $dataArray = $data->fetchArray();
     $this->assertEquals('Düsseldorf', $dataArray['page_template']);
     $this->assertEquals('Düsseldorf', $dataArray['page_type']);
@@ -667,7 +728,12 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_template = ?,
         page_type = ?
     ";
-    $return = $this->db->query($sql, array(1.1, 1));
+    $return = $this->db->query(
+        $sql, array(
+        1.1,
+        1
+    )
+    );
     $this->assertEquals(true, $return);
 
     // query - true
@@ -676,7 +742,12 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_template = ?,
         page_type = ?
     ";
-    $return = $this->db->query($sql, array('dateTest', new DateTime()));
+    $return = $this->db->query(
+        $sql, array(
+        'dateTest',
+        new DateTime()
+    )
+    );
     $this->assertEquals(true, $return);
 
     // query - false
@@ -685,7 +756,12 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_template = ?,
         page_type = ?
     ";
-    $return = $this->db->query($sql, array(true, array('test'))); // array('test') => null
+    $return = $this->db->query(
+        $sql, array(
+        true,
+        array('test')
+    )
+    ); // array('test') => null
     $this->assertEquals(false, $return);
 
     // query - false
@@ -694,11 +770,21 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_template_lall = ?,
         page_type = ?
     ";
-    $return = $this->db->query($sql, array('tpl_test_new15', 1));
+    $return = $this->db->query(
+        $sql, array(
+        'tpl_test_new15',
+        1
+    )
+    );
     $this->assertEquals(false, $return);
 
     // query - false
-    $return = $this->db->query('', array('tpl_test_new15', 1));
+    $return = $this->db->query(
+        '', array(
+        'tpl_test_new15',
+        1
+    )
+    );
     $this->assertEquals(false, $return);
   }
 

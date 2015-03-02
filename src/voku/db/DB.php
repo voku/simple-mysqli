@@ -5,8 +5,6 @@ namespace voku\db;
 use voku\cache\Cache;
 use voku\helper\UTF8;
 
-require_once 'Result.php';
-
 /**
  * DB: this handles DB queries via MySQLi
  *
@@ -120,17 +118,17 @@ Class DB
   /**
    * __construct()
    *
-   * @param string  $hostname
-   * @param string  $username
-   * @param string  $password
-   * @param string  $database
-   * @param int     $port
-   * @param string  $charset
-   * @param boolean $exit_on_error
-   * @param boolean $echo_on_error
-   * @param string  $logger_class_name
-   * @param string  $logger_level 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'
-   * @param boolean $session_to_db
+   * @param string         $hostname
+   * @param string         $username
+   * @param string         $password
+   * @param string         $database
+   * @param int|string     $port
+   * @param string         $charset
+   * @param boolean|string $exit_on_error use a empty string "" or false to disable it
+   * @param boolean|string $echo_on_error use a empty string "" or false to disable it
+   * @param string         $logger_class_name
+   * @param string         $logger_level  'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'
+   * @param boolean|string $session_to_db use a empty string "" or false to disable it
    */
   private function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db)
   {
@@ -175,17 +173,17 @@ Class DB
   /**
    * load the config
    *
-   * @param string  $hostname
-   * @param string  $username
-   * @param string  $password
-   * @param string  $database
-   * @param int     $port
-   * @param string  $charset
-   * @param boolean $exit_on_error
-   * @param boolean $echo_on_error
-   * @param string  $logger_class_name
-   * @param string  $logger_level
-   * @param boolean $session_to_db
+   * @param string         $hostname
+   * @param string         $username
+   * @param string         $password
+   * @param string         $database
+   * @param int            $port
+   * @param int|string     $charset
+   * @param boolean|string $exit_on_error use a empty string "" or false to disable it
+   * @param boolean|string $echo_on_error use a empty string "" or false to disable it
+   * @param string         $logger_class_name
+   * @param string         $logger_level
+   * @param boolean|string $session_to_db use a empty string "" or false to disable it
    *
    * @return bool
    */
@@ -201,7 +199,7 @@ Class DB
     }
 
     if ($port) {
-      $this->port = $port;
+      $this->port = (int)$port;
     } else {
       $this->port = @ini_get('mysqli.default_port');
     }
@@ -440,11 +438,11 @@ Class DB
    * @param string      $database
    * @param int|string  $port
    * @param string      $charset
-   * @param bool|string $exit_on_error
-   * @param bool|string $echo_on_error
+   * @param bool|string $exit_on_error use a empty string "" or false to disable it
+   * @param bool|string $echo_on_error use a empty string "" or false to disable it
    * @param string      $logger_class_name
    * @param string      $logger_level
-   * @param bool|string $session_to_db
+   * @param bool|string $session_to_db use a empty string "" or false to disable it
    *
    * @return \voku\db\DB
    */
@@ -476,7 +474,7 @@ Class DB
       }
     }
 
-    return isset($instance[$connection]) ? $instance[$connection] : false;
+    return isset($instance[$connection]) ? $instance[$connection] : new self();
   }
 
   /**

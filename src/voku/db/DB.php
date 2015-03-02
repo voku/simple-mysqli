@@ -201,7 +201,7 @@ Class DB
     }
 
     if ($port) {
-      $this->port = (int)$port;
+      $this->port = $port;
     } else {
       $this->port = @ini_get('mysqli.default_port');
     }
@@ -1454,7 +1454,7 @@ Class DB
    *
    * @return bool|int|Result
    */
-  function select($table, $where = '1=1')
+  public function select($table, $where = '1=1')
   {
 
     if (strlen($table) == 0) {
@@ -1490,7 +1490,7 @@ Class DB
    * __destruct
    *
    */
-  function __destruct()
+  public function __destruct()
   {
     // close the connection only if we don't save PHP-SESSION's in DB
     if ($this->session_to_db === false) {

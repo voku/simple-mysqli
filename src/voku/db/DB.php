@@ -86,7 +86,7 @@ Class DB
   private $database = '';
 
   /**
-   * @var string
+   * @var int|string
    */
   private $port = '3306';
 
@@ -177,8 +177,8 @@ Class DB
    * @param string         $username
    * @param string         $password
    * @param string         $database
-   * @param int            $port
-   * @param int|string     $charset
+   * @param int|string     $port
+   * @param string         $charset
    * @param boolean|string $exit_on_error use a empty string "" or false to disable it
    * @param boolean|string $echo_on_error use a empty string "" or false to disable it
    * @param string         $logger_class_name
@@ -406,78 +406,6 @@ Class DB
   }
 
   /**
-   * set charset
-   *
-   * @param string $charset
-   *
-   * @return bool|\mysqli_result
-   */
-  public function set_charset($charset)
-  {
-    $this->charset = $charset;
-    mysqli_set_charset($this->link, $charset);
-    return mysqli_query($this->link, "SET NAMES " . $charset);
-  }
-
-  /**
-   * get charset
-   *
-   * @return string
-   */
-  public function get_charset()
-  {
-    return $this->charset;
-  }
-
-  /**
-   * getInstance()
-   *
-   * @param string      $hostname
-   * @param string      $username
-   * @param string      $password
-   * @param string      $database
-   * @param int|string  $port
-   * @param string      $charset
-   * @param bool|string $exit_on_error use a empty string "" or false to disable it
-   * @param bool|string $echo_on_error use a empty string "" or false to disable it
-   * @param string      $logger_class_name
-   * @param string      $logger_level
-   * @param bool|string $session_to_db use a empty string "" or false to disable it
-   *
-   * @return \voku\db\DB
-   */
-  public static function getInstance($hostname = '', $username = '', $password = '', $database = '', $port = '', $charset = '', $exit_on_error = '', $echo_on_error = '', $logger_class_name = '', $logger_level = '', $session_to_db = '')
-  {
-    /**
-     * @var $instance DB[]
-     */
-    static $instance = array();
-
-    /**
-     * @var $firstInstance DB
-     */
-    static $firstInstance = null;
-
-    if ($hostname . $username . $password . $database . $port . $charset == '') {
-      if (null !== $firstInstance) {
-        return $firstInstance;
-      }
-    }
-
-    $connection = md5($hostname . $username . $password . $database . $port . $charset . (int)$exit_on_error . (int)$echo_on_error . $logger_class_name . $logger_level . (int)$session_to_db);
-
-    if (!isset($instance[$connection])) {
-      $instance[$connection] = new self($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db);
-
-      if (null === $firstInstance) {
-        $firstInstance = $instance[$connection];
-      }
-    }
-
-    return isset($instance[$connection]) ? $instance[$connection] : new self();
-  }
-
-  /**
    * execute a sql-query and
    * return the result-array for select-statements
    *
@@ -532,111 +460,51 @@ Class DB
   }
 
   /**
-   * can handel select/insert/update/delete queries
+   * getInstance()
    *
-   * @param string $query    sql-query
-   * @param bool   $useCache use cache?
-   * @param int    $cacheTTL cache-ttl
+   * @param string      $hostname
+   * @param string      $username
+   * @param string      $password
+   * @param string      $database
+   * @param int|string  $port
+   * @param string      $charset
+   * @param bool|string $exit_on_error use a empty string "" or false to disable it
+   * @param bool|string $echo_on_error use a empty string "" or false to disable it
+   * @param string      $logger_class_name
+   * @param string      $logger_level
+   * @param bool|string $session_to_db use a empty string "" or false to disable it
    *
-   * @return bool|int|array         "array" by "<b>SELECT</b>"-queries<br />
-   *                                "int" (insert_id) by "<b>INSERT</b>"-queries<br />
-   *                                "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-   *                                "true" by e.g. "DROP"-queries<br />
-   *                                "false" on error
-   *
+   * @return \voku\db\DB
    */
-  public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
+  public static function getInstance($hostname = '', $username = '', $password = '', $database = '', $port = '', $charset = '', $exit_on_error = '', $echo_on_error = '', $logger_class_name = '', $logger_level = '', $session_to_db = '')
   {
-    $db = DB::getInstance();
-    if ($useCache === true) {
-      $cache = new Cache(null, null, false, $useCache);
+    /**
+     * @var $instance DB[]
+     */
+    static $instance = array();
 
-      if (
-          $cache->getCacheIsReady() === true
-          && $cache->existsItem("sql-" . md5($query))
-      ) {
-        return $cache->getItem("sql-" . md5($query));
+    /**
+     * @var $firstInstance DB
+     */
+    static $firstInstance = null;
+
+    if ($hostname . $username . $password . $database . $port . $charset == '') {
+      if (null !== $firstInstance) {
+        return $firstInstance;
       }
-
-    } else {
-      $cache = false;
     }
 
-    $result = $db->query($query);
+    $connection = md5($hostname . $username . $password . $database . $port . $charset . (int)$exit_on_error . (int)$echo_on_error . $logger_class_name . $logger_level . (int)$session_to_db);
 
-    if ($result instanceof Result) {
+    if (!isset($instance[$connection])) {
+      $instance[$connection] = new self($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db);
 
-      $return = $result->fetchAllArray();
-
-      if (
-          $useCache === true
-          && $cache instanceof Cache
-          && $cache->getCacheIsReady() === true
-      ) {
-        $cache->setItem("sql-" . md5($query), $return, $cacheTTL);
+      if (null === $firstInstance) {
+        $firstInstance = $instance[$connection];
       }
-
-    } else {
-      $return = $result;
     }
 
-    return $return;
-  }
-
-  /**
-   * __wakeup
-   *
-   * @return void
-   */
-  public function __wakeup()
-  {
-    $this->reconnect();
-  }
-
-  /**
-   * reconnect
-   *
-   * @param bool $checkViaPing
-   *
-   * @return bool
-   */
-  public function reconnect($checkViaPing = false)
-  {
-    $ping = false;
-
-    if ($checkViaPing === true) {
-      $ping = $this->ping();
-    }
-
-    if ($ping === false) {
-      $this->connected = false;
-      $this->connect();
-    }
-
-    return $this->isReady();
-  }
-
-  /**
-   * ping
-   *
-   * @return boolean
-   */
-  public function ping()
-  {
-    return mysqli_ping($this->link);
-  }
-
-  /**
-   * get the names of all tables
-   *
-   * @return array
-   */
-  public function getAllTables()
-  {
-    $query = "SHOW TABLES";
-    $result = $this->query($query);
-
-    return $result->fetchAllArray();
+    return $instance[$connection];
   }
 
   /**
@@ -814,9 +682,9 @@ Class DB
   /**
    * escape
    *
-   * @param string $str
-   * @param bool   $stripe_non_utf8
-   * @param bool   $html_entity_decode
+   * @param array|float|int|string $str
+   * @param bool                   $stripe_non_utf8
+   * @param bool                   $html_entity_decode
    *
    * @return array|bool|float|int|string
    */
@@ -916,16 +784,6 @@ Class DB
   }
 
   /**
-   * affected_rows
-   *
-   * @return int
-   */
-  public function affected_rows()
-  {
-    return mysqli_affected_rows($this->link);
-  }
-
-  /**
    * insert_id
    *
    * @return int|string
@@ -933,6 +791,16 @@ Class DB
   public function insert_id()
   {
     return mysqli_insert_id($this->link);
+  }
+
+  /**
+   * affected_rows
+   *
+   * @return int
+   */
+  public function affected_rows()
+  {
+    return mysqli_affected_rows($this->link);
   }
 
   /**
@@ -972,6 +840,138 @@ Class DB
       }
 
     }
+  }
+
+  /**
+   * reconnect
+   *
+   * @param bool $checkViaPing
+   *
+   * @return bool
+   */
+  public function reconnect($checkViaPing = false)
+  {
+    $ping = false;
+
+    if ($checkViaPing === true) {
+      $ping = $this->ping();
+    }
+
+    if ($ping === false) {
+      $this->connected = false;
+      $this->connect();
+    }
+
+    return $this->isReady();
+  }
+
+  /**
+   * ping
+   *
+   * @return boolean
+   */
+  public function ping()
+  {
+    return mysqli_ping($this->link);
+  }
+
+  /**
+   * can handel select/insert/update/delete queries
+   *
+   * @param string $query    sql-query
+   * @param bool   $useCache use cache?
+   * @param int    $cacheTTL cache-ttl
+   *
+   * @return bool|int|array         "array" by "<b>SELECT</b>"-queries<br />
+   *                                "int" (insert_id) by "<b>INSERT</b>"-queries<br />
+   *                                "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                                "true" by e.g. "DROP"-queries<br />
+   *                                "false" on error
+   *
+   */
+  public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
+  {
+    $db = DB::getInstance();
+    if ($useCache === true) {
+      $cache = new Cache(null, null, false, $useCache);
+
+      if (
+          $cache->getCacheIsReady() === true
+          && $cache->existsItem("sql-" . md5($query))
+      ) {
+        return $cache->getItem("sql-" . md5($query));
+      }
+
+    } else {
+      $cache = false;
+    }
+
+    $result = $db->query($query);
+
+    if ($result instanceof Result) {
+
+      $return = $result->fetchAllArray();
+
+      if (
+          $useCache === true
+          && $cache instanceof Cache
+          && $cache->getCacheIsReady() === true
+      ) {
+        $cache->setItem("sql-" . md5($query), $return, $cacheTTL);
+      }
+
+    } else {
+      $return = $result;
+    }
+
+    return $return;
+  }
+
+  /**
+   * get charset
+   *
+   * @return string
+   */
+  public function get_charset()
+  {
+    return $this->charset;
+  }
+
+  /**
+   * set charset
+   *
+   * @param string $charset
+   *
+   * @return bool|\mysqli_result
+   */
+  public function set_charset($charset)
+  {
+    $this->charset = $charset;
+    mysqli_set_charset($this->link, $charset);
+    return mysqli_query($this->link, "SET NAMES " . $charset);
+  }
+
+  /**
+   * __wakeup
+   *
+   * @return void
+   */
+  public function __wakeup()
+  {
+    $this->reconnect();
+  }
+
+  /**
+   * get the names of all tables
+   *
+   * @return array
+   */
+  public function getAllTables()
+  {
+    $query = "SHOW TABLES";
+    $result = $this->query($query);
+
+    return $result->fetchAllArray();
   }
 
   /**
@@ -1111,6 +1111,18 @@ Class DB
   }
 
   /**
+   * clear errors
+   *
+   * @return bool
+   */
+  public function clearErrors()
+  {
+    $this->_errors = array();
+
+    return true;
+  }
+
+  /**
    * Check if in transaction
    *
    * @return boolean
@@ -1118,23 +1130,6 @@ Class DB
   public function inTransaction()
   {
     return $this->_in_transaction;
-  }
-
-  /**
-   * rollback in a transaction
-   */
-  public function rollback()
-  {
-    // init
-    $return = false;
-
-    if ($this->_in_transaction === true) {
-      $return = mysqli_rollback($this->link);
-      mysqli_autocommit($this->link, true);
-      $this->_in_transaction = false;
-    }
-
-    return $return;
   }
 
   /**
@@ -1167,6 +1162,23 @@ Class DB
   public function errors()
   {
     return count($this->_errors) > 0 ? $this->_errors : false;
+  }
+
+  /**
+   * rollback in a transaction
+   */
+  public function rollback()
+  {
+    // init
+    $return = false;
+
+    if ($this->_in_transaction === true) {
+      $return = mysqli_rollback($this->link);
+      mysqli_autocommit($this->link, true);
+      $this->_in_transaction = false;
+    }
+
+    return $return;
   }
 
   /**
@@ -1316,28 +1328,6 @@ Class DB
   }
 
   /**
-   * get errors
-   *
-   * @return array
-   */
-  public function getErrors()
-  {
-    return $this->_errors;
-  }
-
-  /**
-   * clear errors
-   *
-   * @return bool
-   */
-  public function clearErrors()
-  {
-    $this->_errors = array();
-
-    return true;
-  }
-
-  /**
    * Quote && Escape e.g. a table name string
    *
    * @param string $str
@@ -1347,6 +1337,16 @@ Class DB
   public function quote_string($str)
   {
     return "`" . $this->escape($str, false, false) . "`";
+  }
+
+  /**
+   * get errors
+   *
+   * @return array
+   */
+  public function getErrors()
+  {
+    return $this->_errors;
   }
 
   /**

@@ -41,17 +41,13 @@ Class Result
     $this->sql = $sql;
 
     if ($result === null) {
-      return false;
+      return;
     }
 
     if ($result instanceof \mysqli_result) {
       $this->_result = $result;
       $this->num_rows = $this->_result->num_rows;
-
-      return true;
     }
-
-    return false;
   }
 
   /**
@@ -404,5 +400,4 @@ Class Result
   {
     return (string)$this->num_rows;
   }
-
 }

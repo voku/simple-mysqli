@@ -40,16 +40,15 @@ composer require voku/simple-mysqli
 ##Starting the driver
 
 ```php
+    use voku\db\DB;
+
     require_once 'composer/autoload.php';
 
-    $db = \voku\db\DB::getInstance('yourDbHost', 'yourDbUser', 'yourDbPassword', 'yourDbName');
+    $db = DB::getInstance('yourDbHost', 'yourDbUser', 'yourDbPassword', 'yourDbName');
     
     // example
-    // $db = \voku\db\DB::getInstance('localhost', 'root', '', 'test');
-
+    // $db = DB::getInstance('localhost', 'root', '', 'test');
 ```
-
-
 
 ##Using the "DB"-Class
 
@@ -58,11 +57,47 @@ there are numerous ways of using this library, here are some examples of the mos
 ###Selecting and retrieving data from a table
 
 ```php
-  $db = \voku\db\DB::getInstance();
+  use voku\db\DB;
+
+  $db = DB::getInstance();
 
   $result = $db->query("SELECT * FROM users");
   $users  = $result->fetchALL();
 ```
+
+But you can also use a method for select-queries:
+
+```php
+  $db->select( String $table, Array $where );               // generate an SELECT query
+```
+
+Example: SELECT
+```php
+    $where = array(
+        'page_type ='        => 'article',
+        'page_type NOT LIKE' => '%öäü123',
+        'page_id >='          => 2,
+    );
+    $resultSelect = $this->db->select('page', $where);
+```
+
+Here is a list of connectors for the "WHERE"-Array:
+'NOT', 'IS', 'IS NOT', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'LIKE', 'NOT LIKE', '>', '<', '>=', '<=', '<>'
+
+INFO: use a array as $value for "[NOT] IN" and "[NOT] BETWEEN"
+
+Example: SELECT with "NOT IN"
+```php
+    $where = array(
+        'page_type NOT IN'     => array(
+            'foo',
+            'bar'
+        ),
+        'page_id >'            => 2,
+    );
+    $resultSelect = $this->db->select('page', $where);
+```
+
 
 ###Inserting data on a table
 
@@ -71,17 +106,19 @@ they all work the same way: parsing arrays of key/value pairs and forming a safe
 
 the methods are:
 ```php
-  $db->insert( String $table, Array $data );                // generates an INSERT query
-  $db->replace( String $table, Array $data );               // generates an REPLACE query
-  $db->update( String $table, Array $data, Array $where );  // generates an UPDATE query
-  $db->delete( String $table, Array $where );               // generates a DELETE query
+  $db->insert( String $table, Array $data );                // generate an INSERT query
+  $db->replace( String $table, Array $data );               // generate an REPLACE query
+  $db->update( String $table, Array $data, Array $where );  // generate an UPDATE query
+  $db->delete( String $table, Array $where );               // generate a DELETE query
 ```
 
 All methods will return the resulting `mysqli_insert_id()` or true/false depending on context.
-The correct approach if to allways check if they executed as success is allways returned
+The correct approach if to always check if they executed as success is always returned
 
+Example: DELETE
 ```php
-  $ok = $db->delete('users', array( 'user_id' => 9 ) );
+  $deleteArray = array('user_id' => 9);
+  $ok = $db->delete('users', $deleteArray);
   if ($ok) {
     echo "user deleted!";
   } else {
@@ -89,28 +126,43 @@ The correct approach if to allways check if they executed as success is allways 
   }
 ```
 
-**note**: all parameter values are sanitized before execution, you dont have to escape values beforehand.
+**note**: all parameter values are sanitized before execution, you don\'t have to escape values beforehand.
 
+Example: INSERT
 ```php
-  $newUserId = $db->insert('users', array(
-                                'name'  => "jothn",
-                                'email' => "johnsmith@email.com",
-                                'group' => 1,
-                                'active' => true,
-                              )
-                          );
+  $insertArray = array(
+    'name'   => "John",
+    'email'  => "johnsmith@email.com",
+    'group'  => 1,
+    'active' => true,
+  );
+  $newUserId = $db->insert('users', $insertArray);
   if ($newUserId) {
     echo "new user inserted with the id $new_user_id";
   }
 ```
 
+Example: REPLACE
+```php
+  $replaceArray = array(
+      'name'   => 'lars',
+      'email'  => 'lars@moelleken.org',
+      'group'  => 0
+  );
+  $tmpId = $this->db->replace('users', $replaceArray);
+```
 
 ###binding parameters on queries
 
 Binding parameters is a good way of preventing mysql injections as the parameters are sanitized before execution.
 
 ```php
-  $result = $db->query("SELECT * FROM users WHERE id_user = ? AND active = ? LIMIT 1",array(11,1));
+  $sql = "SELECT * FROM users 
+    WHERE id_user = ? 
+    AND active = ? 
+    LIMIT 1
+  ";
+  $result = $db->query($sql, array(11,1));
   if ($result) {
     $user = $result->fetchArray();
     print_r($user);
@@ -143,8 +195,8 @@ $data = $result->fetchAllObject();  // fetch all result data as Object
 
 $data = $result->fetchColumn(String $Column);                  // fetch a single column in a 1 dimention Array
 $data = $result->fetchArrayPair(String $key, String $Value);   // fetch data as a key/value pair Array.
-
 ```
+
 ####Aliases
 ```php
   $db->get()                  // alias for $db->fetch();
@@ -155,44 +207,51 @@ $data = $result->fetchArrayPair(String $key, String $Value);   // fetch data as 
 ```
 
 ####Iterations
-To iterate a resultset you can use any fetch() method listed above
+To iterate a result-set you can use any fetch() method listed above.
 
 ```php
-  $result = $db->query("SELECT * FROM users");
+  $result = $db->select('users');
 
-  //using while
-  while( $row = $result->fetch() ) {
+  // using while
+  while($row = $result->fetch()) {
     echo $row->name;
     echo $row->email;
   }
 
-  //using foreach
-  foreach( $result->fetchAll() as $row ) {
+  // using foreach
+  foreach($result->fetchAll() as $row) {
     echo $row->name;
     echo $row->email;
   }
-
 ```
 
 ####Logging and Errors
 
-// TODO
+You can hook into the "DB"-Class, so you can use your personal "Logger"-Class. But you have to cover the methods:
 
-Showing the query log. the log comes with the SQL executed, the execution time and the result row count (if any)
 ```php
+$this->trace(String $text, String $name) { ... }
+$this->debug(String $text, String $name) { ... }
+$this->info(String $text, String $name) { ... }
+$this->warn(String $text, String $name) { ... } 
+$this->error(String $text, String $name) { ... }
+$this->fatal(String $text, String $name) { ... }
+```
 
+You can also disable the logging of every sql-query, with the "getInstance()"-parameter "logger_level" from "DB"-Class.
+If you set "logger_level" to something other than "trace" or "debug", the "DB"-Class will only log errors anymore.
+
+Showing the query log. the log comes with the SQL executed, the execution time and the result row count
+```php
   print_r($db->log());
-
 ```
 
 to debug mysql errors:
 
-// TODO
-
 use `$db->errors()` to fetch all errors (returns false if no errors) or `$db->lastError()` for information on the last error.
 
 ```php
-  if( $db->errors() ){
+  if ($db->errors()) {
       echo $db->lastError();
   }
 ```

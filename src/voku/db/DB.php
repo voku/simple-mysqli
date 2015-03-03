@@ -1269,11 +1269,11 @@ Class DB
         }
 
         if (strpos($_key_upper, ' >') !== false && strpos($_key_upper, ' =') === false) {
-          $_connector = ">";
+          $_connector = '>';
         }
 
         if (strpos($_key_upper, ' <') !== false && strpos($_key_upper, ' =') === false) {
-          $_connector = "<";
+          $_connector = '<';
         }
 
         if (strpos($_key_upper, ' >=') !== false) {
@@ -1285,7 +1285,7 @@ Class DB
         }
 
         if (strpos($_key_upper, ' <>') !== false) {
-          $_connector = "<>";
+          $_connector = '<>';
         }
 
         if (

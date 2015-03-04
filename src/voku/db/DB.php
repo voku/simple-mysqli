@@ -761,6 +761,11 @@ Class DB
         $line = $referrer[$key]['line'];
       }
 
+      if ($ref['function'] == '_logQuery') {
+        $file = $referrer[$key + 1]['file'];
+        $line = $referrer[$key + 1]['line'];
+      }
+
       if ($ref['function'] == 'execSQL') {
         $file = $referrer[$key]['file'];
         $line = $referrer[$key]['line'];

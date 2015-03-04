@@ -43,7 +43,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testEchoOnError3()
   {
-    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', 'debug', false, true);
     $this->assertEquals(true, $db_1 instanceof DB);
 
     // sql - false
@@ -358,8 +358,44 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
 
     $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->fetch();
+    $getDefaultResultType = $resultSelect->getDefaultResultType();
+    $this->assertEquals('object', $getDefaultResultType);
+    $this->assertEquals('öäü', $resultSelectArray->page_type);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelect->setDefaultResultType('array'); // switch default result-type
+    $resultSelectArray = $resultSelect->fetch();
+    $getDefaultResultType = $resultSelect->getDefaultResultType();
+    $this->assertEquals('array', $getDefaultResultType);
+    $this->assertEquals('öäü', $resultSelectArray['page_type']);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchArray();
     $this->assertEquals('öäü', $resultSelectArray['page_type']);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->get();
+    $this->assertEquals('öäü', $resultSelectArray->page_type);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->getAll();
+    $this->assertEquals('öäü', $resultSelectArray[0]->page_type);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->getArray();
+    $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->getObject();
+    $this->assertEquals('öäü', $resultSelectArray[0]->page_type);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectTmp = $resultSelect->getColumn('page_type');
+    $this->assertEquals('öäü', $resultSelectTmp);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $this->assertEquals(1, (string) $resultSelect);
   }
 
   public function testTransactionFalse()
@@ -781,7 +817,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         true,
         array('test')
     )
-    ); // array('test') => null
+    );
+    // array('test') => null
     $this->assertEquals(false, $return);
 
     // query - false

@@ -26,8 +26,29 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // insert - false
     $false = $db_1->insert($this->tableName, array());
-    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
     $this->expectOutputRegex('/(.)*empty-data-for-INSERT(.)*/');
+    $this->assertEquals(false, $false);
+  }
+
+  public function testEchoOnError4()
+  {
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+    $this->assertEquals(true, $db_1 instanceof DB);
+
+    // sql - false
+    $false = $db_1->query();
+    $this->expectOutputRegex('/(.)*SimpleDbTest\.php \/ 39(.)*/');
+    $this->assertEquals(false, $false);
+  }
+
+  public function testEchoOnError3()
+  {
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+    $this->assertEquals(true, $db_1 instanceof DB);
+
+    // sql - false
+    $false = $db_1->query();
+    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
     $this->assertEquals(false, $false);
   }
 
@@ -38,7 +59,6 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // sql - false
     $false = $db_1->query();
-    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
     $this->expectOutputRegex('/(.)*Can\'t execute an empty Query(.)*/');
     $this->assertEquals(false, $false);
 

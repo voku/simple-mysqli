@@ -302,11 +302,12 @@ Class DB
    */
   private function _displayError($e, $force_exception_after_error = null)
   {
+    $fileInfo = $this->getFileAndLineFromSql();
 
     $this->logger(
         array(
             'error',
-            '<strong>' . date("d. m. Y G:i:s") . ' (sql-error):</strong> ' . $e . '<br>'
+            '<strong>' . date("d. m. Y G:i:s") . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . ') (sql-error):</strong> ' . $e . '<br>'
         )
     );
 
@@ -321,6 +322,7 @@ Class DB
         <div class="OBJ-mysql-box" style="border:' . $box_border . '; background:' . $box_bg . '; padding:10px; margin:10px;">
           <b style="font-size:14px;">MYSQL Error:</b>
           <code style="display:block;">
+            file / line: ' . $fileInfo['file'] . ' / ' . $fileInfo['line'] . '
             ' . $e . '
           </code>
         </div>
@@ -735,6 +737,45 @@ Class DB
   }
 
   /**
+   * try to get the file & line from the current sql-query
+   *
+   * @return array will return array['file'] and array['line']
+   */
+  private function getFileAndLineFromSql()
+  {
+    // init
+    $return = array();
+    $file = '';
+    $line = '';
+
+    $referrer = debug_backtrace();
+
+    foreach ($referrer as $key => $ref) {
+
+      if (
+          $ref['function'] == 'query'
+          ||
+          $ref['function'] == 'qry'
+      ) {
+        $file = $referrer[$key]['file'];
+        $line = $referrer[$key]['line'];
+      }
+
+      if ($ref['function'] == 'execSQL') {
+        $file = $referrer[$key]['file'];
+        $line = $referrer[$key]['line'];
+
+        break;
+      }
+    }
+
+    $return['file'] = $file;
+    $return['line'] = $line;
+
+    return $return;
+  }
+
+  /**
    * _logQuery
    *
    * @param String $sql     sql-query
@@ -750,32 +791,13 @@ Class DB
       return false;
     }
 
-    // init
-    $file = '';
-    $line = '';
-    $referrer = debug_backtrace();
-
-    foreach ($referrer as $key => $ref) {
-
-      if ($ref['function'] == '_logQuery') {
-        $file = $referrer[$key + 1]['file'];
-        $line = $referrer[$key + 1]['line'];
-      }
-
-      if ($ref['function'] == 'execSQL') {
-        $file = $referrer[$key]['file'];
-        $line = $referrer[$key]['line'];
-
-        break;
-      }
-    }
-
     $info = 'time => ' . round($duration, 5) . ' - ' . 'results => ' . $results . ' - ' . 'SQL => ' . UTF8::htmlentities($sql);
 
+    $fileInfo = $this->getFileAndLineFromSql();
     $this->logger(
         array(
             'debug',
-            '<strong>' . date("d. m. Y G:i:s") . ' (' . $file . ' line: ' . $line . '):</strong> ' . $info . '<br>',
+            '<strong>' . date("d. m. Y G:i:s") . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
             'sql'
         )
     );
@@ -994,7 +1016,7 @@ Class DB
       return false;
     }
 
-    if (strlen($sql) == 0) {
+    if (!$sql || strlen($sql) == 0) {
       $this->_displayError('Can\'t execute an empty Query', false);
 
       return false;

@@ -94,9 +94,9 @@ Class Result
 
     foreach ($data as $_row) {
       if (
-        isset($_row[$key])
-        &&
-        isset($_row[$value])
+          isset($_row[$key])
+          &&
+          isset($_row[$value])
       ) {
         $_key = $_row[$key];
         $_value = $_row[$value];
@@ -226,13 +226,13 @@ Class Result
   /**
    * fetchObject
    *
-   * @param string $class
-   * @param string $params
-   * @param bool   $reset
+   * @param string     $class
+   * @param null|array $params
+   * @param bool       $reset
    *
    * @return bool|null|object
    */
-  public function fetchObject($class = '', $params = '', $reset = false)
+  public function fetchObject($class = '', $params = null, $reset = false)
   {
     if ($reset === true) {
       $this->reset();
@@ -304,12 +304,12 @@ Class Result
   /**
    * fetchAllObject
    *
-   * @param string $class
-   * @param string $params
+   * @param string     $class
+   * @param null|array $params
    *
    * @return array
    */
-  public function fetchAllObject($class = '', $params = '')
+  public function fetchAllObject($class = '', $params = null)
   {
     $data = array();
 

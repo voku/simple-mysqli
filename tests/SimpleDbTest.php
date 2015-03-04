@@ -167,6 +167,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testBasics()
   {
+    require_once 'Foobar.php';
 
     // insert - true
     $pageArray = array(
@@ -183,9 +184,30 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $false = $this->db->insert('', $pageArray);
     $this->assertEquals(false, $false);
 
-    // check (select)
+    // select - true
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchObject();
+    $this->assertEquals('tpl_new', $tmpPage->page_template);
+
+    // select - true
+    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $tmpPage = $result->fetchObject('stdClass');
+    $this->assertEquals('tpl_new', $tmpPage->page_template);
+
+    // select - true
+    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $tmpPage = $result->fetchObject(
+        'Foobar',
+        array(
+            array(
+                'foo' => 1,
+                'bar' => 2
+            )
+        )
+    );
+    $this->assertEquals(1, $tmpPage->foo);
+    $this->assertEquals(2, $tmpPage->bar);
+    $this->assertEquals(null, $tmpPage->nothing);
     $this->assertEquals('tpl_new', $tmpPage->page_template);
 
     // update - true
@@ -395,7 +417,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals('öäü', $resultSelectTmp);
 
     $resultSelect = $this->db->select($this->tableName, $where);
-    $this->assertEquals(1, (string) $resultSelect);
+    $this->assertEquals(1, (string)$resultSelect);
   }
 
   public function testTransactionFalse()
@@ -710,15 +732,18 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   {
     // select - true
     $where = array(
-        'page_type ='        => 'öäü',
-        'page_type NOT LIKE' => '%öäü123',
-        'page_id >='         => 0,
-        'page_id NOT BETWEEN' => array('99997', '99999'),
-        'page_id NOT IN'     => array(
+        'page_type ='         => 'öäü',
+        'page_type NOT LIKE'  => '%öäü123',
+        'page_id >='          => 0,
+        'page_id NOT BETWEEN' => array(
+            '99997',
+            '99999'
+        ),
+        'page_id NOT IN'      => array(
             'test',
             'test123'
         ),
-        'page_type IN'       => array(
+        'page_type IN'        => array(
             'öäü',
             '123',
             'abc'
@@ -731,7 +756,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     // select - false
     $where = array(
         'page_type IS NOT' => 'lall',
-        'page_type IS' => 'öäü'
+        'page_type IS'     => 'öäü'
     );
     $resultSelect = $this->db->select($this->tableName, $where);
     $this->assertEquals(false, $resultSelect);
@@ -786,9 +811,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     ";
     $return = $this->db->query(
         $sql, array(
-        1.1,
-        1
-    )
+            1.1,
+            1
+        )
     );
     $this->assertEquals(true, $return);
 
@@ -800,9 +825,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     ";
     $return = $this->db->query(
         $sql, array(
-        'dateTest',
-        new DateTime()
-    )
+            'dateTest',
+            new DateTime()
+        )
     );
     $this->assertEquals(true, $return);
 
@@ -814,9 +839,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     ";
     $return = $this->db->query(
         $sql, array(
-        true,
-        array('test')
-    )
+            true,
+            array('test')
+        )
     );
     // array('test') => null
     $this->assertEquals(false, $return);
@@ -829,18 +854,18 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     ";
     $return = $this->db->query(
         $sql, array(
-        'tpl_test_new15',
-        1
-    )
+            'tpl_test_new15',
+            1
+        )
     );
     $this->assertEquals(false, $return);
 
     // query - false
     $return = $this->db->query(
         '', array(
-        'tpl_test_new15',
-        1
-    )
+            'tpl_test_new15',
+            1
+        )
     );
     $this->assertEquals(false, $return);
   }

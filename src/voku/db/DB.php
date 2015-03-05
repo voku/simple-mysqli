@@ -633,12 +633,10 @@ Class DB
         $var = "'" . trim($this->escape(trim(trim($var), "'")), "'") . "'";
       }
 
-    } else if (is_int($var)) {
-      $var = intval((int)$var);
+    } else if (is_int($var) || is_bool($var)) {
+      $var = intval($var);
     } else if (is_float($var)) {
-      $var = "'" . floatval(str_replace(',', '.', $var)) . "'";
-    } else if (is_bool($var)) {
-      $var = (int)$var;
+      $var = number_format(floatval(str_replace(',', '.', $var)), 8, '.', '');
     } else if (is_array($var)) {
       $var = null;
     } else if (($var instanceof \DateTime)) {
@@ -658,43 +656,43 @@ Class DB
   /**
    * escape
    *
-   * @param array|float|int|string $str
+   * @param array|float|int|string $var
    * @param bool                   $stripe_non_utf8
    * @param bool                   $html_entity_decode
    *
    * @return array|bool|float|int|string
    */
-  public function escape($str = '', $stripe_non_utf8 = true, $html_entity_decode = true)
+  public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = true)
   {
 
-    if (is_int($str) || is_bool($str)) {
-      return intval((int)$str);
-    } else if (is_float($str)) {
-      return floatval(str_replace(',', '.', $str));
-    } else if (is_array($str)) {
-      foreach ($str as $key => $value) {
-        $str[$this->escape($key, $stripe_non_utf8, $html_entity_decode)] = $this->escape($value, $stripe_non_utf8, $html_entity_decode);
+    if (is_int($var) || is_bool($var)) {
+      return intval($var);
+    } else if (is_float($var)) {
+      return number_format(floatval(str_replace(',', '.', $var)), 8, '.', '');
+    } else if (is_array($var)) {
+      foreach ($var as $key => $value) {
+        $var[$this->escape($key, $stripe_non_utf8, $html_entity_decode)] = $this->escape($value, $stripe_non_utf8, $html_entity_decode);
       }
 
-      return (array)$str;
+      return (array)$var;
     }
 
-    if (is_string($str)) {
+    if (is_string($var)) {
 
       if ($stripe_non_utf8 === true) {
-        $str = UTF8::cleanup($str);
+        $var = UTF8::cleanup($var);
       }
 
       if ($html_entity_decode === true) {
         // use no-html-entity for db
-        $str = UTF8::html_entity_decode($str);
+        $var = UTF8::html_entity_decode($var);
       }
 
-      $str = get_magic_quotes_gpc() ? stripslashes($str) : $str;
+      $var = get_magic_quotes_gpc() ? stripslashes($var) : $var;
 
-      $str = mysqli_real_escape_string($this->getLink(), $str);
+      $var = mysqli_real_escape_string($this->getLink(), $var);
 
-      return (string)$str;
+      return (string)$var;
     } else {
       return false;
     }

@@ -51,7 +51,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // sql - false
     $false = $db_1->query();
-    $this->expectOutputRegex('/(.)*SimpleDbTest\.php \/ 39(.)*/');
+    $this->expectOutputRegex('/(.)*SimpleDbTest\.php \/(.)*/');
     $this->assertEquals(false, $false);
   }
 

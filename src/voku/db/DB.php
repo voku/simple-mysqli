@@ -527,8 +527,6 @@ Class DB
    */
   public function query($sql = '', $params = false)
   {
-    static $reconnectCounter;
-
     if (!$this->isReady()) {
       return false;
     }
@@ -578,31 +576,7 @@ Class DB
 
         return true;
       } else {
-
-        $errorMsg = mysqli_error($this->link);
-
-        if ($errorMsg == 'DB server has gone away' || $errorMsg == 'MySQL server has gone away') {
-
-          // exit if we have more then 3 "DB server has gone away"-errors
-          if ($reconnectCounter > 3) {
-            $this->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
-            throw new \Exception($errorMsg);
-          } else {
-            $this->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
-
-            // reconnect
-            $reconnectCounter++;
-            $this->reconnect(true);
-
-            // re-run the current query
-            $this->query($sql, $params);
-          }
-        } else {
-          $this->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
-
-          // this query returned an error, we must display it (only for dev) !!!
-          $this->_displayError($errorMsg . ' | ' . $sql);
-        }
+        $this->queryErrorHandling(mysqli_error($this->link), $sql, $params);
       }
     }
 
@@ -884,7 +858,7 @@ Class DB
       $ping = $this->ping();
     }
 
-    if ($ping === false) {
+    if ($ping !== true) {
       $this->connected = false;
       $this->connect();
     }
@@ -899,7 +873,11 @@ Class DB
    */
   public function ping()
   {
-    return mysqli_ping($this->link);
+    if ($this->link && $this->link instanceof \mysqli) {
+      return @mysqli_ping($this->link);
+    } else {
+      return false;
+    }
   }
 
   /**
@@ -1015,8 +993,6 @@ Class DB
    */
   public function multi_query($sql)
   {
-    static $reconnectCounterMulti;
-
     if (!$this->isReady()) {
       return false;
     }
@@ -1055,25 +1031,7 @@ Class DB
           } else {
             $result[] = false;
 
-            if ($errorMsg == 'DB server has gone away' || $errorMsg == 'MySQL server has gone away') {
-
-              // exit if we have more then 3 "DB server has gone away"-errors
-              if ($reconnectCounterMulti > 3) {
-                $this->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
-                throw new \Exception($errorMsg);
-              } else {
-                $this->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
-
-                // reconnect
-                $reconnectCounterMulti++;
-                $this->reconnect(true);
-              }
-            } else {
-              $this->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
-
-              // this query returned an error, we must display it (only for dev) !!!
-              $this->_displayError($errorMsg . ' | ' . $sql);
-            }
+            $this->queryErrorHandling($errorMsg, $sql);
           }
         }
       }
@@ -1100,6 +1058,42 @@ Class DB
       return true;
     } else {
       return false;
+    }
+  }
+
+  /**
+   * query error-handling
+   *
+   * @param      $errorMsg
+   * @param      $sql
+   * @param bool $sqlParams
+   *
+   * @throws \Exception
+   */
+  protected function queryErrorHandling($errorMsg, $sql, $sqlParams = false)
+  {
+    if ($errorMsg == 'DB server has gone away' || $errorMsg == 'MySQL server has gone away') {
+      static $reconnectCounter;
+
+      // exit if we have more then 3 "DB server has gone away"-errors
+      if ($reconnectCounter > 3) {
+        $this->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
+        throw new \Exception($errorMsg);
+      } else {
+        $this->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
+
+        // reconnect
+        $reconnectCounter++;
+        $this->reconnect(true);
+
+        // re-run the current query
+        $this->query($sql, $sqlParams);
+      }
+    } else {
+      $this->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
+
+      // this query returned an error, we must display it (only for dev) !!!
+      $this->_displayError($errorMsg . ' | ' . $sql);
     }
   }
 

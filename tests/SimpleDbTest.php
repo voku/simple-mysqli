@@ -10,9 +10,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   /**
    * @var DB
    */
-  public $db;
+  protected $db;
 
-  public $tableName = 'test_page';
+  protected $tableName = 'test_page';
 
   public function setUp()
   {
@@ -492,7 +492,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertGreaterThan(1, $resultInsert);
 
     // start - test a transaction
-    $this->db->beginTransaction();
+    $this->db->startTransaction();
 
     $data = array(
         'page_type' => 'lall'
@@ -908,5 +908,42 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // check cache
     $this->assertEquals($queryCount, $this->db->query_count);
+  }
+
+  public function testQueryErrorHandling()
+  {
+    $this->db->close();
+    $this->assertEquals(false, $this->db->isReady());
+    $this->invokeMethod(
+        $this->db, "queryErrorHandling",
+        array(
+            "DB server has gone away",
+            "SELECT * FROM " . $this->tableName . " WHERE page_id = 1"
+        )
+    );
+    $this->assertEquals(true, $this->db->isReady());
+  }
+
+  /**
+   * Call protected/private method of a class.
+   *
+   * @param object &$object    Instantiated object that we will run method on.
+   * @param string $methodName Method name to call
+   * @param array  $parameters Array of parameters to pass into method.
+   *
+   * @return mixed Method return.
+   */
+  public function invokeMethod(&$object, $methodName, array $parameters = array())
+  {
+    $reflection = new \ReflectionClass(get_class($object));
+    $method = $reflection->getMethod($methodName);
+    $method->setAccessible(true);
+
+    return $method->invokeArgs($object, $parameters);
+  }
+
+  public function testInstanceOf()
+  {
+    $this->assertInstanceOf('voku\db\DB', DB::getInstance());
   }
 }

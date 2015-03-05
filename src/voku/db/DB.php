@@ -354,14 +354,13 @@ Class DB
     $logType = '';
     $logClass = $this->logger_class_name;
 
-    $tmpCount = count($log);
-
-    if ($tmpCount == 2) {
+    if (isset($log[0])) {
       $logMethod = $log[0];
+    }
+    if (isset($log[1])) {
       $logText = $log[1];
-    } else if ($tmpCount == 3) {
-      $logMethod = $log[0];
-      $logText = $log[1];
+    }
+    if (isset($log[2])) {
       $logType = $log[2];
     }
 

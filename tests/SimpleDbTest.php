@@ -19,6 +19,20 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', '3306', 'utf8', false, false);
   }
 
+  public function testLogQuery()
+  {
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true, '', 'debug');
+    $this->assertEquals(true, $db_1 instanceof DB);
+
+    // sql - true
+    $pageArray = array(
+        'page_template' => 'tpl_new',
+        'page_type'     => 'lall'
+    );
+    $tmpId = $db_1->insert($this->tableName, $pageArray);
+    $this->assertEquals(true, $tmpId > 0);
+  }
+
   public function testEchoOnError1()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
@@ -43,7 +57,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testEchoOnError3()
   {
-    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', 'debug', false, true);
+    $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
     $this->assertEquals(true, $db_1 instanceof DB);
 
     // sql - false

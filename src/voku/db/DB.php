@@ -942,14 +942,18 @@ Class DB
    * set charset
    *
    * @param string $charset
+   *
+   * @return bool
    */
   public function set_charset($charset)
   {
-    $this->charset = $charset;
+    $this->charset = (string)$charset;
 
-    mysqli_set_charset($this->link, $charset);
+    $return = mysqli_set_charset($this->link, $charset);
     @mysqli_query($this->link, "SET NAMES '" . $charset . "'");
     @mysqli_query($this->link, "SET CHARACTER SET " . $charset);
+
+    return $return;
   }
 
   /**

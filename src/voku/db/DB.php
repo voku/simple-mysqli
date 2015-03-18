@@ -136,9 +136,7 @@ Class DB
 
     $this->_loadConfig($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db);
 
-    if ($this->connect()) {
-      $this->set_charset($this->charset);
-    }
+    $this->connect();
 
     $this->mysqlDefaultTimeFunctions = array(
       // Returns the current date
@@ -276,6 +274,7 @@ Class DB
     if (!$this->link) {
       $this->_displayError("Error connecting to mysql server: " . mysqli_connect_error(), true);
     } else {
+      $this->set_charset($this->charset);
       $this->connected = true;
     }
 
@@ -943,14 +942,14 @@ Class DB
    * set charset
    *
    * @param string $charset
-   *
-   * @return bool|\mysqli_result
    */
   public function set_charset($charset)
   {
     $this->charset = $charset;
+
     mysqli_set_charset($this->link, $charset);
-    return mysqli_query($this->link, "SET NAMES " . $charset);
+    @mysqli_query($this->link, "SET NAMES '" . $charset . "'");
+    @mysqli_query($this->link, "SET CHARACTER SET " . $charset);
   }
 
   /**

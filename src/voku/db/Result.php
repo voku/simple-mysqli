@@ -211,16 +211,15 @@ Class Result
    */
   public function fetch($reset = false)
   {
+    $return = false;
 
     if ($this->_default_result_type == 'object') {
-      return $this->fetchObject('', '', $reset);
+      $return = $this->fetchObject('', '', $reset);
+    } else if ($this->_default_result_type == 'array') {
+      $return = $this->fetchArray($reset);
     }
 
-    if ($this->_default_result_type == 'array') {
-      return $this->fetchArray($reset);
-    }
-
-    return false;
+    return $return;
   }
 
   /**

@@ -890,9 +890,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // select - false
     $result = new Result();
-    $tmpPage = $result->fetchObject();
-    $this->assertEquals(false, $tmpPage);
     $tmpPage = $result->fetch();
+    $this->assertEquals(false, $tmpPage);
+    $tmpPage = $result->fetchObject();
     $this->assertEquals(false, $tmpPage);
     $tmpPage = $result->fetchArray();
     $this->assertEquals(false, $tmpPage);

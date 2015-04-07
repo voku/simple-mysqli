@@ -852,13 +852,19 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_template = ?,
         page_type = ?
     ";
-    $return = $this->db->query(
+    $tmpDate = new DateTime();
+    $tmpId = $this->db->query(
         $sql, array(
             'dateTest',
-            new DateTime()
+            $tmpDate
         )
     );
-    $this->assertEquals(true, $return);
+    $this->assertEquals(true, $tmpId);
+
+    // select - true
+    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $tmpPage = $result->fetchObject();
+    $this->assertEquals($tmpDate->format('Y-m-d H:i:s'), $tmpPage->page_type);
 
     // query - false
     $sql = "INSERT INTO " . $this->tableName . "

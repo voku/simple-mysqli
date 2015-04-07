@@ -639,7 +639,7 @@ Class DB
       $var = null;
     } else if (($var instanceof \DateTime)) {
       try {
-        $var = "'" . $this->escape($var->format('Y-m-d h:m:i'), false, false) . "'";
+        $var = "'" . $this->escape($var->format('Y-m-d H:i:s'), false, false) . "'";
       }
       catch (\Exception $e) {
         $var = null;

@@ -748,7 +748,7 @@ Class DB
       $var = null;
     } else if (($var instanceof \DateTime)) {
       try {
-        $var = "'" . $this->escape($var->format('Y-m-d h:m:i')) . "'";
+        $var = "'" . $this->escape($var->format('Y-m-d H:i:s')) . "'";
       } catch (\Exception $e) {
         $var = null;
       }

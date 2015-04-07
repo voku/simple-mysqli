@@ -224,6 +224,28 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(null, $tmpPage->nothing);
     $this->assertEquals('tpl_new', $tmpPage->page_template);
 
+    $tmpPage = $result->fetchAllObject(
+        'Foobar',
+        array(
+            array(
+                'foo' => 1,
+                'bar' => 2
+            )
+        )
+    );
+    $this->assertEquals(1, $tmpPage[0]->foo);
+    $this->assertEquals(2, $tmpPage[0]->bar);
+    $this->assertEquals(null, $tmpPage[0]->nothing);
+    $this->assertEquals('tpl_new', $tmpPage[0]->page_template);
+
+    $tmpPage = $result->fetchAllObject(
+        'Foobar'
+    );
+    $this->assertEquals(null, $tmpPage[0]->foo);
+    $this->assertEquals(null, $tmpPage[0]->bar);
+    $this->assertEquals('lall', $tmpPage[0]->page_type);
+    $this->assertEquals('tpl_new', $tmpPage[0]->page_template);
+
     // update - true
     $pageArray = array(
         'page_template' => 'tpl_update'
@@ -865,6 +887,15 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchObject();
     $this->assertEquals($tmpDate->format('Y-m-d H:i:s'), $tmpPage->page_type);
+
+    // select - false
+    $result = new Result();
+    $tmpPage = $result->fetchObject();
+    $this->assertEquals(false, $tmpPage);
+    $tmpPage = $result->fetch();
+    $this->assertEquals(false, $tmpPage);
+    $tmpPage = $result->fetchArray();
+    $this->assertEquals(false, $tmpPage);
 
     // query - false
     $sql = "INSERT INTO " . $this->tableName . "

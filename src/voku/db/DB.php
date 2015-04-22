@@ -1064,9 +1064,9 @@ Class DB
   /**
    * query error-handling
    *
-   * @param      $errorMsg
-   * @param      $sql
-   * @param bool $sqlParams
+   * @param string     $errorMsg
+   * @param string     $sql
+   * @param array|bool $sqlParams false if there wasn't any parameter
    *
    * @throws \Exception
    */

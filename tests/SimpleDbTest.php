@@ -4,6 +4,9 @@ use voku\db\DB;
 use voku\db\Result;
 use voku\helper\UTF8;
 
+/**
+ * Class SimpleMySQLiTest
+ */
 class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 {
 
@@ -22,7 +25,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   public function testLogQuery()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true, '', 'debug');
-    $this->assertEquals(true, $db_1 instanceof DB);
+    self::assertEquals(true, $db_1 instanceof DB);
 
     // sql - true
     $pageArray = array(
@@ -30,60 +33,60 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         'page_type'     => 'lall'
     );
     $tmpId = $db_1->insert($this->tableName, $pageArray);
-    $this->assertEquals(true, $tmpId > 0);
+    self::assertEquals(true, $tmpId > 0);
   }
 
   public function testEchoOnError1()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-    $this->assertEquals(true, $db_1 instanceof DB);
+    self::assertEquals(true, $db_1 instanceof DB);
 
     // insert - false
     $false = $db_1->insert($this->tableName, array());
     $this->expectOutputRegex('/(.)*empty-data-for-INSERT(.)*/');
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
   }
 
   public function testEchoOnError4()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-    $this->assertEquals(true, $db_1 instanceof DB);
+    self::assertEquals(true, $db_1 instanceof DB);
 
     // sql - false
     $false = $db_1->query();
     $this->expectOutputRegex('/(.)*SimpleDbTest\.php \/(.)*/');
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
   }
 
   public function testEchoOnError3()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-    $this->assertEquals(true, $db_1 instanceof DB);
+    self::assertEquals(true, $db_1 instanceof DB);
 
     // sql - false
     $false = $db_1->query();
     $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
   }
 
   public function testEchoOnError2()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-    $this->assertEquals(true, $db_1 instanceof DB);
+    self::assertEquals(true, $db_1 instanceof DB);
 
     // sql - false
     $false = $db_1->query();
     $this->expectOutputRegex('/(.)*Can\'t execute an empty Query(.)*/');
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // close db-connection
-    $this->assertEquals(true, $this->db->isReady());
+    self::assertEquals(true, $this->db->isReady());
     $this->db->close();
-    $this->assertEquals(false, $this->db->isReady());
+    self::assertEquals(false, $this->db->isReady());
 
     // insert - false
     $false = $db_1->query("INSERT INTO lall SET false=1");
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
   }
 
   /**
@@ -92,7 +95,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   public function testExitOnError1()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
-    $this->assertEquals(true, $db_1 instanceof DB);
+    self::assertEquals(true, $db_1 instanceof DB);
 
     // insert - false
     $pageArray = array(
@@ -100,7 +103,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         'page_type'     => 'lall'
     );
     $false = $db_1->insert('', $pageArray);
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
   }
 
   /**
@@ -109,42 +112,42 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   public function testExitOnError2()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
-    $this->assertEquals(true, $db_1 instanceof DB);
+    self::assertEquals(true, $db_1 instanceof DB);
 
     // insert - false
     $false = $db_1->insert($this->tableName, array());
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
   }
 
   public function testGetInstance()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
-    $this->assertEquals(true, $db_1 instanceof DB);
+    self::assertEquals(true, $db_1 instanceof DB);
 
     $db_2 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
-    $this->assertEquals(true, $db_2 instanceof DB);
+    self::assertEquals(true, $db_2 instanceof DB);
 
     $db_3 = DB::getInstance('localhost', 'root', '', 'mysql_test', null, '', true, false);
-    $this->assertEquals(true, $db_3 instanceof DB);
+    self::assertEquals(true, $db_3 instanceof DB);
 
     $db_4 = DB::getInstance();
-    $this->assertEquals(true, $db_4 instanceof DB);
+    self::assertEquals(true, $db_4 instanceof DB);
     $db_4_serial = serialize($db_4);
     unset($db_4);
     $db_4 = unserialize($db_4_serial);
-    $this->assertEquals(true, $db_4 instanceof DB);
+    self::assertEquals(true, $db_4 instanceof DB);
 
     $true = $this->db->connect();
-    $this->assertEquals(true, $true);
+    self::assertEquals(true, $true);
 
     $true = $this->db->connect();
-    $this->assertEquals(true, $true);
+    self::assertEquals(true, $true);
 
     $true = $this->db->reconnect(false);
-    $this->assertEquals(true, $true);
+    self::assertEquals(true, $true);
 
     $true = $this->db->reconnect(true);
-    $this->assertEquals(true, $true);
+    self::assertEquals(true, $true);
   }
 
   /**
@@ -173,10 +176,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testCharset()
   {
-    $this->assertEquals('utf8', $this->db->get_charset());
+    self::assertEquals('utf8', $this->db->get_charset());
     $return = $this->db->set_charset('utf8');
-    $this->assertEquals(true, $return);
-    $this->assertEquals('utf8', $this->db->get_charset());
+    self::assertEquals(true, $return);
+    self::assertEquals('utf8', $this->db->get_charset());
   }
 
   public function testBasics()
@@ -192,21 +195,21 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // insert - false
     $false = $this->db->insert($this->tableName);
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // insert - false
     $false = $this->db->insert('', $pageArray);
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // select - true
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchObject();
-    $this->assertEquals('tpl_new', $tmpPage->page_template);
+    self::assertEquals('tpl_new', $tmpPage->page_template);
 
     // select - true
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchObject('stdClass');
-    $this->assertEquals('tpl_new', $tmpPage->page_template);
+    self::assertEquals('tpl_new', $tmpPage->page_template);
 
     // select - true
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
@@ -219,10 +222,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
             )
         )
     );
-    $this->assertEquals(1, $tmpPage->foo);
-    $this->assertEquals(2, $tmpPage->bar);
-    $this->assertEquals(null, $tmpPage->nothing);
-    $this->assertEquals('tpl_new', $tmpPage->page_template);
+    self::assertEquals(1, $tmpPage->foo);
+    self::assertEquals(2, $tmpPage->bar);
+    self::assertEquals(null, $tmpPage->nothing);
+    self::assertEquals('tpl_new', $tmpPage->page_template);
 
     $tmpPage = $result->fetchAllObject(
         'Foobar',
@@ -233,18 +236,18 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
             )
         )
     );
-    $this->assertEquals(1, $tmpPage[0]->foo);
-    $this->assertEquals(2, $tmpPage[0]->bar);
-    $this->assertEquals(null, $tmpPage[0]->nothing);
-    $this->assertEquals('tpl_new', $tmpPage[0]->page_template);
+    self::assertEquals(1, $tmpPage[0]->foo);
+    self::assertEquals(2, $tmpPage[0]->bar);
+    self::assertEquals(null, $tmpPage[0]->nothing);
+    self::assertEquals('tpl_new', $tmpPage[0]->page_template);
 
     $tmpPage = $result->fetchAllObject(
         'Foobar'
     );
-    $this->assertEquals(null, $tmpPage[0]->foo);
-    $this->assertEquals(null, $tmpPage[0]->bar);
-    $this->assertEquals('lall', $tmpPage[0]->page_type);
-    $this->assertEquals('tpl_new', $tmpPage[0]->page_template);
+    self::assertEquals(null, $tmpPage[0]->foo);
+    self::assertEquals(null, $tmpPage[0]->bar);
+    self::assertEquals('lall', $tmpPage[0]->page_type);
+    self::assertEquals('tpl_new', $tmpPage[0]->page_template);
 
     // update - true
     $pageArray = array(
@@ -254,24 +257,24 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // update - false
     $false = $this->db->update($this->tableName, array(), "page_id = $tmpId");
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // update - false
     $false = $this->db->update($this->tableName, $pageArray, "");
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // update - false
     $false = $this->db->update($this->tableName, $pageArray, null);
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // update - false
     $false = $this->db->update('', $pageArray, "page_id = $tmpId");
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // check (select)
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchAllObject();
-    $this->assertEquals('tpl_update', $tmpPage[0]->page_template);
+    self::assertEquals('tpl_update', $tmpPage[0]->page_template);
 
     // replace - true
     $data = array(
@@ -283,23 +286,23 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // replace - false
     $false = $this->db->replace($this->tableName);
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // replace - false
     $false = $this->db->replace('', $data);
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchAllObject();
-    $this->assertEquals('tpl_test', $tmpPage[0]->page_template);
+    self::assertEquals('tpl_test', $tmpPage[0]->page_template);
 
     // delete - true
     $deleteId = $this->db->delete($this->tableName, array('page_id' => $tmpId));
-    $this->assertEquals(1, $deleteId);
+    self::assertEquals(1, $deleteId);
 
     // delete - false
     $false = $this->db->delete('', array('page_id' => $tmpId));
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // insert - true
     $pageArray = array(
@@ -310,31 +313,31 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // delete - false
     $false = $this->db->delete($this->tableName, "");
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // delete - false
     $false = $this->db->delete($this->tableName, null);
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // delete - true
     $false = $this->db->delete($this->tableName, "page_id = " . $this->db->escape($tmpId));
-    $this->assertEquals(true, $false);
+    self::assertEquals(true, $false);
 
     // select - true
     $result = $this->db->select($this->tableName, array('page_id' => 2));
-    $this->assertEquals(0, $result->num_rows);
+    self::assertEquals(0, $result->num_rows);
 
     // select - true
     $result = $this->db->select($this->tableName);
-    $this->assertEquals(true, $result->num_rows > 0);
+    self::assertEquals(true, $result->num_rows > 0);
 
     // select - false
     $false = $this->db->select($this->tableName, null);
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
 
     // select - false
     $false = $this->db->select('', array('page_id' => 2));
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
   }
 
   public function testQry()
@@ -346,21 +349,21 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
       WHERE page_id = ?
     ", 1
     );
-    $this->assertEquals(1, ($result));
+    self::assertEquals(1, ($result));
 
     $result = $this->db->qry(
         "SELECT * FROM " . $this->db->escape($this->tableName) . "
       WHERE page_id = 1
     "
     );
-    $this->assertEquals('tpl_test', ($result[0]['page_template']));
+    self::assertEquals('tpl_test', ($result[0]['page_template']));
 
     $result = $this->db->qry(
         "SELECT * FROM " . $this->db->escape($this->tableName) . "
       WHERE page_id_lall = 1
     "
     );
-    $this->assertEquals(false, $result);
+    self::assertEquals(false, $result);
   }
 
   public function testEscape()
@@ -374,8 +377,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $newData = $this->db->escape($data);
 
-    $this->assertEquals("tpl_test_\'new2", $newData['page_template']);
-    $this->assertEquals(1.10000000, $newData['page_type']);
+    self::assertEquals("tpl_test_\'new2", $newData['page_template']);
+    self::assertEquals(1.10000000, $newData['page_type']);
   }
 
   public function testConnector()
@@ -389,7 +392,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // will return the number of effected rows
     $resultUpdate = $this->db->update($this->tableName, $data, $where);
-    $this->assertEquals(1, $resultUpdate);
+    self::assertEquals(1, $resultUpdate);
 
     $data = array(
         'page_template' => 'tpl_test_new2',
@@ -398,7 +401,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
-    $this->assertGreaterThan(1, $resultInsert);
+    self::assertGreaterThan(1, $resultInsert);
 
     $where = array(
         'page_type ='        => 'öäü',
@@ -408,7 +411,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchArray();
-    $this->assertEquals('öäü', $resultSelectArray['page_type']);
+    self::assertEquals('öäü', $resultSelectArray['page_type']);
 
     $where = array(
         'page_type ='  => 'öäü',
@@ -422,7 +425,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchArrayPair('page_type', 'page_type');
-    $this->assertEquals('öäü', $resultSelectArray['öäü']);
+    self::assertEquals('öäü', $resultSelectArray['öäü']);
 
     $where = array(
         'page_type LIKE'     => 'öäü',
@@ -433,42 +436,42 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetch();
     $getDefaultResultType = $resultSelect->getDefaultResultType();
-    $this->assertEquals('object', $getDefaultResultType);
-    $this->assertEquals('öäü', $resultSelectArray->page_type);
+    self::assertEquals('object', $getDefaultResultType);
+    self::assertEquals('öäü', $resultSelectArray->page_type);
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelect->setDefaultResultType('array'); // switch default result-type
     $resultSelectArray = $resultSelect->fetch();
     $getDefaultResultType = $resultSelect->getDefaultResultType();
-    $this->assertEquals('array', $getDefaultResultType);
-    $this->assertEquals('öäü', $resultSelectArray['page_type']);
+    self::assertEquals('array', $getDefaultResultType);
+    self::assertEquals('öäü', $resultSelectArray['page_type']);
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchArray();
-    $this->assertEquals('öäü', $resultSelectArray['page_type']);
+    self::assertEquals('öäü', $resultSelectArray['page_type']);
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->get();
-    $this->assertEquals('öäü', $resultSelectArray->page_type);
+    self::assertEquals('öäü', $resultSelectArray->page_type);
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->getAll();
-    $this->assertEquals('öäü', $resultSelectArray[0]->page_type);
+    self::assertEquals('öäü', $resultSelectArray[0]->page_type);
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->getArray();
-    $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
+    self::assertEquals('öäü', $resultSelectArray[0]['page_type']);
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->getObject();
-    $this->assertEquals('öäü', $resultSelectArray[0]->page_type);
+    self::assertEquals('öäü', $resultSelectArray[0]->page_type);
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectTmp = $resultSelect->getColumn('page_type');
-    $this->assertEquals('öäü', $resultSelectTmp);
+    self::assertEquals('öäü', $resultSelectTmp);
 
     $resultSelect = $this->db->select($this->tableName, $where);
-    $this->assertEquals(1, (string)$resultSelect);
+    self::assertEquals(1, (string)$resultSelect);
   }
 
   public function testTransactionFalse()
@@ -481,11 +484,11 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
-    $this->assertGreaterThan(1, $resultInsert);
+    self::assertGreaterThan(1, $resultInsert);
 
     // start - test a transaction - true
     $beginTransaction = $this->db->beginTransaction();
-    $this->assertEquals(true, $beginTransaction);
+    self::assertEquals(true, $beginTransaction);
 
     $data = array(
         'page_type' => 'lall'
@@ -514,7 +517,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchAllArray();
-    $this->assertEquals('öäü', $resultSelectArray[0]['page_type']);
+    self::assertEquals('öäü', $resultSelectArray[0]['page_type']);
   }
 
   public function testGetErrors()
@@ -522,12 +525,12 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     // INFO: run all previous tests and generate some errors
 
     $error = $this->db->lastError();
-    $this->assertEquals(true, is_string($error));
-    $this->assertContains('Unknown column \'page_lall\' in \'field list', $error);
+    self::assertEquals(true, is_string($error));
+    self::assertContains('Unknown column \'page_lall\' in \'field list', $error);
 
     $errors = $this->db->getErrors();
-    $this->assertEquals(true, is_array($errors));
-    $this->assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);
+    self::assertEquals(true, is_array($errors));
+    self::assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);
   }
 
   public function testTransactionTrue()
@@ -540,7 +543,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
-    $this->assertGreaterThan(1, $resultInsert);
+    self::assertGreaterThan(1, $resultInsert);
 
     // start - test a transaction
     $this->db->startTransaction();
@@ -571,7 +574,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchAllArray();
-    $this->assertEquals('lall', $resultSelectArray[0]['page_type']);
+    self::assertEquals('lall', $resultSelectArray[0]['page_type']);
   }
 
   public function testRollback()
@@ -586,7 +589,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
-    $this->assertGreaterThan(1, $resultInsert);
+    self::assertGreaterThan(1, $resultInsert);
 
     $data = array(
         'page_type' => 'lall'
@@ -613,7 +616,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         'page_id' => $resultInsert,
     );
     $resultSelect = $this->db->select($this->tableName, $where);
-    $this->assertEquals(0, $resultSelect->num_rows);
+    self::assertEquals(0, $resultSelect->num_rows);
   }
 
   /**
@@ -624,11 +627,11 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   {
     // start - test a transaction - true
     $beginTransaction = $this->db->beginTransaction();
-    $this->assertEquals(true, $beginTransaction);
+    self::assertEquals(true, $beginTransaction);
 
     // start - test a transaction - false
     $beginTransaction = $this->db->beginTransaction();
-    $this->assertEquals(false, $beginTransaction);
+    self::assertEquals(false, $beginTransaction);
   }
 
   public function testFetchColumn()
@@ -640,11 +643,11 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
-    $this->assertGreaterThan(1, $resultInsert);
+    self::assertGreaterThan(1, $resultInsert);
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
     $columnResult = $resultSelect->fetchColumn('page_template');
-    $this->assertEquals('tpl_test_new5', $columnResult);
+    self::assertEquals('tpl_test_new5', $columnResult);
   }
 
   public function testJson()
@@ -656,12 +659,12 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
-    $this->assertGreaterThan(1, $resultInsert);
+    self::assertGreaterThan(1, $resultInsert);
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
     $columnResult = $resultSelect->json();
     $columnResultDecode = json_decode($columnResult, true);
-    $this->assertEquals('tpl_test_new6', $columnResultDecode[0]['page_template']);
+    self::assertEquals('tpl_test_new6', $columnResultDecode[0]['page_template']);
   }
 
   public function testFetchObject()
@@ -673,11 +676,11 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
-    $this->assertGreaterThan(1, $resultInsert);
+    self::assertGreaterThan(1, $resultInsert);
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
     $columnResult = $resultSelect->fetchObject();
-    $this->assertEquals('tpl_test_new7', $columnResult->page_template);
+    self::assertEquals('tpl_test_new7', $columnResult->page_template);
   }
 
   public function testDefaultResultType()
@@ -689,7 +692,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
-    $this->assertGreaterThan(1, $resultInsert);
+    self::assertGreaterThan(1, $resultInsert);
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
 
@@ -697,25 +700,25 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultSelect->setDefaultResultType('array');
 
     $columnResult = $resultSelect->fetch(true);
-    $this->assertEquals('tpl_test_new8', $columnResult['page_template']);
+    self::assertEquals('tpl_test_new8', $columnResult['page_template']);
 
     $columnResult = $resultSelect->fetchAll();
-    $this->assertEquals('tpl_test_new8', $columnResult[0]['page_template']);
+    self::assertEquals('tpl_test_new8', $columnResult[0]['page_template']);
 
     $columnResult = $resultSelect->fetchAllArray();
-    $this->assertEquals('tpl_test_new8', $columnResult[0]['page_template']);
+    self::assertEquals('tpl_test_new8', $columnResult[0]['page_template']);
 
     // object
     $resultSelect->setDefaultResultType('object');
 
     $columnResult = $resultSelect->fetch(true);
-    $this->assertEquals('tpl_test_new8', $columnResult->page_template);
+    self::assertEquals('tpl_test_new8', $columnResult->page_template);
 
     $columnResult = $resultSelect->fetchAll();
-    $this->assertEquals('tpl_test_new8', $columnResult[0]->page_template);
+    self::assertEquals('tpl_test_new8', $columnResult[0]->page_template);
 
     $columnResult = $resultSelect->fetchAllObject();
-    $this->assertEquals('tpl_test_new8', $columnResult[0]->page_template);
+    self::assertEquals('tpl_test_new8', $columnResult[0]->page_template);
   }
 
   public function testGetAllTables()
@@ -724,19 +727,19 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $return = false;
     foreach ($tableArray as $table) {
-      if (in_array($this->tableName, $table) === true) {
+      if (in_array($this->tableName, $table, true) === true) {
         $return = true;
         break;
       }
     }
 
-    $this->assertEquals(true, $return);
+    self::assertEquals(true, $return);
   }
 
   public function testPing()
   {
     $ping = $this->db->ping();
-    $this->assertEquals(true, $ping);
+    self::assertEquals(true, $ping);
   }
 
   public function testMultiQuery()
@@ -757,7 +760,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     ";
     // multi_query - true
     $result = $this->db->multi_query($sql);
-    $this->assertEquals(true, $result);
+    self::assertEquals(true, $result);
 
     $sql = "
     SELECT * FROM " . $this->tableName . ";
@@ -765,18 +768,18 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     ";
     // multi_query - true
     $result = $this->db->multi_query($sql);
-    $this->assertEquals(true, is_array($result));
+    self::assertEquals(true, is_array($result));
     foreach ($result as $resultForEach) {
       /* @var $resultForEach Result */
       $tmpArray = $resultForEach->fetchArray();
 
-      $this->assertEquals(true, is_array($tmpArray));
-      $this->assertEquals(true, count($tmpArray) > 0);
+      self::assertEquals(true, is_array($tmpArray));
+      self::assertEquals(true, count($tmpArray) > 0);
     }
 
     // multi_query - false
     $false = $this->db->multi_query('');
-    $this->assertEquals(false, $false);
+    self::assertEquals(false, $false);
   }
 
   public function testConnector2()
@@ -801,8 +804,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         )
     );
     $resultSelect = $this->db->select($this->tableName, $where);
-    $this->assertNotEquals(false, $resultSelect);
-    $this->assertEquals(true, ($resultSelect->num_rows > 0));
+    self::assertNotEquals(false, $resultSelect);
+    self::assertEquals(true, ($resultSelect->num_rows > 0));
 
     // select - false
     $where = array(
@@ -810,7 +813,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         'page_type IS'     => 'öäü'
     );
     $resultSelect = $this->db->select($this->tableName, $where);
-    $this->assertEquals(false, $resultSelect);
+    self::assertEquals(false, $resultSelect);
   }
 
   public function testExecSQL()
@@ -822,7 +825,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_type = " . $this->db->secure('öäü') . "
     ";
     $return = $this->db->execSQL($sql);
-    $this->assertEquals(false, $return);
+    self::assertEquals(false, $return);
 
     // execSQL - true
     $sql = "INSERT INTO " . $this->tableName . "
@@ -831,8 +834,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_type = " . $this->db->secure('öäü') . "
     ";
     $return = $this->db->execSQL($sql);
-    $this->assertEquals(true, is_int($return));
-    $this->assertEquals(true, $return > 0);
+    self::assertEquals(true, is_int($return));
+    self::assertEquals(true, $return > 0);
   }
 
   public function testUtf8Query()
@@ -843,13 +846,13 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_type = '" . UTF8::urldecode('DÃ¼sseldorf') . "'
     ";
     $return = $this->db->execSQL($sql);
-    $this->assertEquals(true, is_int($return));
-    $this->assertEquals(true, $return > 0);
+    self::assertEquals(true, is_int($return));
+    self::assertEquals(true, $return > 0);
 
     $data = $this->db->select($this->tableName, 'page_id=' . (int)$return);
     $dataArray = $data->fetchArray();
-    $this->assertEquals('Düsseldorf', $dataArray['page_template']);
-    $this->assertEquals('Düsseldorf', $dataArray['page_type']);
+    self::assertEquals('Düsseldorf', $dataArray['page_template']);
+    self::assertEquals('Düsseldorf', $dataArray['page_type']);
   }
 
   public function testQuery()
@@ -866,7 +869,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
             1
         )
     );
-    $this->assertEquals(true, $return);
+    self::assertEquals(true, $return);
 
     // query - true
     $sql = "INSERT INTO " . $this->tableName . "
@@ -881,21 +884,21 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
             $tmpDate
         )
     );
-    $this->assertEquals(true, $tmpId);
+    self::assertEquals(true, $tmpId);
 
     // select - true
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchObject();
-    $this->assertEquals($tmpDate->format('Y-m-d H:i:s'), $tmpPage->page_type);
+    self::assertEquals($tmpDate->format('Y-m-d H:i:s'), $tmpPage->page_type);
 
     // select - false
     $result = new Result();
     $tmpPage = $result->fetch();
-    $this->assertEquals(false, $tmpPage);
+    self::assertEquals(false, $tmpPage);
     $tmpPage = $result->fetchObject();
-    $this->assertEquals(false, $tmpPage);
+    self::assertEquals(false, $tmpPage);
     $tmpPage = $result->fetchArray();
-    $this->assertEquals(false, $tmpPage);
+    self::assertEquals(false, $tmpPage);
 
     // query - false
     $sql = "INSERT INTO " . $this->tableName . "
@@ -910,7 +913,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         )
     );
     // array('test') => null
-    $this->assertEquals(false, $return);
+    self::assertEquals(false, $return);
 
     // query - false
     $sql = "INSERT INTO " . $this->tableName . "
@@ -924,7 +927,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
             1
         )
     );
-    $this->assertEquals(false, $return);
+    self::assertEquals(false, $return);
 
     // query - false
     $return = $this->db->query(
@@ -933,7 +936,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
             1
         )
     );
-    $this->assertEquals(false, $return);
+    self::assertEquals(false, $return);
   }
 
   public function testCache()
@@ -948,7 +951,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     } else {
       $return = false;
     }
-    $this->assertEquals(true, $return);
+    self::assertEquals(true, $return);
 
     // set cache
     $sql = "SELECT * FROM " . $this->tableName;
@@ -958,7 +961,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     } else {
       $return = false;
     }
-    $this->assertEquals(true, $return);
+    self::assertEquals(true, $return);
 
     $queryCount = $this->db->query_count;
 
@@ -970,16 +973,16 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     } else {
       $return = false;
     }
-    $this->assertEquals(true, $return);
+    self::assertEquals(true, $return);
 
     // check cache
-    $this->assertEquals($queryCount, $this->db->query_count);
+    self::assertEquals($queryCount, $this->db->query_count);
   }
 
   public function testQueryErrorHandling()
   {
     $this->db->close();
-    $this->assertEquals(false, $this->db->isReady());
+    self::assertEquals(false, $this->db->isReady());
     $this->invokeMethod(
         $this->db, "queryErrorHandling",
         array(
@@ -987,7 +990,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
             "SELECT * FROM " . $this->tableName . " WHERE page_id = 1"
         )
     );
-    $this->assertEquals(true, $this->db->isReady());
+    self::assertEquals(true, $this->db->isReady());
   }
 
   /**
@@ -1010,6 +1013,6 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testInstanceOf()
   {
-    $this->assertInstanceOf('voku\db\DB', DB::getInstance());
+    self::assertInstanceOf('voku\db\DB', DB::getInstance());
   }
 }

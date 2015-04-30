@@ -134,7 +134,19 @@ Class DB
   {
     $this->connected = false;
 
-    $this->_loadConfig($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db);
+    $this->_loadConfig(
+        $hostname,
+        $username,
+        $password,
+        $database,
+        $port,
+        $charset,
+        $exit_on_error,
+        $echo_on_error,
+        $logger_class_name,
+        $logger_level,
+        $session_to_db
+    );
 
     $this->connect();
 
@@ -164,7 +176,7 @@ Class DB
       // Returns the current UTC time
       'UTC_TIME()',
       // Returns the current UTC date and time
-      'UTC_TIMESTAMP()'
+      'UTC_TIMESTAMP()',
     );
   }
 
@@ -199,10 +211,12 @@ Class DB
     if ($port) {
       $this->port = (int)$port;
     } else {
+      /** @noinspection PhpUsageOfSilenceOperatorInspection */
       $this->port = @ini_get('mysqli.default_port');
     }
 
     if (!$this->socket) {
+      /** @noinspection PhpUsageOfSilenceOperatorInspection */
       $this->socket = @ini_get('mysqli.default_socket');
     }
 
@@ -263,6 +277,7 @@ Class DB
       return true;
     }
 
+    /** @noinspection PhpUsageOfSilenceOperatorInspection */
     $this->link = @mysqli_connect(
         $this->hostname,
         $this->username,
@@ -306,7 +321,9 @@ Class DB
     $this->logger(
         array(
             'error',
-            '<strong>' . date("d. m. Y G:i:s") . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . ') (sql-error):</strong> ' . $e . '<br>'
+            '<strong>' . date(
+                "d. m. Y G:i:s"
+            ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . ') (sql-error):</strong> ' . $e . '<br>',
         )
     );
 
@@ -339,6 +356,50 @@ Class DB
         }
       }
     }
+  }
+
+  /**
+   * try to get the file & line from the current sql-query
+   *
+   * @return array will return array['file'] and array['line']
+   */
+  private function getFileAndLineFromSql()
+  {
+    // init
+    $return = array();
+    $file = '';
+    $line = '';
+
+    $referrer = debug_backtrace();
+
+    foreach ($referrer as $key => $ref) {
+
+      if (
+          $ref['function'] == 'query'
+          ||
+          $ref['function'] == 'qry'
+      ) {
+        $file = $referrer[$key]['file'];
+        $line = $referrer[$key]['line'];
+      }
+
+      if ($ref['function'] == '_logQuery') {
+        $file = $referrer[$key + 1]['file'];
+        $line = $referrer[$key + 1]['line'];
+      }
+
+      if ($ref['function'] == 'execSQL') {
+        $file = $referrer[$key]['file'];
+        $line = $referrer[$key]['line'];
+
+        break;
+      }
+    }
+
+    $return['file'] = $file;
+    $return['line'] = $line;
+
+    return $return;
   }
 
   /**
@@ -439,8 +500,9 @@ Class DB
     $args = array_map(
         array(
             $db,
-            'escape'
-        ), $args
+            'escape',
+        ),
+        $args
     );
     array_unshift($args, $query);
     $query = call_user_func_array('sprintf', $args);
@@ -494,10 +556,24 @@ Class DB
       }
     }
 
-    $connection = md5($hostname . $username . $password . $database . $port . $charset . (int)$exit_on_error . (int)$echo_on_error . $logger_class_name . $logger_level . (int)$session_to_db);
+    $connection = md5(
+        $hostname . $username . $password . $database . $port . $charset . (int)$exit_on_error . (int)$echo_on_error . $logger_class_name . $logger_level . (int)$session_to_db
+    );
 
     if (!isset($instance[$connection])) {
-      $instance[$connection] = new self($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db);
+      $instance[$connection] = new self(
+          $hostname,
+          $username,
+          $password,
+          $database,
+          $port,
+          $charset,
+          $exit_on_error,
+          $echo_on_error,
+          $logger_class_name,
+          $logger_level,
+          $session_to_db
+      );
 
       if (null === $firstInstance) {
         $firstInstance = $instance[$connection];
@@ -529,7 +605,7 @@ Class DB
       return false;
     }
 
-    if (!$sql || strlen($sql) == 0) {
+    if (!$sql || $sql === '') {
       $this->_displayError('Can\'t execute an empty Query', false);
 
       return false;
@@ -627,7 +703,7 @@ Class DB
   {
     if (is_string($var)) {
 
-      if (!in_array($var, $this->mysqlDefaultTimeFunctions)) {
+      if (!in_array($var, $this->mysqlDefaultTimeFunctions, true)) {
         $var = "'" . trim($this->escape(trim(trim($var), "'")), "'") . "'";
       }
 
@@ -669,7 +745,11 @@ Class DB
       return number_format(floatval(str_replace(',', '.', $var)), 8, '.', '');
     } else if (is_array($var)) {
       foreach ($var as $key => $value) {
-        $var[$this->escape($key, $stripe_non_utf8, $html_entity_decode)] = $this->escape($value, $stripe_non_utf8, $html_entity_decode);
+        $var[$this->escape($key, $stripe_non_utf8, $html_entity_decode)] = $this->escape(
+            $value,
+            $stripe_non_utf8,
+            $html_entity_decode
+        );
       }
 
       return (array)$var;
@@ -707,50 +787,6 @@ Class DB
   }
 
   /**
-   * try to get the file & line from the current sql-query
-   *
-   * @return array will return array['file'] and array['line']
-   */
-  private function getFileAndLineFromSql()
-  {
-    // init
-    $return = array();
-    $file = '';
-    $line = '';
-
-    $referrer = debug_backtrace();
-
-    foreach ($referrer as $key => $ref) {
-
-      if (
-          $ref['function'] == 'query'
-          ||
-          $ref['function'] == 'qry'
-      ) {
-        $file = $referrer[$key]['file'];
-        $line = $referrer[$key]['line'];
-      }
-
-      if ($ref['function'] == '_logQuery') {
-        $file = $referrer[$key + 1]['file'];
-        $line = $referrer[$key + 1]['line'];
-      }
-
-      if ($ref['function'] == 'execSQL') {
-        $file = $referrer[$key]['file'];
-        $line = $referrer[$key]['line'];
-
-        break;
-      }
-    }
-
-    $return['file'] = $file;
-    $return['line'] = $line;
-
-    return $return;
-  }
-
-  /**
    * _logQuery
    *
    * @param String $sql     sql-query
@@ -766,14 +802,19 @@ Class DB
       return false;
     }
 
-    $info = 'time => ' . round($duration, 5) . ' - ' . 'results => ' . $results . ' - ' . 'SQL => ' . UTF8::htmlentities($sql);
+    $info = 'time => ' . round(
+            $duration,
+            5
+        ) . ' - ' . 'results => ' . $results . ' - ' . 'SQL => ' . UTF8::htmlentities($sql);
 
     $fileInfo = $this->getFileAndLineFromSql();
     $this->logger(
         array(
             'debug',
-            '<strong>' . date("d. m. Y G:i:s") . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
-            'sql'
+            '<strong>' . date(
+                "d. m. Y G:i:s"
+            ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
+            'sql',
         )
     );
 
@@ -801,6 +842,42 @@ Class DB
   }
 
   /**
+   * query error-handling
+   *
+   * @param string     $errorMsg
+   * @param string     $sql
+   * @param array|bool $sqlParams false if there wasn't any parameter
+   *
+   * @throws \Exception
+   */
+  protected function queryErrorHandling($errorMsg, $sql, $sqlParams = false)
+  {
+    if ($errorMsg == 'DB server has gone away' || $errorMsg == 'MySQL server has gone away') {
+      static $reconnectCounter;
+
+      // exit if we have more then 3 "DB server has gone away"-errors
+      if ($reconnectCounter > 3) {
+        $this->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
+        throw new \Exception($errorMsg);
+      } else {
+        $this->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
+
+        // reconnect
+        $reconnectCounter++;
+        $this->reconnect(true);
+
+        // re-run the current query
+        $this->query($sql, $sqlParams);
+      }
+    } else {
+      $this->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
+
+      // this query returned an error, we must display it (only for dev) !!!
+      $this->_displayError($errorMsg . ' | ' . $sql);
+    }
+  }
+
+  /**
    * send a error mail to the admin / dev
    *
    * @param string $subject
@@ -817,21 +894,21 @@ Class DB
         $this->logger(
             array(
                 'debug',
-                $subject . ' | ' . $htmlBody
+                $subject . ' | ' . $htmlBody,
             )
         );
       } else if ($priority > 3) {
         $this->logger(
             array(
                 'error',
-                $subject . ' | ' . $htmlBody
+                $subject . ' | ' . $htmlBody,
             )
         );
       } else if ($priority < 3) {
         $this->logger(
             array(
                 'info',
-                $subject . ' | ' . $htmlBody
+                $subject . ' | ' . $htmlBody,
             )
         );
       }
@@ -870,6 +947,7 @@ Class DB
   public function ping()
   {
     if ($this->link && $this->link instanceof \mysqli) {
+      /** @noinspection PhpUsageOfSilenceOperatorInspection */
       return @mysqli_ping($this->link);
     } else {
       return false;
@@ -950,7 +1028,9 @@ Class DB
     $this->charset = (string)$charset;
 
     $return = mysqli_set_charset($this->link, $charset);
+    /** @noinspection PhpUsageOfSilenceOperatorInspection */
     @mysqli_query($this->link, "SET NAMES '" . $charset . "'");
+    /** @noinspection PhpUsageOfSilenceOperatorInspection */
     @mysqli_query($this->link, "SET CHARACTER SET " . $charset);
 
     return $return;
@@ -997,7 +1077,7 @@ Class DB
       return false;
     }
 
-    if (!$sql || strlen($sql) == 0) {
+    if (!$sql || $sql === '') {
       $this->_displayError('Can\'t execute an empty Query', false);
 
       return false;
@@ -1034,8 +1114,7 @@ Class DB
             $this->queryErrorHandling($errorMsg, $sql);
           }
         }
-      }
-      while (mysqli_more_results($this->link) === true ? mysqli_next_result($this->link) : false);
+      } while (mysqli_more_results($this->link) === true ? mysqli_next_result($this->link) : false);
 
     } else {
 
@@ -1054,46 +1133,10 @@ Class DB
       return $result;
     }
 
-    if (!in_array(false, $result)) {
+    if (!in_array(false, $result, true)) {
       return true;
     } else {
       return false;
-    }
-  }
-
-  /**
-   * query error-handling
-   *
-   * @param string     $errorMsg
-   * @param string     $sql
-   * @param array|bool $sqlParams false if there wasn't any parameter
-   *
-   * @throws \Exception
-   */
-  protected function queryErrorHandling($errorMsg, $sql, $sqlParams = false)
-  {
-    if ($errorMsg == 'DB server has gone away' || $errorMsg == 'MySQL server has gone away') {
-      static $reconnectCounter;
-
-      // exit if we have more then 3 "DB server has gone away"-errors
-      if ($reconnectCounter > 3) {
-        $this->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
-        throw new \Exception($errorMsg);
-      } else {
-        $this->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
-
-        // reconnect
-        $reconnectCounter++;
-        $this->reconnect(true);
-
-        // re-run the current query
-        $this->query($sql, $sqlParams);
-      }
-    } else {
-      $this->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
-
-      // this query returned an error, we must display it (only for dev) !!!
-      $this->_displayError($errorMsg . ' | ' . $sql);
     }
   }
 
@@ -1214,7 +1257,7 @@ Class DB
   {
     $table = trim($table);
 
-    if (strlen($table) == 0) {
+    if ($table === '') {
       $this->_displayError("invalid-table-name");
 
       return false;
@@ -1339,7 +1382,8 @@ Class DB
           $_value = $this->secure($_value);
         }
 
-        $pairs[] = " " . $this->quote_string(trim(str_ireplace($_connector, '', $_key))) . " " . $_connector . " " . $_value . " \n";
+        $quoteString = $this->quote_string(trim(str_ireplace($_connector, '', $_key)));
+        $pairs[] = " " . $quoteString . " " . $_connector . " " . $_value . " \n";
       }
 
       $sql = implode($glue, $pairs);
@@ -1383,7 +1427,7 @@ Class DB
 
     $table = trim($table);
 
-    if (strlen($table) == 0) {
+    if ($table === '') {
       $this->_displayError("invalid table name");
 
       return false;
@@ -1428,7 +1472,7 @@ Class DB
 
     $table = trim($table);
 
-    if (strlen($table) == 0) {
+    if ($table === '') {
       $this->_displayError("invalid table name");
 
       return false;
@@ -1468,7 +1512,7 @@ Class DB
 
     $table = trim($table);
 
-    if (strlen($table) == 0) {
+    if ($table === '') {
       $this->_displayError("invalid table name");
 
       return false;
@@ -1498,7 +1542,7 @@ Class DB
   public function select($table, $where = '1=1')
   {
 
-    if (strlen($table) == 0) {
+    if ($table === '') {
       $this->_displayError("invalid table name");
 
       return false;

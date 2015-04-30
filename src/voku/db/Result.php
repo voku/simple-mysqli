@@ -123,6 +123,7 @@ Class Result
     ) {
       $this->reset();
 
+      /** @noinspection PhpAssignmentInConditionInspection */
       while ($row = mysqli_fetch_assoc($this->_result)) {
         $data[] = $row;
       }
@@ -320,14 +321,17 @@ Class Result
       $this->reset();
 
       if ($class && $params) {
+        /** @noinspection PhpAssignmentInConditionInspection */
         while ($row = mysqli_fetch_object($this->_result, $class, $params)) {
           $data[] = $row;
         }
       } else if ($class) {
+        /** @noinspection PhpAssignmentInConditionInspection */
         while ($row = mysqli_fetch_object($this->_result, $class)) {
           $data[] = $row;
         }
       } else {
+        /** @noinspection PhpAssignmentInConditionInspection */
         while ($row = mysqli_fetch_object($this->_result)) {
           $data[] = $row;
         }

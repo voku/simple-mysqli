@@ -19,15 +19,6 @@ class Foobar extends stdClass
 
   /**
    * @param $name
-   * @param $value
-   */
-  public function __set($name, $value)
-  {
-    $this->data[$name] = $value;
-  }
-
-  /**
-   * @param $name
    *
    * @return null
    */
@@ -38,5 +29,14 @@ class Foobar extends stdClass
     }
 
     return null;
+  }
+
+  /**
+   * @param $name
+   * @param $value
+   */
+  public function __set($name, $value)
+  {
+    $this->data[$name] = $value;
   }
 }

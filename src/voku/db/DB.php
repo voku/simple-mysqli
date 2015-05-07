@@ -674,7 +674,7 @@ Class DB
     }
 
     // convert to array
-    if (!is_array($params)) {
+    if (is_array($params) === false) {
       $params = array($params);
     }
 
@@ -708,9 +708,9 @@ Class DB
       }
 
     } else if (is_int($var) || is_bool($var)) {
-      $var = intval($var);
+      $var = (int)$var;
     } else if (is_float($var)) {
-      $var = number_format(floatval(str_replace(',', '.', $var)), 8, '.', '');
+      $var = number_format((float)str_replace(',', '.', $var), 8, '.', '');
     } else if (is_array($var)) {
       $var = null;
     } else if (($var instanceof \DateTime)) {
@@ -740,9 +740,9 @@ Class DB
   {
 
     if (is_int($var) || is_bool($var)) {
-      return intval($var);
+      return (int)$var;
     } else if (is_float($var)) {
-      return number_format(floatval(str_replace(',', '.', $var)), 8, '.', '');
+      return number_format((float)str_replace(',', '.', $var), 8, '.', '');
     } else if (is_array($var)) {
       foreach ($var as $key => $value) {
         $var[$this->escape($key, $stripe_non_utf8, $html_entity_decode)] = $this->escape(
@@ -1362,6 +1362,7 @@ Class DB
             )
         ) {
           foreach ($_value as $oldKey => $oldValue) {
+            /** @noinspection AlterInForeachInspection */
             $_value[$oldKey] = $this->secure($oldValue);
           }
           $_value = '(' . implode(',', $_value) . ')';
@@ -1375,6 +1376,7 @@ Class DB
             )
         ) {
           foreach ($_value as $oldKey => $oldValue) {
+            /** @noinspection AlterInForeachInspection */
             $_value[$oldKey] = $this->secure($oldValue);
           }
           $_value = '(' . implode(' AND ', $_value) . ')';
@@ -1442,6 +1444,7 @@ Class DB
     // extracting column names
     $columns = array_keys($data);
     foreach ($columns as $k => $_key) {
+      /** @noinspection AlterInForeachInspection */
       $columns[$k] = $this->quote_string($_key);
     }
 
@@ -1449,6 +1452,7 @@ Class DB
 
     // extracting values
     foreach ($data as $k => $_value) {
+      /** @noinspection AlterInForeachInspection */
       $data[$k] = $this->secure($_value);
     }
     $values = implode(",", $data);

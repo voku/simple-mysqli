@@ -25,8 +25,8 @@ You can download it from here, or require it using [composer](https://packagist.
 ```json
 {
     "require": {
-		"voku/simple-mysqli": "dev-master"
-	}
+    "voku/simple-mysqli": "dev-master"
+  }
 }
 ```
 

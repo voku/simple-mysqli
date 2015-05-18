@@ -611,7 +611,11 @@ Class DB
       return false;
     }
 
-    if ($params !== false && is_array($params)) {
+    if (
+        $params !== false
+        &&
+        is_array($params)
+    ) {
       $sql = $this->_parseQueryParams($sql, $params);
     }
 
@@ -626,7 +630,11 @@ Class DB
     }
     $this->_logQuery($sql, $query_duration, $resultCount);
 
-    if ($result !== null && $result instanceof \mysqli_result) {
+    if (
+        $result !== null
+        &&
+        $result instanceof \mysqli_result
+    ) {
 
       // return query result object
       return new Result($sql, $result);
@@ -798,7 +806,12 @@ Class DB
   private function _logQuery($sql, $duration, $results)
   {
     $logLevelUse = strtolower($this->logger_level);
-    if ($logLevelUse != 'trace' && $logLevelUse != 'debug') {
+
+    if (
+        $logLevelUse != 'trace'
+        &&
+        $logLevelUse != 'debug'
+    ) {
       return false;
     }
 
@@ -946,7 +959,11 @@ Class DB
    */
   public function ping()
   {
-    if ($this->link && $this->link instanceof \mysqli) {
+    if (
+        $this->link
+        &&
+        $this->link instanceof \mysqli
+    ) {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
       return @mysqli_ping($this->link);
     } else {
@@ -959,7 +976,7 @@ Class DB
    *
    * @param string $query    sql-query
    * @param bool   $useCache use cache?
-   * @param int    $cacheTTL cache-ttl
+   * @param int    $cacheTTL cache-ttl in seconds
    *
    * @return bool|int|array         "array" by "<b>SELECT</b>"-queries<br />
    *                                "int" (insert_id) by "<b>INSERT</b>"-queries<br />
@@ -971,12 +988,14 @@ Class DB
   public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
   {
     $db = DB::getInstance();
+
     if ($useCache === true) {
       $cache = new Cache(null, null, false, $useCache);
 
       if (
           $cache->getCacheIsReady() === true
-          && $cache->existsItem("sql-" . md5($query))
+          &&
+          $cache->existsItem("sql-" . md5($query))
       ) {
         return $cache->getItem("sql-" . md5($query));
       }
@@ -993,8 +1012,10 @@ Class DB
 
       if (
           $useCache === true
-          && $cache instanceof Cache
-          && $cache->getCacheIsReady() === true
+          &&
+          $cache instanceof Cache
+          &&
+          $cache->getCacheIsReady() === true
       ) {
         $cache->setItem("sql-" . md5($query), $return, $cacheTTL);
       }

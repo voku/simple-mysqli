@@ -590,8 +590,6 @@ Class DB
    *
    * @param array|boolean $params         a "array" of sql-query-parameters
    *                                      "false" if you don't need any parameter
-   * @param bool          $useCache       use cache?
-   * @param int           $cacheTTL       cache-ttl in seconds
    *
    * @return bool|int|Result              "Result" by "<b>SELECT</b>"-queries<br />
    *                                      "int" (insert_id) by "<b>INSERT</b>"-queries<br />
@@ -601,7 +599,7 @@ Class DB
    *
    * @throws \Exception
    */
-  public function query($sql = '', $params = false, $useCache = false, $cacheTTL = 3600)
+  public function query($sql = '', $params = false)
   {
     if (!$this->isReady()) {
       return false;
@@ -617,21 +615,6 @@ Class DB
       $sql = $this->_parseQueryParams($sql, $params);
     }
 
-    if ($useCache === true) {
-      $cache = new Cache(null, null, false, $useCache);
-
-      if (
-          $cache->getCacheIsReady() === true
-          &&
-          $cache->existsItem("sql-" . md5($sql))
-      ) {
-        return $cache->getItem("sql-" . md5($sql));
-      }
-
-    } else {
-      $cache = false;
-    }
-
     $query_start_time = microtime(true);
     $result = mysqli_query($this->link, $sql);
     $query_duration = microtime(true) - $query_start_time;
@@ -643,26 +626,10 @@ Class DB
     }
     $this->_logQuery($sql, $query_duration, $resultCount);
 
-    if (
-        $result !== null
-        &&
-        $result instanceof \mysqli_result
-    ) {
-
-      $resultObject = new Result($sql, $result);
-
-      if (
-          $useCache === true
-          &&
-          $cache instanceof Cache
-          &&
-          $cache->getCacheIsReady() === true
-      ) {
-        $cache->setItem("sql-" . md5($sql), $resultObject, $cacheTTL);
-      }
+    if ($result !== null && $result instanceof \mysqli_result) {
 
       // return query result object
-      return $resultObject;
+      return new Result($sql, $result);
 
     } else {
       // is the query successful
@@ -992,7 +959,7 @@ Class DB
    *
    * @param string $query    sql-query
    * @param bool   $useCache use cache?
-   * @param int    $cacheTTL cache-ttl in seconds
+   * @param int    $cacheTTL cache-ttl
    *
    * @return bool|int|array         "array" by "<b>SELECT</b>"-queries<br />
    *                                "int" (insert_id) by "<b>INSERT</b>"-queries<br />
@@ -1004,11 +971,34 @@ Class DB
   public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
   {
     $db = DB::getInstance();
+    if ($useCache === true) {
+      $cache = new Cache(null, null, false, $useCache);
 
-    $result = $db->query($query, false, $useCache, $cacheTTL);
+      if (
+          $cache->getCacheIsReady() === true
+          && $cache->existsItem("sql-" . md5($query))
+      ) {
+        return $cache->getItem("sql-" . md5($query));
+      }
+
+    } else {
+      $cache = false;
+    }
+
+    $result = $db->query($query);
 
     if ($result instanceof Result) {
+
       $return = $result->fetchAllArray();
+
+      if (
+          $useCache === true
+          && $cache instanceof Cache
+          && $cache->getCacheIsReady() === true
+      ) {
+        $cache->setItem("sql-" . md5($query), $return, $cacheTTL);
+      }
+
     } else {
       $return = $result;
     }

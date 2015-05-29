@@ -299,8 +299,6 @@ Class Result
     return $return;
   }
 
-  // only aliases ------>
-
   /**
    * fetchAllObject
    *

@@ -939,6 +939,22 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(false, $return);
   }
 
+  public function testFixedArray()
+  {
+    $sql = "SELECT * FROM " . $this->tableName;
+    /* var $result \SplFixedArray */
+    $result = $this->db->execSQL($sql, false, 0, true);
+
+    if ($result->count() > 0) {
+      $return = true;
+    } else {
+      $return = false;
+    }
+    self::assertEquals(true, $return);
+    self::assertEquals(true, $result[0] instanceof SplFixedArray);
+    self::assertEquals(true, $result instanceof SplFixedArray);
+  }
+
   public function testCache()
   {
     $_GET['testCache'] = 1;

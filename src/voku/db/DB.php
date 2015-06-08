@@ -974,25 +974,24 @@ Class DB
   /**
    * can handel select/insert/update/delete queries
    *
-   * @param string $query         sql-query
-   * @param bool   $useCache      use cache?
-   * @param int    $cacheTTL      cache-ttl in seconds
-   * @param bool   $useFixedArray use a "SplFixedArray" as result
+   * @param string $query    sql-query
+   * @param bool   $useCache use cache?
+   * @param int    $cacheTTL cache-ttl in seconds
    *
-   * @return bool|int|array|\SplFixedArray  "array" || "SplFixedArray" by "<b>SELECT</b>"-queries<br />
-   *                                        "int" (insert_id) by "<b>INSERT</b>"-queries<br />
-   *                                        "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-   *                                        "true" by e.g. "DROP"-queries<br />
-   *                                        "false" on error
+   * @return bool|int|array       "array" by "<b>SELECT</b>"-queries<br />
+   *                              "int" (insert_id) by "<b>INSERT</b>"-queries<br />
+   *                              "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                              "true" by e.g. "DROP"-queries<br />
+   *                              "false" on error
    *
    */
-  public static function execSQL($query, $useCache = false, $cacheTTL = 3600, $useFixedArray = false)
+  public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
   {
     $db = DB::getInstance();
 
     if ($useCache === true) {
       $cache = new Cache(null, null, false, $useCache);
-      $cacheKey = "sql-" . md5($query) . '-' . (int)$useFixedArray;
+      $cacheKey = "sql-" . md5($query);
 
       if (
           $cache->getCacheIsReady() === true
@@ -1010,26 +1009,7 @@ Class DB
 
     if ($result instanceof Result) {
 
-      if ($useFixedArray === true) {
-
-        $return = new \SplFixedArray($result->num_rows);
-        $i = 0;
-        foreach ($result->fetchAllArray() as $resultItemArray) {
-
-          $returnTmp = new \SplFixedArray(count($resultItemArray));
-          $y = 0;
-          foreach ($resultItemArray as $resultItem) {
-            $returnTmp[$y] = $resultItem;
-            $y++;
-          }
-
-          $return[$i] = $returnTmp;
-          $i++;
-        }
-
-      } else {
-        $return = $result->fetchAllArray();
-      }
+      $return = $result->fetchAllArray();
 
       if (
           isset($cacheKey)

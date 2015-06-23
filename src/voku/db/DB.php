@@ -277,22 +277,22 @@ Class DB
       return true;
     }
 
-    /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    $this->link = @mysqli_connect(
+    try{
+      mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+      $this->link = mysqli_connect(
         $this->hostname,
         $this->username,
         $this->password,
         $this->database,
         $this->port
-    );
-
-    if (!$this->link) {
+      );
+    } catch(Exception $exception){
       $this->_displayError("Error connecting to mysql server: " . mysqli_connect_error(), true);
-    } else {
+    }
+    if ($this->link === true) {
       $this->set_charset($this->charset);
       $this->connected = true;
     }
-
     return $this->isReady();
   }
 

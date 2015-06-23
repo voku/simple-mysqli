@@ -130,7 +130,7 @@ Class DB
    * @param string         $logger_level  'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'
    * @param boolean|string $session_to_db use a empty string "" or false to disable it
    */
-  private function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db)
+  protected function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db)
   {
     $this->connected = false;
 
@@ -738,9 +738,13 @@ Class DB
   /**
    * escape
    *
-   * @param array|float|int|string $var
-   * @param bool                   $stripe_non_utf8
-   * @param bool                   $html_entity_decode
+   * @param array|float|int|string|boolean $var boolean: convert into "integer"<br />
+   *                                            int: convert into "integer"<br />
+   *                                            float: convert into "float" and replace "," with "."<br />
+   *                                            array: run escape() for every key => value<br />
+   *                                            string: run UTF8::cleanup() and mysqli_real_escape_string()<br />
+   * @param bool                           $stripe_non_utf8
+   * @param bool                           $html_entity_decode
    *
    * @return array|bool|float|int|string
    */
@@ -753,11 +757,7 @@ Class DB
       return number_format((float)str_replace(',', '.', $var), 8, '.', '');
     } else if (is_array($var)) {
       foreach ($var as $key => $value) {
-        $var[$this->escape($key, $stripe_non_utf8, $html_entity_decode)] = $this->escape(
-            $value,
-            $stripe_non_utf8,
-            $html_entity_decode
-        );
+        $var[$this->escape($key, $stripe_non_utf8, $html_entity_decode)] = $this->escape($value, $stripe_non_utf8, $html_entity_decode);
       }
 
       return (array)$var;
@@ -1609,8 +1609,6 @@ Class DB
     if ($this->session_to_db === false) {
       $this->close();
     }
-
-    return;
   }
 
   /**

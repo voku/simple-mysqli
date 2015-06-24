@@ -139,7 +139,11 @@ Class Result
    */
   public function is_empty()
   {
-    return ($this->num_rows > 0) ? false : true;
+    if ($this->num_rows > 0) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -179,8 +183,6 @@ Class Result
   public function __destruct()
   {
     $this->free();
-
-    return;
   }
 
   /**

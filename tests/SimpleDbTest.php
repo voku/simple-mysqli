@@ -125,7 +125,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
    */
   public function testGetFalseInstanceV1()
   {
-    $db_1 = DB::getInstance('localhost', 'root', 'test', 'mysql_test', '', '', false, false);
+    DB::getInstance('localhost', 'root', 'test', 'mysql_test', '', '', false, false);
   }
 
   /**
@@ -134,7 +134,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
    */
   public function testGetFalseInstanceV2()
   {
-    $db_2 = DB::getInstance('localhost_lall', 'root123', '', 'mysql_test', '', '', true, false);
+    DB::getInstance('localhost_lall', 'root123', '', 'mysql_test', '', '', true, false);
   }
 
   /**
@@ -143,7 +143,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
    */
   public function testGetFalseInstanceV3()
   {
-    $db_3 = DB::getInstance('localhost', 'root', '', 'mysql_test_foo', null, '', true, false);
+    DB::getInstance('localhost', 'root', '', 'mysql_test_foo', null, '', true, false);
   }
 
   public function testGetInstance()
@@ -675,6 +675,24 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
     $columnResult = $resultSelect->fetchColumn('page_template');
     self::assertEquals('tpl_test_new5', $columnResult);
+  }
+
+  public function testIsEmpty()
+  {
+    $data = array(
+        'page_template' => 'tpl_test_new5',
+        'page_type'     => 'öäü',
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert = $this->db->insert($this->tableName, $data);
+    self::assertGreaterThan(1, $resultInsert);
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
+    self::assertEquals(false, $resultSelect->is_empty());
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id' => 999999));
+    self::assertEquals(true, $resultSelect->is_empty());
   }
 
   public function testJson()

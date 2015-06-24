@@ -119,6 +119,33 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(false, $false);
   }
 
+  /**
+   * @expectedException Exception
+   * @expectedExceptionMessage Error connecting to mysql server: Access denied for user 'root'@'localhost' (using password: YES)
+   */
+  public function testGetFalseInstanceV1()
+  {
+    $db_1 = DB::getInstance('localhost', 'root', 'test', 'mysql_test', '', '', false, false);
+  }
+
+  /**
+   * @expectedException Exception
+   * @expectedExceptionMessageRegExp #Error connecting to mysql server: php_network_getaddresses: getaddrinfo failed: .*#
+   */
+  public function testGetFalseInstanceV2()
+  {
+    $db_2 = DB::getInstance('localhost_lall', 'root123', '', 'mysql_test', '', '', true, false);
+  }
+
+  /**
+   * @expectedException Exception
+   * @expectedExceptionMessageRegExp #Error connecting to mysql server: Unknown database 'mysql_test_foo'#
+   */
+  public function testGetFalseInstanceV3()
+  {
+    $db_3 = DB::getInstance('localhost', 'root', '', 'mysql_test_foo', null, '', true, false);
+  }
+
   public function testGetInstance()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);

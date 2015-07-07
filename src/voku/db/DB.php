@@ -279,6 +279,7 @@ Class DB
 
     mysqli_report(MYSQLI_REPORT_STRICT);
     try {
+      /** @noinspection PhpUsageOfSilenceOperatorInspection */
       $this->link = @mysqli_connect(
           $this->hostname,
           $this->username,

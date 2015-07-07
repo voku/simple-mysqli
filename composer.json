@@ -25,7 +25,7 @@
   ],
   "require": {
     "php": ">=5.3.0",
-    "voku/simple-cache": "1.*",
+    "voku/simple-cache": "2.*",
     "voku/portable-utf8": "1.*"
   },
   "require-dev": {

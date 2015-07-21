@@ -29,7 +29,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // sql - true
     $pageArray = array(
-        'page_template' => 'tpl_new',
+        'page_template' => 'tpl_new_中',
         'page_type'     => 'lall',
     );
     $tmpId = $db_1->insert($this->tableName, $pageArray);
@@ -99,7 +99,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // insert - false
     $pageArray = array(
-        'page_template' => 'tpl_new',
+        'page_template' => 'tpl_new_中',
         'page_type'     => 'lall',
     );
     $false = $db_1->insert('', $pageArray);
@@ -215,7 +215,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // insert - true
     $pageArray = array(
-        'page_template' => 'tpl_new',
+        'page_template' => 'tpl_new_中',
         'page_type'     => 'lall',
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);
@@ -231,12 +231,12 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     // select - true
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchObject();
-    self::assertEquals('tpl_new', $tmpPage->page_template);
+    self::assertEquals('tpl_new_中', $tmpPage->page_template);
 
     // select - true
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchObject('stdClass');
-    self::assertEquals('tpl_new', $tmpPage->page_template);
+    self::assertEquals('tpl_new_中', $tmpPage->page_template);
 
     // select - true
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
@@ -252,7 +252,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(1, $tmpPage->foo);
     self::assertEquals(2, $tmpPage->bar);
     self::assertEquals(null, $tmpPage->nothing);
-    self::assertEquals('tpl_new', $tmpPage->page_template);
+    self::assertEquals('tpl_new_中', $tmpPage->page_template);
 
     $tmpPage = $result->fetchAllObject(
         'Foobar',
@@ -266,7 +266,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(1, $tmpPage[0]->foo);
     self::assertEquals(2, $tmpPage[0]->bar);
     self::assertEquals(null, $tmpPage[0]->nothing);
-    self::assertEquals('tpl_new', $tmpPage[0]->page_template);
+    self::assertEquals('tpl_new_中', $tmpPage[0]->page_template);
 
     $tmpPage = $result->fetchAllObject(
         'Foobar'
@@ -274,7 +274,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(null, $tmpPage[0]->foo);
     self::assertEquals(null, $tmpPage[0]->bar);
     self::assertEquals('lall', $tmpPage[0]->page_type);
-    self::assertEquals('tpl_new', $tmpPage[0]->page_template);
+    self::assertEquals('tpl_new_中', $tmpPage[0]->page_template);
 
     // update - true
     $pageArray = array(
@@ -333,7 +333,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // insert - true
     $pageArray = array(
-        'page_template' => 'tpl_new',
+        'page_template' => 'tpl_new_中',
         'page_type'     => 'lall',
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);

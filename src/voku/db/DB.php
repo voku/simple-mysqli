@@ -287,8 +287,7 @@ Class DB
           $this->database,
           $this->port
       );
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
       $this->_displayError("Error connecting to mysql server: " . $e->getMessage(), true);
     }
     mysqli_report(MYSQLI_REPORT_OFF);
@@ -535,8 +534,9 @@ Class DB
    * @param string      $username
    * @param string      $password
    * @param string      $database
-   * @param int|string  $port
-   * @param string      $charset
+   * @param int|string  $port          default is '3306'
+   * @param string      $charset       default is 'utf8', but if you need 4-byte chars, then your tables need
+   *                                   the 'utf8mb4'-charset
    * @param bool|string $exit_on_error use a empty string "" or false to disable it
    * @param bool|string $echo_on_error use a empty string "" or false to disable it
    * @param string      $logger_class_name
@@ -731,8 +731,7 @@ Class DB
     } else if (($var instanceof \DateTime)) {
       try {
         $var = "'" . $this->escape($var->format('Y-m-d H:i:s'), false, false) . "'";
-      }
-      catch (\Exception $e) {
+      } catch (\Exception $e) {
         $var = null;
       }
     } else {
@@ -1060,9 +1059,9 @@ Class DB
 
     $return = mysqli_set_charset($this->link, $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    @mysqli_query($this->link, "SET NAMES '" . $charset . "'");
-    /** @noinspection PhpUsageOfSilenceOperatorInspection */
     @mysqli_query($this->link, "SET CHARACTER SET " . $charset);
+    /** @noinspection PhpUsageOfSilenceOperatorInspection */
+    @mysqli_query($this->link, "SET NAMES '" . ($charset == 'utf8' ? 'utf8mb4' : $charset) . "'");
 
     return $return;
   }

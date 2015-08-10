@@ -86,9 +86,9 @@ Class DB
   private $database = '';
 
   /**
-   * @var int|string
+   * @var int
    */
-  private $port = '3306';
+  private $port = 3306;
 
   /**
    * @var string
@@ -122,7 +122,7 @@ Class DB
    * @param string         $username
    * @param string         $password
    * @param string         $database
-   * @param int|string     $port
+   * @param int            $port
    * @param string         $charset
    * @param boolean|string $exit_on_error use a empty string "" or false to disable it
    * @param boolean|string $echo_on_error use a empty string "" or false to disable it
@@ -187,7 +187,7 @@ Class DB
    * @param string         $username
    * @param string         $password
    * @param string         $database
-   * @param int|string     $port
+   * @param int            $port
    * @param string         $charset
    * @param boolean|string $exit_on_error use a empty string "" or false to disable it
    * @param boolean|string $echo_on_error use a empty string "" or false to disable it
@@ -534,7 +534,7 @@ Class DB
    * @param string      $username
    * @param string      $password
    * @param string      $database
-   * @param int|string  $port          default is '3306'
+   * @param string      $port          default is '3306'
    * @param string      $charset       default is 'utf8', but if you need 4-byte chars, then your tables need
    *                                   the 'utf8mb4'-charset
    * @param bool|string $exit_on_error use a empty string "" or false to disable it

@@ -19,7 +19,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function setUp()
   {
-    $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', '3306', 'utf8', false, false);
+    $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
   }
 
   public function testLogQuery()
@@ -182,7 +182,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
    */
   public function testGetInstanceHostnameException()
   {
-    DB::getInstance('', 'root', '', 'mysql_test', '3306', 'utf8', false, false);
+    DB::getInstance('', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
   }
 
   /**
@@ -190,7 +190,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
    */
   public function testGetInstanceUsernameException()
   {
-    DB::getInstance('localhost', '', '', 'mysql_test', '3306', 'utf8', false, false);
+    DB::getInstance('localhost', '', '', 'mysql_test', 3306, 'utf8', false, false);
   }
 
   /**
@@ -198,7 +198,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
    */
   public function testGetInstanceDatabaseException()
   {
-    DB::getInstance('localhost', 'root', '', '', '3306', 'utf8', false, false);
+    DB::getInstance('localhost', 'root', '', '', 3306, 'utf8', false, false);
   }
 
   public function testCharset()

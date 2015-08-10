@@ -404,8 +404,65 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     $newData = $this->db->escape($data);
 
-    self::assertEquals("tpl_test_\'new2", $newData['page_template']);
+    self::assertEquals('tpl_test_\\\'new2', $newData['page_template']);
     self::assertEquals(1.10000000, $newData['page_type']);
+
+    // ---
+
+    $data = array();
+
+    $tested = $this->db->escape($data);
+
+    self::assertEquals(array(), $tested);
+
+    // ---
+
+    $data = array('foo\'', 'bar"');
+
+    $tested = $this->db->escape($data);
+
+    self::assertEquals(array('foo\\\'', 'bar\"'), $tested);
+
+    // ---
+
+    $data = 123;
+
+    $tested = $this->db->escape($data);
+
+    self::assertEquals(123, $tested);
+
+    // ---
+
+    $data = true;
+
+    $tested = $this->db->escape($data);
+
+    self::assertEquals(1, $tested);
+
+    // ---
+
+    $data = false;
+
+    $tested = $this->db->escape($data);
+
+    self::assertEquals(0, $tested);
+
+    // ---
+
+    $data = array(true, false);
+
+    $tested = $this->db->escape($data);
+
+    self::assertEquals(array(1, 0), $tested);
+
+    // ---
+
+    $data = 'http://foobar.com?test=1';
+
+    $tested = $this->db->escape($data);
+
+    self::assertEquals('http://foobar.com?test=1', $tested);
+
   }
 
   public function testConnector()
@@ -902,21 +959,40 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testQuery()
   {
+    //
     // query - true
+    //
     $sql = "INSERT INTO " . $this->tableName . "
       SET
         page_template = ?,
         page_type = ?
     ";
     $return = $this->db->query(
-        $sql, array(
-                1.1,
-                1,
-            )
+        $sql,
+        array(
+            1.1,
+            1,
+        )
     );
     self::assertEquals(true, $return);
 
+    //
+    // query - true (with empty array)
+    //
+    $sql = "INSERT INTO " . $this->tableName . "
+      SET
+        page_template = '1.1',
+        page_type = '1'
+    ";
+    $return = $this->db->query(
+        $sql,
+        array()
+    );
+    self::assertEquals(true, $return);
+
+    //
     // query - true
+    //
     $sql = "INSERT INTO " . $this->tableName . "
       SET
         page_template = ?,
@@ -924,19 +1000,43 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     ";
     $tmpDate = new DateTime();
     $tmpId = $this->db->query(
-        $sql, array(
-                'dateTest',
-                $tmpDate,
-            )
+        $sql,
+        array(
+            'dateTest',
+            $tmpDate,
+        )
     );
     self::assertEquals(true, $tmpId);
 
+    //
     // select - true
+    //
     $result = $this->db->select($this->tableName, "page_id = $tmpId");
     $tmpPage = $result->fetchObject();
     self::assertEquals($tmpDate->format('Y-m-d H:i:s'), $tmpPage->page_type);
 
+    //
+    // query - true (with '?' in the string)
+    //
+    $sql = "INSERT INTO " . $this->tableName . "
+      SET
+        page_template = ?,
+        page_type = ?
+    ";
+    $tmpId = $this->db->query(
+        $sql,
+        array('http://foo.com/?foo=1', 'foo\'bar')
+    );
+    self::assertEquals(true, $tmpId);
+    // select - true
+    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $tmpPage = $result->fetchObject();
+    self::assertEquals('http://foo.com/?foo=1', $tmpPage->page_template);
+    self::assertEquals('foo\'bar', $tmpPage->page_type);
+
+    //
     // select - false
+    //
     $result = new Result();
     $tmpPage = $result->fetch();
     self::assertEquals(false, $tmpPage);
@@ -945,41 +1045,50 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $tmpPage = $result->fetchArray();
     self::assertEquals(false, $tmpPage);
 
+    //
     // query - false
+    //
     $sql = "INSERT INTO " . $this->tableName . "
       SET
         page_template = ?,
         page_type = ?
     ";
     $return = $this->db->query(
-        $sql, array(
-                true,
-                array('test'),
-            )
+        $sql,
+        array(
+            true,
+            array('test'),
+        )
     );
     // array('test') => null
     self::assertEquals(false, $return);
 
+    //
     // query - false
+    //
     $sql = "INSERT INTO " . $this->tableName . "
       SET
         page_template_lall = ?,
         page_type = ?
     ";
     $return = $this->db->query(
-        $sql, array(
-                'tpl_test_new15',
-                1,
-            )
+        $sql,
+        array(
+            'tpl_test_new15',
+            1,
+        )
     );
     self::assertEquals(false, $return);
 
+    //
     // query - false
+    //
     $return = $this->db->query(
-        '', array(
-              'tpl_test_new15',
-              1,
-          )
+        '',
+        array(
+            'tpl_test_new15',
+            1,
+        )
     );
     self::assertEquals(false, $return);
   }

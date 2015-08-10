@@ -622,6 +622,8 @@ Class DB
         $params !== false
         &&
         is_array($params)
+        &&
+        count($params) > 0
     ) {
       $sql = $this->_parseQueryParams($sql, $params);
     }
@@ -680,7 +682,7 @@ Class DB
    *
    * @return string
    */
-  private function _parseQueryParams($sql, $params)
+  private function _parseQueryParams($sql, Array $params)
   {
 
     // is there anything to parse?
@@ -688,23 +690,19 @@ Class DB
       return $sql;
     }
 
-    // convert to array
-    if (is_array($params) === false) {
-      $params = array($params);
+    if (count($params) > 0) {
+      $parseKey = md5(uniqid(mt_rand(), true));
+      $sql = str_replace('?', $parseKey, $sql);
+
+      $k = 0;
+      while (strpos($sql, $parseKey) !== false) {
+        $value = $this->secure($params[$k]);
+        $sql = preg_replace("/$parseKey/", $value, $sql, 1);
+        $k++;
+      }
     }
 
-    $parse_key = md5(uniqid(time(), true));
-    $parsed_sql = str_replace('?', $parse_key, $sql);
-
-    $k = 0;
-    while (strpos($parsed_sql, $parse_key) > 0) {
-
-      $value = $this->secure($params[$k]);
-      $parsed_sql = preg_replace("/$parse_key/", $value, $parsed_sql, 1);
-      $k++;
-    }
-
-    return $parsed_sql;
+    return $sql;
   }
 
   /**
@@ -758,18 +756,36 @@ Class DB
   {
 
     if (is_int($var) || is_bool($var)) {
+
+      // int
+
       return (int)$var;
+
     } else if (is_float($var)) {
+
+      // float
+
       return number_format((float)str_replace(',', '.', $var), 8, '.', '');
+
     } else if (is_array($var)) {
+
+      // array
+
+      $varCleaned = array();
       foreach ($var as $key => $value) {
-        $var[$this->escape($key, $stripe_non_utf8, $html_entity_decode)] = $this->escape($value, $stripe_non_utf8, $html_entity_decode);
+
+        $key = (string)$this->escape($key, $stripe_non_utf8, $html_entity_decode);
+        $value = (string)$this->escape($value, $stripe_non_utf8, $html_entity_decode);
+
+        $varCleaned[$key] = $value;
       }
 
-      return (array)$var;
+      return (array)$varCleaned;
     }
 
     if (is_string($var)) {
+
+      // string
 
       if ($stripe_non_utf8 === true) {
         $var = UTF8::cleanup($var);

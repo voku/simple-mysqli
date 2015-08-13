@@ -34,7 +34,7 @@
   },
   "autoload": {
     "psr-4": {
-      "voku\\db\\": "src"
+      "voku\\db\\": "src/voku/db/"
     }
   },
   "extra": {

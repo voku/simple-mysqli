@@ -7,7 +7,7 @@ namespace voku\db;
  *
  * @package   voku\db
  */
-Class Result
+class Result
 {
 
   /**
@@ -218,7 +218,7 @@ Class Result
 
     if ($this->_default_result_type == 'object') {
       $return = $this->fetchObject('', '', $reset);
-    } else if ($this->_default_result_type == 'array') {
+    } elseif ($this->_default_result_type == 'array') {
       $return = $this->fetchArray($reset);
     }
 
@@ -243,7 +243,7 @@ Class Result
     if ($this->_result) {
       if ($class && $params) {
         return ($row = mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
-      } else if ($class) {
+      } elseif ($class) {
         return ($row = mysqli_fetch_object($this->_result, $class)) ? $row : false;
       } else {
         return ($row = mysqli_fetch_object($this->_result)) ? $row : false;
@@ -294,7 +294,7 @@ Class Result
 
     if ($this->_default_result_type == 'object') {
       $return = $this->fetchAllObject();
-    } else if ($this->_default_result_type == 'array') {
+    } elseif ($this->_default_result_type == 'array') {
       $return = $this->fetchAllArray();
     }
 
@@ -325,7 +325,7 @@ Class Result
         while ($row = mysqli_fetch_object($this->_result, $class, $params)) {
           $data[] = $row;
         }
-      } else if ($class) {
+      } elseif ($class) {
         /** @noinspection PhpAssignmentInConditionInspection */
         while ($row = mysqli_fetch_object($this->_result, $class)) {
           $data[] = $row;

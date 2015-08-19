@@ -85,7 +85,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(false, $this->db->isReady());
 
     // insert - false
-    $false = $db_1->query("INSERT INTO lall SET false=1");
+    $false = $db_1->query('INSERT INTO lall SET false=1');
     self::assertEquals(false, $false);
   }
 
@@ -287,7 +287,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(false, $false);
 
     // update - false
-    $false = $this->db->update($this->tableName, $pageArray, "");
+    $false = $this->db->update($this->tableName, $pageArray, '');
     self::assertEquals(false, $false);
 
     // update - false
@@ -339,7 +339,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $tmpId = $this->db->insert($this->tableName, $pageArray);
 
     // delete - false
-    $false = $this->db->delete($this->tableName, "");
+    $false = $this->db->delete($this->tableName, '');
     self::assertEquals(false, $false);
 
     // delete - false
@@ -347,7 +347,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(false, $false);
 
     // delete - true
-    $false = $this->db->delete($this->tableName, "page_id = " . $this->db->escape($tmpId));
+    $false = $this->db->delete($this->tableName, 'page_id = ' . $this->db->escape($tmpId));
     self::assertEquals(true, $false);
 
     // select - true
@@ -370,7 +370,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   public function testQry()
   {
     $result = $this->db->qry(
-        "UPDATE " . $this->db->escape($this->tableName) . "
+        'UPDATE ' . $this->db->escape($this->tableName) . "
       SET
         page_template = 'tpl_test'
       WHERE page_id = ?
@@ -379,16 +379,16 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(1, ($result));
 
     $result = $this->db->qry(
-        "SELECT * FROM " . $this->db->escape($this->tableName) . "
+        'SELECT * FROM ' . $this->db->escape($this->tableName) . '
       WHERE page_id = 1
-    "
+    '
     );
     self::assertEquals('tpl_test', ($result[0]['page_template']));
 
     $result = $this->db->qry(
-        "SELECT * FROM " . $this->db->escape($this->tableName) . "
+        'SELECT * FROM ' . $this->db->escape($this->tableName) . '
       WHERE page_id_lall = 1
-    "
+    '
     );
     self::assertEquals(false, $result);
   }
@@ -846,8 +846,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testMultiQuery()
   {
-    $sql = "
-    INSERT INTO " . $this->tableName . "
+    $sql = '
+    INSERT INTO ' . $this->tableName . "
       SET
         page_template = 'lall1',
         page_type = 'test1';
@@ -864,10 +864,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $result = $this->db->multi_query($sql);
     self::assertEquals(true, $result);
 
-    $sql = "
-    SELECT * FROM " . $this->tableName . ";
-    SELECT * FROM " . $this->tableName . ";
-    ";
+    $sql = '
+    SELECT * FROM ' . $this->tableName . ';
+    SELECT * FROM ' . $this->tableName . ';
+    ';
     // multi_query - true
     $result = $this->db->multi_query($sql);
     self::assertEquals(true, is_array($result));
@@ -921,20 +921,20 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
   public function testExecSQL()
   {
     // execSQL - false
-    $sql = "INSERT INTO " . $this->tableName . "
+    $sql = 'INSERT INTO ' . $this->tableName . "
       SET
         page_template_lall = '" . $this->db->escape('tpl_test_new7') . "',
-        page_type = " . $this->db->secure('öäü') . "
-    ";
+        page_type = " . $this->db->secure('öäü') . '
+    ';
     $return = $this->db->execSQL($sql);
     self::assertEquals(false, $return);
 
     // execSQL - true
-    $sql = "INSERT INTO " . $this->tableName . "
+    $sql = 'INSERT INTO ' . $this->tableName . "
       SET
         page_template = '" . $this->db->escape('tpl_test_new7') . "',
-        page_type = " . $this->db->secure('öäü') . "
-    ";
+        page_type = " . $this->db->secure('öäü') . '
+    ';
     $return = $this->db->execSQL($sql);
     self::assertEquals(true, is_int($return));
     self::assertEquals(true, $return > 0);
@@ -942,7 +942,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testUtf8Query()
   {
-    $sql = "INSERT INTO " . $this->tableName . "
+    $sql = 'INSERT INTO ' . $this->tableName . "
       SET
         page_template = '" . $this->db->escape(UTF8::urldecode('D%26%23xFC%3Bsseldorf')) . "',
         page_type = '" . UTF8::urldecode('DÃ¼sseldorf') . "'
@@ -962,11 +962,11 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     //
     // query - true
     //
-    $sql = "INSERT INTO " . $this->tableName . "
+    $sql = 'INSERT INTO ' . $this->tableName . '
       SET
         page_template = ?,
         page_type = ?
-    ";
+    ';
     $return = $this->db->query(
         $sql,
         array(
@@ -979,7 +979,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     //
     // query - true (with empty array)
     //
-    $sql = "INSERT INTO " . $this->tableName . "
+    $sql = 'INSERT INTO ' . $this->tableName . "
       SET
         page_template = '1.1',
         page_type = '1'
@@ -993,11 +993,11 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     //
     // query - true
     //
-    $sql = "INSERT INTO " . $this->tableName . "
+    $sql = 'INSERT INTO ' . $this->tableName . '
       SET
         page_template = ?,
         page_type = ?
-    ";
+    ';
     $tmpDate = new DateTime();
     $tmpId = $this->db->query(
         $sql,
@@ -1018,11 +1018,11 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     //
     // query - true (with '?' in the string)
     //
-    $sql = "INSERT INTO " . $this->tableName . "
+    $sql = 'INSERT INTO ' . $this->tableName . '
       SET
         page_template = ?,
         page_type = ?
-    ";
+    ';
     $tmpId = $this->db->query(
         $sql,
         array('http://foo.com/?foo=1', 'foo\'bar')
@@ -1048,11 +1048,11 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     //
     // query - false
     //
-    $sql = "INSERT INTO " . $this->tableName . "
+    $sql = 'INSERT INTO ' . $this->tableName . '
       SET
         page_template = ?,
         page_type = ?
-    ";
+    ';
     $return = $this->db->query(
         $sql,
         array(
@@ -1066,11 +1066,11 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     //
     // query - false
     //
-    $sql = "INSERT INTO " . $this->tableName . "
+    $sql = 'INSERT INTO ' . $this->tableName . '
       SET
         page_template_lall = ?,
         page_type = ?
-    ";
+    ';
     $return = $this->db->query(
         $sql,
         array(
@@ -1098,7 +1098,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $_GET['testCache'] = 1;
 
     // no-cache
-    $sql = "SELECT * FROM " . $this->tableName;
+    $sql = 'SELECT * FROM ' . $this->tableName;
     $result = $this->db->execSQL($sql, false);
     if (count($result) > 0) {
       $return = true;
@@ -1108,7 +1108,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(true, $return);
 
     // set cache
-    $sql = "SELECT * FROM " . $this->tableName;
+    $sql = 'SELECT * FROM ' . $this->tableName;
     $result = $this->db->execSQL($sql, true);
     if (count($result) > 0) {
       $return = true;
@@ -1120,7 +1120,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $queryCount = $this->db->query_count;
 
     // use cache
-    $sql = "SELECT * FROM " . $this->tableName;
+    $sql = 'SELECT * FROM ' . $this->tableName;
     $result = $this->db->execSQL($sql, true);
     if (count($result) > 0) {
       $return = true;
@@ -1138,10 +1138,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $this->db->close();
     self::assertEquals(false, $this->db->isReady());
     $this->invokeMethod(
-        $this->db, "queryErrorHandling",
+        $this->db, 'queryErrorHandling',
         array(
-            "DB server has gone away",
-            "SELECT * FROM " . $this->tableName . " WHERE page_id = 1",
+            'DB server has gone away',
+            'SELECT * FROM ' . $this->tableName . ' WHERE page_id = 1',
         )
     );
     self::assertEquals(true, $this->db->isReady());

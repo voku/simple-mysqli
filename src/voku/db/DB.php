@@ -10,7 +10,7 @@ use voku\helper\UTF8;
  *
  * @package   voku\db
  */
-Class DB
+class DB
 {
 
   /**
@@ -289,12 +289,12 @@ Class DB
           $this->socket
       );
     } catch (\Exception $e) {
-      $this->_displayError("Error connecting to mysql server: " . $e->getMessage(), true);
+      $this->_displayError('Error connecting to mysql server: ' . $e->getMessage(), true);
     }
     mysqli_report(MYSQLI_REPORT_OFF);
 
     if (!$this->link) {
-      $this->_displayError("Error connecting to mysql server: " . mysqli_connect_error(), true);
+      $this->_displayError('Error connecting to mysql server: ' . mysqli_connect_error(), true);
     } else {
       $this->set_charset($this->charset);
       $this->connected = true;
@@ -329,7 +329,7 @@ Class DB
         array(
             'error',
             '<strong>' . date(
-                "d. m. Y G:i:s"
+                'd. m. Y G:i:s'
             ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . ') (sql-error):</strong> ' . $e . '<br>',
         )
     );
@@ -354,9 +354,9 @@ Class DB
 
       if ($force_exception_after_error === true) {
         throw new \Exception($e);
-      } else if ($force_exception_after_error === false) {
+      } elseif ($force_exception_after_error === false) {
         // nothing
-      } else if ($force_exception_after_error === null) {
+      } elseif ($force_exception_after_error === null) {
         // default
         if ($this->exit_on_error === true) {
           throw new \Exception($e);
@@ -499,11 +499,11 @@ Class DB
    */
   public static function qry($query)
   {
-    $db = DB::getInstance();
+    $db = self::getInstance();
 
     $args = func_get_args();
     $query = array_shift($args);
-    $query = str_replace("?", "%s", $query);
+    $query = str_replace('?', '%s', $query);
     $args = array_map(
         array(
             $db,
@@ -683,7 +683,7 @@ Class DB
    *
    * @return string
    */
-  private function _parseQueryParams($sql, Array $params)
+  private function _parseQueryParams($sql, array $params)
   {
 
     // is there anything to parse?
@@ -721,13 +721,13 @@ Class DB
         $var = "'" . trim($this->escape(trim(trim($var), "'")), "'") . "'";
       }
 
-    } else if (is_int($var) || is_bool($var)) {
+    } elseif (is_int($var) || is_bool($var)) {
       $var = (int)$var;
-    } else if (is_float($var)) {
+    } elseif (is_float($var)) {
       $var = number_format((float)str_replace(',', '.', $var), 8, '.', '');
-    } else if (is_array($var)) {
+    } elseif (is_array($var)) {
       $var = null;
-    } else if (($var instanceof \DateTime)) {
+    } elseif (($var instanceof \DateTime)) {
       try {
         $var = "'" . $this->escape($var->format('Y-m-d H:i:s'), false, false) . "'";
       } catch (\Exception $e) {
@@ -762,13 +762,13 @@ Class DB
 
       return (int)$var;
 
-    } else if (is_float($var)) {
+    } elseif (is_float($var)) {
 
       // float
 
       return number_format((float)str_replace(',', '.', $var), 8, '.', '');
 
-    } else if (is_array($var)) {
+    } elseif (is_array($var)) {
 
       // array
 
@@ -848,7 +848,7 @@ Class DB
         array(
             'debug',
             '<strong>' . date(
-                "d. m. Y G:i:s"
+                'd. m. Y G:i:s'
             ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
             'sql',
         )
@@ -933,14 +933,14 @@ Class DB
                 $subject . ' | ' . $htmlBody,
             )
         );
-      } else if ($priority > 3) {
+      } elseif ($priority > 3) {
         $this->logger(
             array(
                 'error',
                 $subject . ' | ' . $htmlBody,
             )
         );
-      } else if ($priority < 3) {
+      } elseif ($priority < 3) {
         $this->logger(
             array(
                 'info',
@@ -1010,11 +1010,11 @@ Class DB
    */
   public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
   {
-    $db = DB::getInstance();
+    $db = self::getInstance();
 
     if ($useCache === true) {
       $cache = new Cache(null, null, false, $useCache);
-      $cacheKey = "sql-" . md5($query);
+      $cacheKey = 'sql-' . md5($query);
 
       if (
           $cache->getCacheIsReady() === true
@@ -1076,7 +1076,7 @@ Class DB
 
     $return = mysqli_set_charset($this->link, $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    @mysqli_query($this->link, "SET CHARACTER SET " . $charset);
+    @mysqli_query($this->link, 'SET CHARACTER SET ' . $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
     @mysqli_query($this->link, "SET NAMES '" . ($charset == 'utf8' ? 'utf8mb4' : $charset) . "'");
 
@@ -1100,7 +1100,7 @@ Class DB
    */
   public function getAllTables()
   {
-    $query = "SHOW TABLES";
+    $query = 'SHOW TABLES';
     $result = $this->query($query);
 
     return $result->fetchAllArray();
@@ -1169,7 +1169,7 @@ Class DB
 
       if ($this->checkForDev() === true) {
         echo "Info: maybe you have to increase your 'max_allowed_packet = 30M' in the config: 'my.conf' \n<br />";
-        echo "Error:" . $errorMsg;
+        echo 'Error:' . $errorMsg;
       }
 
       $this->mailToAdmin('SQL-Error in mysqli_multi_query', $errorMsg . ":\n<br />" . $sql);
@@ -1205,11 +1205,11 @@ Class DB
     $this->clearErrors();
 
     if ($this->inTransaction() === true) {
-      $this->_displayError("Error mysql server already in transaction!", true);
+      $this->_displayError('Error mysql server already in transaction!', true);
 
       return false;
-    } else if (mysqli_connect_errno()) {
-      $this->_displayError("Error connecting to mysql server: " . mysqli_connect_error(), true);
+    } elseif (mysqli_connect_errno()) {
+      $this->_displayError('Error connecting to mysql server: ' . mysqli_connect_error(), true);
 
       return false;
     } else {
@@ -1305,20 +1305,20 @@ Class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_displayError("invalid-table-name");
+      $this->_displayError('invalid-table-name');
 
       return false;
     }
 
     if (count($data) == 0) {
-      $this->_displayError("empty-data-for-INSERT");
+      $this->_displayError('empty-data-for-INSERT');
 
       return false;
     }
 
     $SET = $this->_parseArrayPair($data);
 
-    $sql = "INSERT INTO " . $this->quote_string($table) . " SET $SET;";
+    $sql = 'INSERT INTO ' . $this->quote_string($table) . " SET $SET;";
 
     return $this->query($sql);
   }
@@ -1355,11 +1355,11 @@ Class DB
           $_connector = 'IS NOT';
         }
 
-        if (strpos($_key_upper, " IN") !== false) {
+        if (strpos($_key_upper, ' IN') !== false) {
           $_connector = 'IN';
         }
 
-        if (strpos($_key_upper, " NOT IN") !== false) {
+        if (strpos($_key_upper, ' NOT IN') !== false) {
           $_connector = 'NOT IN';
         }
 
@@ -1413,7 +1413,7 @@ Class DB
             $_value[$oldKey] = $this->secure($oldValue);
           }
           $_value = '(' . implode(',', $_value) . ')';
-        } else if (
+        } elseif (
             is_array($_value)
             &&
             (
@@ -1432,7 +1432,7 @@ Class DB
         }
 
         $quoteString = $this->quote_string(trim(str_ireplace($_connector, '', $_key)));
-        $pairs[] = " " . $quoteString . " " . $_connector . " " . $_value . " \n";
+        $pairs[] = ' ' . $quoteString . ' ' . $_connector . ' ' . $_value . " \n";
       }
 
       $sql = implode($glue, $pairs);
@@ -1450,7 +1450,7 @@ Class DB
    */
   public function quote_string($str)
   {
-    return "`" . $this->escape($str, false, false) . "`";
+    return '`' . $this->escape($str, false, false) . '`';
   }
 
   /**
@@ -1477,13 +1477,13 @@ Class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_displayError("invalid table name");
+      $this->_displayError('invalid table name');
 
       return false;
     }
 
     if (count($data) == 0) {
-      $this->_displayError("empty data for REPLACE");
+      $this->_displayError('empty data for REPLACE');
 
       return false;
     }
@@ -1495,16 +1495,16 @@ Class DB
       $columns[$k] = $this->quote_string($_key);
     }
 
-    $columns = implode(",", $columns);
+    $columns = implode(',', $columns);
 
     // extracting values
     foreach ($data as $k => $_value) {
       /** @noinspection AlterInForeachInspection */
       $data[$k] = $this->secure($_value);
     }
-    $values = implode(",", $data);
+    $values = implode(',', $data);
 
-    $sql = "REPLACE INTO " . $this->quote_string($table) . " ($columns) VALUES ($values);";
+    $sql = 'REPLACE INTO ' . $this->quote_string($table) . " ($columns) VALUES ($values);";
 
     return $this->query($sql);
   }
@@ -1524,13 +1524,13 @@ Class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_displayError("invalid table name");
+      $this->_displayError('invalid table name');
 
       return false;
     }
 
     if (count($data) == 0) {
-      $this->_displayError("empty data for UPDATE");
+      $this->_displayError('empty data for UPDATE');
 
       return false;
     }
@@ -1539,13 +1539,13 @@ Class DB
 
     if (is_string($where)) {
       $WHERE = $this->escape($where, false, false);
-    } else if (is_array($where)) {
-      $WHERE = $this->_parseArrayPair($where, "AND");
+    } elseif (is_array($where)) {
+      $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {
       $WHERE = '';
     }
 
-    $sql = "UPDATE " . $this->quote_string($table) . " SET $SET WHERE ($WHERE);";
+    $sql = 'UPDATE ' . $this->quote_string($table) . " SET $SET WHERE ($WHERE);";
 
     return $this->query($sql);
   }
@@ -1564,20 +1564,20 @@ Class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_displayError("invalid table name");
+      $this->_displayError('invalid table name');
 
       return false;
     }
 
     if (is_string($where)) {
       $WHERE = $this->escape($where, false, false);
-    } else if (is_array($where)) {
-      $WHERE = $this->_parseArrayPair($where, "AND");
+    } elseif (is_array($where)) {
+      $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {
       $WHERE = '';
     }
 
-    $sql = "DELETE FROM " . $this->quote_string($table) . " WHERE ($WHERE);";
+    $sql = 'DELETE FROM ' . $this->quote_string($table) . " WHERE ($WHERE);";
 
     return $this->query($sql);
   }
@@ -1594,20 +1594,20 @@ Class DB
   {
 
     if ($table === '') {
-      $this->_displayError("invalid table name");
+      $this->_displayError('invalid table name');
 
       return false;
     }
 
     if (is_string($where)) {
       $WHERE = $this->escape($where, false, false);
-    } else if (is_array($where)) {
+    } elseif (is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {
       $WHERE = '';
     }
 
-    $sql = "SELECT * FROM " . $this->quote_string($table) . " WHERE ($WHERE);";
+    $sql = 'SELECT * FROM ' . $this->quote_string($table) . " WHERE ($WHERE);";
 
     return $this->query($sql);
   }

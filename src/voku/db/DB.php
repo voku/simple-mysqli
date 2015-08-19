@@ -285,7 +285,8 @@ Class DB
           $this->username,
           $this->password,
           $this->database,
-          $this->port
+          $this->port,
+          $this->socket
       );
     } catch (\Exception $e) {
       $this->_displayError("Error connecting to mysql server: " . $e->getMessage(), true);

@@ -600,7 +600,7 @@ class DB
    *                                      "false" if you don't need any parameter
    *
    * @return bool|int|Result              "Result" by "<b>SELECT</b>"-queries<br />
-   *                                      "int" (insert_id) by "<b>INSERT</b>"-queries<br />
+   *                                      "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
    *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
    *                                      "true" by e.g. "DROP"-queries<br />
    *                                      "false" on error
@@ -1298,7 +1298,7 @@ class DB
    * @param string $table
    * @param array  $data
    *
-   * @return bool|int|Result
+   * @return false|int false on error
    */
   public function insert($table, $data = array())
   {
@@ -1469,7 +1469,7 @@ class DB
    * @param string $table
    * @param array  $data
    *
-   * @return bool|int|Result
+   * @return false|int false on error
    */
   public function replace($table, $data = array())
   {
@@ -1516,11 +1516,10 @@ class DB
    * @param array        $data
    * @param array|string $where
    *
-   * @return bool|int|Result
+   * @return false|int false on error
    */
   public function update($table, $data = array(), $where = '1=1')
   {
-
     $table = trim($table);
 
     if ($table === '') {
@@ -1556,7 +1555,7 @@ class DB
    * @param string       $table
    * @param string|array $where
    *
-   * @return bool|int|Result
+   * @return false|int false on error
    */
   public function delete($table, $where)
   {
@@ -1588,7 +1587,7 @@ class DB
    * @param string       $table
    * @param string|array $where
    *
-   * @return bool|int|Result
+   * @return false|Result false on error
    */
   public function select($table, $where = '1=1')
   {

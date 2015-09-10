@@ -135,7 +135,7 @@ class Result
   /**
    * is_empty
    *
-   * @return boolean
+   * @return bool
    */
   public function is_empty()
   {
@@ -198,7 +198,7 @@ class Result
   /**
    * get
    *
-   * @return array|bool|null|object
+   * @return array|object|false false on error
    */
   public function get()
   {
@@ -210,7 +210,7 @@ class Result
    *
    * @param $reset
    *
-   * @return array|bool|null|object
+   * @return array|object|false false on error
    */
   public function fetch($reset = false)
   {
@@ -232,7 +232,7 @@ class Result
    * @param null|array $params
    * @param bool       $reset
    *
-   * @return bool|null|object
+   * @return object|false false on error
    */
   public function fetchObject($class = '', $params = null, $reset = false)
   {
@@ -258,7 +258,7 @@ class Result
    *
    * @param bool $reset
    *
-   * @return array|bool|null
+   * @return array|false false on error
    */
   public function fetchArray($reset = false)
   {

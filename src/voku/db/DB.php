@@ -750,10 +750,11 @@ class DB
    *                                            string: run UTF8::cleanup() and mysqli_real_escape_string()<br />
    * @param bool                           $stripe_non_utf8
    * @param bool                           $html_entity_decode
+   * @param bool                           $array_to_string
    *
    * @return array|bool|float|int|string
    */
-  public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = true)
+  public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = true, $array_to_string = false)
   {
 
     if (is_int($var) || is_bool($var)) {
@@ -781,7 +782,13 @@ class DB
         $varCleaned[$key] = $value;
       }
 
-      return (array)$varCleaned;
+      if ($array_to_string === true) {
+        $varCleaned = implode(',', $varCleaned);
+
+        return $varCleaned;
+      } else {
+        return (array)$varCleaned;
+      }
     }
 
     if (is_string($var)) {

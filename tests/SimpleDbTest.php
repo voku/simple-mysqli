@@ -409,6 +409,17 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // ---
 
+    $data = array(
+        'page_template' => "tpl_test_'new2",
+        'page_type'     => 1.1,
+    );
+
+    $newData = $this->db->escape($data, true , true, true);
+
+    self::assertEquals('tpl_test_\\\'new2,1.10000000', $newData);
+
+    // ---
+
     $data = array();
 
     $tested = $this->db->escape($data);

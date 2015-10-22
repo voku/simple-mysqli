@@ -334,8 +334,9 @@ class DB
         )
     );
 
+    $this->_errors[] = $e;
+
     if ($this->checkForDev() === true) {
-      $this->_errors[] = $e;
 
       if ($this->echo_on_error) {
         $box_border = $this->css_mysql_box_border;
@@ -1275,7 +1276,7 @@ class DB
   /**
    * get all errors
    *
-   * @return array false on error
+   * @return array false === on errors
    */
   public function errors()
   {

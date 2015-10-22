@@ -414,7 +414,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         'page_type'     => 1.1,
     );
 
-    $newData = $this->db->escape($data, true , true, true);
+    $newData = $this->db->escape($data, true, true, true);
 
     self::assertEquals('tpl_test_\\\'new2,1.10000000', $newData);
 

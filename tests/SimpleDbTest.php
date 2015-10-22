@@ -130,7 +130,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   /**
    * @expectedException Exception
-   * @expectedExceptionMessageRegExp #Error connecting to mysql server: php_network_getaddresses: getaddrinfo failed: .*#
+   * @expectedExceptionMessageRegExp #Error connecting to mysql server:.*#
    */
   public function testGetFalseInstanceV2()
   {

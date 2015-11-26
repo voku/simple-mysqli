@@ -77,7 +77,7 @@ Example: SELECT
         'page_type NOT LIKE' => '%öäü123',
         'page_id >='          => 2,
     );
-    $resultSelect = $this->db->select('page', $where);
+    $resultSelect = $db->select('page', $where);
 ```
 
 Here is a list of connectors for the "WHERE"-Array:
@@ -94,9 +94,15 @@ Example: SELECT with "NOT IN"
         ),
         'page_id >'            => 2,
     );
-    $resultSelect = $this->db->select('page', $where);
+    $resultSelect = $db->select('page', $where);
 ```
 
+Example: SELECT with Cache
+```php
+    $resultSelect = $db->execSQL("SELECT * FROM users", true, 3600);
+```
+
+The result (via $result->fetchAllArray()) is only cached for 3600s when the query was a SELECT statement, otherwise you get the default result from the ```$db->query()``` function. 
 
 ###Inserting data on a table
 
@@ -148,7 +154,7 @@ Example: REPLACE
       'email'  => 'lars@moelleken.org',
       'group'  => 0
   );
-  $tmpId = $this->db->replace('users', $replaceArray);
+  $tmpId = $db->replace('users', $replaceArray);
 ```
 
 ###binding parameters on queries

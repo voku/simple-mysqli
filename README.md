@@ -61,7 +61,7 @@ there are numerous ways of using this library, here are some examples of the mos
   $db = DB::getInstance();
 
   $result = $db->query("SELECT * FROM users");
-  $users  = $result->fetchALL();
+  $users  = $result->fetchAll();
 ```
 
 But you can also use a method for select-queries:

@@ -4,8 +4,7 @@
 [![Codacy Badge](https://www.codacy.com/project/badge/797ba3ba657d4e0e86f0bade6923fdec)](https://www.codacy.com/app/voku/simple-mysqli)
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/f1ad7660-6b85-4e1e-a7a3-8489b96b64f8/mini.png)](https://insight.sensiolabs.com/projects/f1ad7660-6b85-4e1e-a7a3-8489b96b64f8)
 [![Dependency Status](https://www.versioneye.com/php/voku:simple-mysqli/dev-master/badge.svg)](https://www.versioneye.com/php/voku:simple-mysqli/dev-master)
-[![Total Downloads](https://poser.pugx.org/voku/simple-mysqli/downloads)](https://packagist.org/packages/voku/simple-mysqli)
-[![License](https://poser.pugx.org/voku/simple-mysqli/license.svg)](https://packagist.org/packages/voku/simple-mysqli)
+[![Latest Stable Version](https://poser.pugx.org/voku/simple-mysqli/v/stable)](https://packagist.org/packages/voku/simple-mysqli) [![Total Downloads](https://poser.pugx.org/voku/simple-mysqli/downloads)](https://packagist.org/packages/voku/simple-mysqli) [![Latest Unstable Version](https://poser.pugx.org/voku/simple-mysqli/v/unstable)](https://packagist.org/packages/voku/simple-mysqli) [![License](https://poser.pugx.org/voku/simple-mysqli/license)](https://packagist.org/packages/voku/simple-mysqli)
 
 Simple MySQLi Class
 ===================
@@ -62,7 +61,7 @@ there are numerous ways of using this library, here are some examples of the mos
   $db = DB::getInstance();
 
   $result = $db->query("SELECT * FROM users");
-  $users  = $result->fetchALL();
+  $users  = $result->fetchAll();
 ```
 
 But you can also use a method for select-queries:
@@ -78,7 +77,7 @@ Example: SELECT
         'page_type NOT LIKE' => '%öäü123',
         'page_id >='          => 2,
     );
-    $resultSelect = $this->db->select('page', $where);
+    $resultSelect = $db->select('page', $where);
 ```
 
 Here is a list of connectors for the "WHERE"-Array:
@@ -95,9 +94,15 @@ Example: SELECT with "NOT IN"
         ),
         'page_id >'            => 2,
     );
-    $resultSelect = $this->db->select('page', $where);
+    $resultSelect = $db->select('page', $where);
 ```
 
+Example: SELECT with Cache
+```php
+    $resultSelect = $db->execSQL("SELECT * FROM users", true, 3600);
+```
+
+The result (via $result->fetchAllArray()) is only cached for 3600s when the query was a SELECT statement, otherwise you get the default result from the ```$db->query()``` function. 
 
 ###Inserting data on a table
 
@@ -149,7 +154,7 @@ Example: REPLACE
       'email'  => 'lars@moelleken.org',
       'group'  => 0
   );
-  $tmpId = $this->db->replace('users', $replaceArray);
+  $tmpId = $db->replace('users', $replaceArray);
 ```
 
 ###binding parameters on queries

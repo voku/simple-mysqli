@@ -743,6 +743,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
     $columnResult = $resultSelect->fetchColumn('page_template');
     self::assertEquals('tpl_test_new5', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template_foo');
+    self::assertEquals('', $columnResult);
   }
 
   public function testIsEmpty()

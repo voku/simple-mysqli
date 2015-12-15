@@ -114,6 +114,7 @@ class Result
    */
   public function fetchAllArray()
   {
+    // init
     $data = array();
 
     if (
@@ -311,6 +312,7 @@ class Result
    */
   public function fetchAllObject($class = '', $params = null)
   {
+    // init
     $data = array();
 
     if (
@@ -378,11 +380,11 @@ class Result
    *
    * @param string $column
    *
-   * @return string
+   * @return string empty string if the $column wasn't found
    */
   public function fetchColumn($column = '')
   {
-    $columnData = array();
+    $columnData = '';
     $data = $this->fetchAllArray();
 
     foreach ($data as $_row) {

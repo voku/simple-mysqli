@@ -7,6 +7,7 @@
 [![Latest Stable Version](https://poser.pugx.org/voku/simple-mysqli/v/stable)](https://packagist.org/packages/voku/simple-mysqli) 
 [![Total Downloads](https://poser.pugx.org/voku/simple-mysqli/downloads)](https://packagist.org/packages/voku/simple-mysqli) 
 [![Latest Unstable Version](https://poser.pugx.org/voku/simple-mysqli/v/unstable)](https://packagist.org/packages/voku/simple-mysqli) 
+[![PHP 7 ready](http://php7ready.timesplinter.ch/voku/simple-mysqli/badge.svg)](https://travis-ci.org/voku/simple-mysqli)
 [![License](https://poser.pugx.org/voku/simple-mysqli/license)](https://packagist.org/packages/voku/simple-mysqli)
 
 Simple MySQLi Class

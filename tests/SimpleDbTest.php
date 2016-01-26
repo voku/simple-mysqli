@@ -121,7 +121,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   /**
    * @expectedException Exception
-   * @expectedExceptionMessage Error connecting to mysql server: Access denied for user 'root'@'localhost' (using password: YES)
+   * @expectedExceptionMessage Error connecting to mysql server: Access denied for user 'root'@'localhost' (using
+   *                           password: YES)
    */
   public function testGetFalseInstanceV1()
   {
@@ -369,6 +370,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testQry()
   {
+    /** @noinspection StaticInvocationViaThisInspection */
     $result = $this->db->qry(
         'UPDATE ' . $this->db->escape($this->tableName) . "
       SET
@@ -376,15 +378,17 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
       WHERE page_id = ?
     ", 1
     );
-    self::assertEquals(1, ($result));
+    self::assertEquals(1, $result);
 
-    $result = $this->db->qry(
+    /** @noinspection StaticInvocationViaThisInspection */
+    $result = (array)$this->db->qry(
         'SELECT * FROM ' . $this->db->escape($this->tableName) . '
       WHERE page_id = 1
     '
     );
-    self::assertEquals('tpl_test', ($result[0]['page_template']));
+    self::assertEquals('tpl_test', $result[0]['page_template']);
 
+    /** @noinspection StaticInvocationViaThisInspection */
     $result = $this->db->qry(
         'SELECT * FROM ' . $this->db->escape($this->tableName) . '
       WHERE page_id_lall = 1
@@ -402,7 +406,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         'page_type'     => 1.1,
     );
 
-    $newData = $this->db->escape($data);
+    $newData = (array)$this->db->escape($data);
 
     self::assertEquals('tpl_test_\\\'new2', $newData['page_template']);
     self::assertEquals(1.10000000, $newData['page_type']);
@@ -508,6 +512,14 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultSelectArray = $resultSelect->fetchArray();
     self::assertEquals('öäü', $resultSelectArray['page_type']);
 
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->fetchArrayy();
+    self::assertEquals('öäü', $resultSelectArray['page_type']);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->fetchArrayy()->clean()->getArray();
+    self::assertEquals('öäü', $resultSelectArray['page_type']);
+
     $where = array(
         'page_type ='  => 'öäü',
         'page_type <>' => 'öäü123',
@@ -539,6 +551,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultSelectArray = $resultSelect->fetch();
     $getDefaultResultType = $resultSelect->getDefaultResultType();
     self::assertEquals('array', $getDefaultResultType);
+    /** @noinspection OffsetOperationsInspection */
     self::assertEquals('öäü', $resultSelectArray['page_type']);
 
     $resultSelect = $this->db->select($this->tableName, $where);
@@ -613,6 +626,10 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchAllArray();
     self::assertEquals('öäü', $resultSelectArray[0]['page_type']);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->fetchAllArrayy()->filterBy('page_type', 'öäü')->first()->getArray();
+    self::assertEquals('öäü', $resultSelectArray['page_type']);
   }
 
   public function testGetErrors()
@@ -815,13 +832,13 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     // array
     $resultSelect->setDefaultResultType('array');
 
-    $columnResult = $resultSelect->fetch(true);
+    $columnResult = (array)$resultSelect->fetch(true);
     self::assertEquals('tpl_test_new8', $columnResult['page_template']);
 
-    $columnResult = $resultSelect->fetchAll();
+    $columnResult = (array)$resultSelect->fetchAll();
     self::assertEquals('tpl_test_new8', $columnResult[0]['page_template']);
 
-    $columnResult = $resultSelect->fetchAllArray();
+    $columnResult = (array)$resultSelect->fetchAllArray();
     self::assertEquals('tpl_test_new8', $columnResult[0]['page_template']);
 
     // object
@@ -921,7 +938,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     );
     $resultSelect = $this->db->select($this->tableName, $where);
     self::assertNotEquals(false, $resultSelect);
-    self::assertEquals(true, ($resultSelect->num_rows > 0));
+    self::assertEquals(true, $resultSelect->num_rows > 0);
 
     // select - false
     $where = array(
@@ -940,7 +957,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_template_lall = '" . $this->db->escape('tpl_test_new7') . "',
         page_type = " . $this->db->secure('öäü') . '
     ';
-    $return = $this->db->execSQL($sql);
+    $return = DB::execSQL($sql);
     self::assertEquals(false, $return);
 
     // execSQL - true
@@ -949,7 +966,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_template = '" . $this->db->escape('tpl_test_new7') . "',
         page_type = " . $this->db->secure('öäü') . '
     ';
-    $return = $this->db->execSQL($sql);
+    $return = DB::execSQL($sql);
     self::assertEquals(true, is_int($return));
     self::assertEquals(true, $return > 0);
   }
@@ -961,7 +978,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
         page_template = '" . $this->db->escape(UTF8::urldecode('D%26%23xFC%3Bsseldorf')) . "',
         page_type = '" . UTF8::urldecode('DÃ¼sseldorf') . "'
     ";
-    $return = $this->db->execSQL($sql);
+    $return = DB::execSQL($sql);
     self::assertEquals(true, is_int($return));
     self::assertEquals(true, $return > 0);
 
@@ -1058,6 +1075,8 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(false, $tmpPage);
     $tmpPage = $result->fetchArray();
     self::assertEquals(false, $tmpPage);
+    $tmpPage = $result->fetchArrayy();
+    self::assertEquals(false, $tmpPage);
 
     //
     // query - false
@@ -1113,7 +1132,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // no-cache
     $sql = 'SELECT * FROM ' . $this->tableName;
-    $result = $this->db->execSQL($sql, false);
+    $result = DB::execSQL($sql, false);
     if (count($result) > 0) {
       $return = true;
     } else {
@@ -1123,7 +1142,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // set cache
     $sql = 'SELECT * FROM ' . $this->tableName;
-    $result = $this->db->execSQL($sql, true);
+    $result = DB::execSQL($sql, true);
     if (count($result) > 0) {
       $return = true;
     } else {
@@ -1135,7 +1154,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
     // use cache
     $sql = 'SELECT * FROM ' . $this->tableName;
-    $result = $this->db->execSQL($sql, true);
+    $result = DB::execSQL($sql, true);
     if (count($result) > 0) {
       $return = true;
     } else {

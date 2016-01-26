@@ -2,6 +2,8 @@
 
 namespace voku\db;
 
+use Arrayy\Arrayy;
+
 /**
  * Result: this handles the result from "DB"-Class
  *
@@ -93,11 +95,7 @@ class Result
     $data = $this->fetchAllArray();
 
     foreach ($data as $_row) {
-      if (
-          isset($_row[$key])
-          &&
-          isset($_row[$value])
-      ) {
+      if (isset($_row[$key], $_row[$value])) {
         $_key = $_row[$key];
         $_value = $_row[$value];
         $arrayPair[$_key] = $_value;
@@ -118,9 +116,9 @@ class Result
     $data = array();
 
     if (
-        !$this->is_empty()
-        &&
         $this->_result
+        &&
+        !$this->is_empty()
     ) {
       $this->reset();
 
@@ -131,6 +129,32 @@ class Result
     }
 
     return $data;
+  }
+
+  /**
+   * fetch all results, return via Arrayy
+   *
+   * @return Arrayy
+   */
+  public function fetchAllArrayy()
+  {
+    // init
+    $data = array();
+
+    if (
+        $this->_result
+        &&
+        !$this->is_empty()
+    ) {
+      $this->reset();
+
+      /** @noinspection PhpAssignmentInConditionInspection */
+      while ($row = mysqli_fetch_assoc($this->_result)) {
+        $data[] = $row;
+      }
+    }
+
+    return Arrayy::create($data);
   }
 
   /**
@@ -155,9 +179,9 @@ class Result
   public function reset()
   {
     if (
-        !$this->is_empty()
-        &&
         $this->_result
+        &&
+        !$this->is_empty()
     ) {
       mysqli_data_seek($this->_result, 0);
     }
@@ -255,7 +279,7 @@ class Result
   }
 
   /**
-   * fetchArray
+   * fetch as array
    *
    * @param bool $reset
    *
@@ -268,10 +292,36 @@ class Result
     }
 
     if ($this->_result) {
-      return ($row = mysqli_fetch_assoc($this->_result)) ? $row : false;
-    } else {
-      return false;
+      $row = mysqli_fetch_assoc($this->_result);
+      if ($row) {
+        return $row;
+      }
     }
+
+    return false;
+  }
+
+  /**
+   * fetch as Arrayy-Object
+   *
+   * @param bool $reset
+   *
+   * @return Arrayy|false false on error
+   */
+  public function fetchArrayy($reset = false)
+  {
+    if ($reset === true) {
+      $this->reset();
+    }
+
+    if ($this->_result) {
+      $row = mysqli_fetch_assoc($this->_result);
+      if ($row) {
+        return Arrayy::create($row);
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -316,9 +366,9 @@ class Result
     $data = array();
 
     if (
-        !$this->is_empty()
-        &&
         $this->_result
+        &&
+        !$this->is_empty()
     ) {
       $this->reset();
 

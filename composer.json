@@ -26,6 +26,7 @@
   ],
   "require": {
     "php": ">=5.3.0",
+    "voku/arrayy": "1.*",
     "voku/simple-cache": "2.*",
     "voku/portable-utf8": "2.*"
   },

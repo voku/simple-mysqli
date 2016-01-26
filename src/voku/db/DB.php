@@ -310,7 +310,7 @@ class DB
    */
   public function isReady()
   {
-    return ($this->connected) ? true : false;
+    return $this->connected ? true : false;
   }
 
   /**
@@ -432,10 +432,14 @@ class DB
       $logType = $log[2];
     }
 
-    if ($logClass && class_exists($logClass)) {
-      if ($logMethod && method_exists($logClass, $logMethod)) {
-        $logClass::$logMethod($logText, $logType);
-      }
+    if (
+        $logClass
+        &&
+        class_exists($logClass)
+        &&
+        method_exists($logClass, $logMethod)
+    ) {
+      $logClass::$logMethod($logText, $logType);
     }
   }
 
@@ -559,10 +563,12 @@ class DB
      */
     static $firstInstance = null;
 
-    if ($hostname . $username . $password . $database . $port . $charset == '') {
-      if (null !== $firstInstance) {
-        return $firstInstance;
-      }
+    if (
+        $hostname . $username . $password . $database . $port . $charset == ''
+        &&
+        null !== $firstInstance
+    ) {
+      return $firstInstance;
     }
 
     $connection = md5(

@@ -366,6 +366,28 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     // select - false
     $false = $this->db->select('', array('page_id' => 2));
     self::assertEquals(false, $false);
+
+    // insert - true (float)
+    $pageArray = array(
+        'page_template' => 'tpl_new_中',
+        'page_type'     => (float)21.3123,
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+
+    // delete - true
+    $false = $this->db->delete($this->tableName, 'page_id = ' . $this->db->escape($tmpId));
+    self::assertEquals(true, $false);
+
+    // insert - true (int)
+    $pageArray = array(
+        'page_template' => 'tpl_new_中',
+        'page_type'     => (float)213123,
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+
+    // delete - true
+    $false = $this->db->delete($this->tableName, 'page_id = ' . $this->db->escape($tmpId));
+    self::assertEquals(true, $false);
   }
 
   public function testQry()

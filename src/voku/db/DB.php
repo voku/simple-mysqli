@@ -722,26 +722,41 @@ class DB
    */
   public function secure($var)
   {
+    // init
+    if (!is_object($var)) {
+      $varInt = (int)$var;
+    }
+
     if (is_string($var)) {
 
       if (!in_array($var, $this->mysqlDefaultTimeFunctions, true)) {
-        $var = "'" . trim($this->escape(trim(trim($var), "'")), "'") . "'";
+        $var = "'" . trim($this->escape(trim(trim((string)$var), "'")), "'") . "'";
       }
 
-    } elseif (is_int($var) || is_bool($var)) {
+    } elseif ((isset($varInt) && "$varInt" == $var) || is_int($var) || is_bool($var)) {
+
       $var = (int)$var;
+
     } elseif (is_float($var)) {
+
       $var = number_format((float)str_replace(',', '.', $var), 8, '.', '');
+
     } elseif (is_array($var)) {
+
       $var = null;
+
     } elseif (($var instanceof \DateTime)) {
+
       try {
         $var = "'" . $this->escape($var->format('Y-m-d H:i:s'), false, false) . "'";
       } catch (\Exception $e) {
         $var = null;
       }
+
     } else {
-      $var = "'" . trim($this->escape(trim(trim($var), "'")), "'") . "'";
+
+      $var = "'" . trim($this->escape(trim(trim((string)$var), "'")), "'") . "'";
+
     }
 
     return $var;

@@ -650,7 +650,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals('öäü', $resultSelectArray[0]['page_type']);
 
     $resultSelect = $this->db->select($this->tableName, $where);
-    $resultSelectArray = $resultSelect->fetchAllArrayy()->filterBy('page_type', 'öäü')->first()->getArray();
+    $resultSelectArray = $resultSelect->fetchAllArrayy()->filterBy('page_type', 'öäü')->first();
     self::assertEquals('öäü', $resultSelectArray['page_type']);
   }
 

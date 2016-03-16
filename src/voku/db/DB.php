@@ -151,7 +151,7 @@ class DB
     $this->connect();
 
     $this->mysqlDefaultTimeFunctions = array(
-      // Returns the current date
+      // Returns the current date.
       'CURDATE()',
       // CURRENT_DATE	| Synonyms for CURDATE()
       'CURRENT_DATE()',
@@ -159,29 +159,29 @@ class DB
       'CURRENT_TIME()',
       // CURRENT_TIMESTAMP | Synonyms for NOW()
       'CURRENT_TIMESTAMP()',
-      // Returns the current time
+      // Returns the current time.
       'CURTIME()',
       // Synonym for NOW()
       'LOCALTIME()',
       // Synonym for NOW()
       'LOCALTIMESTAMP()',
-      // Returns the current date and time
+      // Returns the current date and time.
       'NOW()',
-      // Returns the time at which the function executes
+      // Returns the time at which the function executes.
       'SYSDATE()',
-      // Returns a UNIX timestamp
+      // Returns a UNIX timestamp.
       'UNIX_TIMESTAMP()',
-      // Returns the current UTC date
+      // Returns the current UTC date.
       'UTC_DATE()',
-      // Returns the current UTC time
+      // Returns the current UTC time.
       'UTC_TIME()',
-      // Returns the current UTC date and time
+      // Returns the current UTC date and time.
       'UTC_TIMESTAMP()',
     );
   }
 
   /**
-   * load the config
+   * Load the config from the constructor.
    *
    * @param string         $hostname
    * @param string         $username
@@ -237,7 +237,11 @@ class DB
   }
 
   /**
-   * show config error and throw a exception
+   * Show config errors by throw exceptions.
+   *
+   * @return bool
+   *
+   * @throws \Exception
    */
   public function showConfigError()
   {
@@ -261,13 +265,15 @@ class DB
       if (!$this->database) {
         throw new \Exception('no-sql-database');
       }
+
+      return false;
     }
 
     return true;
   }
 
   /**
-   * connect
+   * Open a new connection to the MySQL server.
    *
    * @return boolean
    */
@@ -304,7 +310,7 @@ class DB
   }
 
   /**
-   * check if db-connection is ready
+   * Check if db-connection is ready.
    *
    * @return boolean
    */
@@ -314,14 +320,14 @@ class DB
   }
 
   /**
-   * _displayError
+   * Display SQL-Errors or throw Exceptions (for dev).
    *
-   * @param string       $e
+   * @param string       $error
    * @param null|boolean $force_exception_after_error
    *
    * @throws \Exception
    */
-  private function _displayError($e, $force_exception_after_error = null)
+  private function _displayError($error, $force_exception_after_error = null)
   {
     $fileInfo = $this->getFileAndLineFromSql();
 
@@ -330,11 +336,11 @@ class DB
             'error',
             '<strong>' . date(
                 'd. m. Y G:i:s'
-            ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . ') (sql-error):</strong> ' . $e . '<br>',
+            ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . ') (sql-error):</strong> ' . $error . '<br>',
         )
     );
 
-    $this->_errors[] = $e;
+    $this->_errors[] = $error;
 
     if ($this->checkForDev() === true) {
 
@@ -347,27 +353,27 @@ class DB
           <b style="font-size:14px;">MYSQL Error:</b>
           <code style="display:block;">
             file / line: ' . $fileInfo['file'] . ' / ' . $fileInfo['line'] . '
-            ' . $e . '
+            ' . $error . '
           </code>
         </div>
         ';
       }
 
       if ($force_exception_after_error === true) {
-        throw new \Exception($e);
+        throw new \Exception($error);
       } elseif ($force_exception_after_error === false) {
         // nothing
       } elseif ($force_exception_after_error === null) {
         // default
         if ($this->exit_on_error === true) {
-          throw new \Exception($e);
+          throw new \Exception($error);
         }
       }
     }
   }
 
   /**
-   * try to get the file & line from the current sql-query
+   * Try to get the file & line from the current sql-query.
    *
    * @return array will return array['file'] and array['line']
    */
@@ -389,11 +395,15 @@ class DB
       ) {
         $file = $referrer[$key]['file'];
         $line = $referrer[$key]['line'];
+
+        break;
       }
 
       if ($ref['function'] == '_logQuery') {
         $file = $referrer[$key + 1]['file'];
         $line = $referrer[$key + 1]['line'];
+
+        break;
       }
 
       if ($ref['function'] == 'execSQL') {
@@ -411,11 +421,17 @@ class DB
   }
 
   /**
-   * wrapper for a "Logger"-Class
+   * Wrapper-Function for a "Logger"-Class.
    *
-   * @param string[] $log [method, text, type] e.g.: array('error', 'this is a error', 'sql')
+   * INFO:
+   * The "Logger"-ClassName is set by "$this->logger_class_name",<br />
+   * the "Logger"-Method is the [0] element from the "$log"-parameter,<br />
+   * the text you want to log is the [1] element and<br />
+   * the type you want to log is the next [2] element.
+   *
+   * @param string[] $log [method, text, type]<br />e.g.: array('error', 'this is a error', 'sql')
    */
-  private function logger($log)
+  private function logger(array $log)
   {
     $logMethod = '';
     $logText = '';
@@ -444,12 +460,18 @@ class DB
   }
 
   /**
-   * check for developer
+   * Check is the current user is a developer.
+   *
+   * INFO:
+   * By default we will return "true" if the remote-ip-address is localhost or
+   * if the script is called via CLI. But you can also overwrite this method or
+   * you can implement a global "checkForDev()"-function.
    *
    * @return bool
    */
-  private function checkForDev()
+  protected function checkForDev()
   {
+    // init
     $return = false;
 
     if (function_exists('checkForDev')) {
@@ -458,15 +480,15 @@ class DB
 
       // for testing with dev-address
       $noDev = isset($_GET['noDev']) ? (int)$_GET['noDev'] : 0;
-      $remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : false;
+      $remoteIpAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : false;
 
       if (
           $noDev != 1
           &&
           (
-              $remoteAddr == '127.0.0.1'
+              $remoteIpAddress == '127.0.0.1'
               ||
-              $remoteAddr == '::1'
+              $remoteIpAddress == '::1'
               ||
               PHP_SAPI == 'cli'
           )
@@ -479,26 +501,11 @@ class DB
   }
 
   /**
-   * execute a sql-query and
-   * return the result-array for select-statements
-   *
-   * -----------------------
-   *
-   * e.g.:
-   *  $retcode = DB::qry("UPDATE user_extension
-   *    SET
-   *      user_name='?'
-   *    WHERE user_uid_fk='?'
-   *  ",
-   *    $userName,
-   *    (int)$uid
-   *  );
-   *
-   * -----------------------
+   * Execute a sql-query and return the result-array for select-statements.
    *
    * @param $query
    *
-   * @return array|bool|int|\voku\db\Result
+   * @return mixed
    * @deprecated
    * @throws \Exception
    */
@@ -540,7 +547,7 @@ class DB
    * @param string      $username
    * @param string      $password
    * @param string      $database
-   * @param string      $port          default is '3306'
+   * @param string      $port          default is (int)3306
    * @param string      $charset       default is 'utf8', but if you need 4-byte chars, then your tables need
    *                                   the 'utf8mb4'-charset
    * @param bool|string $exit_on_error use a empty string "" or false to disable it
@@ -599,12 +606,12 @@ class DB
   }
 
   /**
-   * run a sql-query
+   * Execute a sql-query.
    *
-   * @param string        $sql            sql-query string
+   * @param string        $sql            sql-query
    *
-   * @param array|boolean $params         a "array" of sql-query-parameters
-   *                                      "false" if you don't need any parameter
+   * @param array|boolean $params         "array" of sql-query-parameters
+   *                                      "false" if you don't need any parameter (default)
    *
    * @return bool|int|Result              "Result" by "<b>SELECT</b>"-queries<br />
    *                                      "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
@@ -714,7 +721,18 @@ class DB
   }
 
   /**
-   * secure
+   * Try to secure a variable, so can you use it in sql-queries.
+   *
+   * int: (also strings that contains only an int-value)
+   * 1. parse into (int)
+   *
+   * strings:
+   * 1. check if the string isn't a default mysql-time-function e.g. 'CURDATE()'
+   * 2. trim whitespace
+   * 3. trim '
+   * 4. escape the string (and remove non utf-8 chars)
+   * 5. trim ' again (because we maybe removed some chars)
+   * 6. add ' around the new string
    *
    * @param mixed $var
    *
@@ -722,30 +740,40 @@ class DB
    */
   public function secure($var)
   {
-    // init
+    // save the current value as int (for later usage)
     if (!is_object($var)) {
       $varInt = (int)$var;
     }
 
-    if (is_string($var)) {
+    if ((isset($varInt) && "$varInt" == $var) || is_int($var) || is_bool($var)) {
+
+      // "int" || int || bool
+
+      $var = (int)$var;
+
+    } elseif (is_string($var)) {
+
+      // "string"
 
       if (!in_array($var, $this->mysqlDefaultTimeFunctions, true)) {
         $var = "'" . trim($this->escape(trim(trim((string)$var), "'")), "'") . "'";
       }
 
-    } elseif ((isset($varInt) && "$varInt" == $var) || is_int($var) || is_bool($var)) {
-
-      $var = (int)$var;
-
     } elseif (is_float($var)) {
+
+      // float
 
       $var = number_format((float)str_replace(',', '.', $var), 8, '.', '');
 
     } elseif (is_array($var)) {
 
+      // array
+
       $var = null;
 
-    } elseif (($var instanceof \DateTime)) {
+    } elseif ($var instanceof \DateTime) {
+
+      // "DateTime"-object
 
       try {
         $var = "'" . $this->escape($var->format('Y-m-d H:i:s'), false, false) . "'";
@@ -755,6 +783,8 @@ class DB
 
     } else {
 
+      // fallback ...
+
       $var = "'" . trim($this->escape(trim(trim((string)$var), "'")), "'") . "'";
 
     }
@@ -763,25 +793,29 @@ class DB
   }
 
   /**
-   * escape
+   * Escape
    *
-   * @param array|float|int|string|boolean $var boolean: convert into "integer"<br />
-   *                                            int: convert into "integer"<br />
-   *                                            float: convert into "float" and replace "," with "."<br />
-   *                                            array: run escape() for every key => value<br />
-   *                                            string: run UTF8::cleanup() and mysqli_real_escape_string()<br />
-   * @param bool                           $stripe_non_utf8
-   * @param bool                           $html_entity_decode
-   * @param bool                           $array_to_string
+   * @param mixed $var boolean: convert into "integer"<br />
+   *                   int: convert into "integer"<br />
+   *                   float: convert into "float" and replace "," with "."<br />
+   *                   array: run escape() for every key => value<br />
+   *                   string: run UTF8::cleanup() and mysqli_real_escape_string()<br />
+   * @param bool  $stripe_non_utf8
+   * @param bool  $html_entity_decode
+   * @param bool  $array_to_string
    *
    * @return array|bool|float|int|string
    */
   public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = true, $array_to_string = false)
   {
+    // save the current value as int (for later usage)
+    if (!is_object($var)) {
+      $varInt = (int)$var;
+    }
 
-    if (is_int($var) || is_bool($var)) {
+    if ((isset($varInt) && "$varInt" == $var) || is_int($var) || is_bool($var)) {
 
-      // int
+      // "int" || int || bool
 
       return (int)$var;
 
@@ -815,7 +849,7 @@ class DB
 
     if (is_string($var)) {
 
-      // string
+      // "string"
 
       if ($stripe_non_utf8 === true) {
         $var = UTF8::cleanup($var);
@@ -837,7 +871,7 @@ class DB
   }
 
   /**
-   * getLink
+   * Get the mysqli-link (link identifier returned by mysqli-connect).
    *
    * @return \mysqli
    */
@@ -847,9 +881,9 @@ class DB
   }
 
   /**
-   * _logQuery
+   * Log the current query via "$this->logger".
    *
-   * @param String $sql     sql-query
+   * @param string $sql     sql-query
    * @param int    $duration
    * @param int    $results result counter
    *
@@ -887,7 +921,7 @@ class DB
   }
 
   /**
-   * insert_id
+   * Returns the auto generated id used in the last query.
    *
    * @return int|string
    */
@@ -897,7 +931,7 @@ class DB
   }
 
   /**
-   * affected_rows
+   * Gets the number of affected rows in a previous MySQL operation.
    *
    * @return int
    */
@@ -907,7 +941,7 @@ class DB
   }
 
   /**
-   * query error-handling
+   * Error-handling for the sql-query.
    *
    * @param string     $errorMsg
    * @param string     $sql
@@ -982,7 +1016,7 @@ class DB
   }
 
   /**
-   * reconnect
+   * Reconnect to the MySQL-Server.
    *
    * @param bool $checkViaPing
    *
@@ -1005,7 +1039,8 @@ class DB
   }
 
   /**
-   * ping
+   * Pings a server connection, or tries to reconnect
+   * if the connection has gone down.
    *
    * @return boolean
    */
@@ -1024,17 +1059,17 @@ class DB
   }
 
   /**
-   * can handel select/insert/update/delete queries
+   * Execute select/insert/update/delete sql-queries.
    *
    * @param string $query    sql-query
    * @param bool   $useCache use cache?
    * @param int    $cacheTTL cache-ttl in seconds
    *
-   * @return bool|int|array       "array" by "<b>SELECT</b>"-queries<br />
-   *                              "int" (insert_id) by "<b>INSERT</b>"-queries<br />
-   *                              "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-   *                              "true" by e.g. "DROP"-queries<br />
-   *                              "false" on error
+   * @return mixed "array" by "<b>SELECT</b>"-queries<br />
+   *               "int" (insert_id) by "<b>INSERT</b>"-queries<br />
+   *               "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *               "true" by e.g. "DROP"-queries<br />
+   *               "false" on error
    *
    */
   public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
@@ -1083,7 +1118,7 @@ class DB
   }
 
   /**
-   * get charset
+   * Get the current charset.
    *
    * @return string
    */
@@ -1093,7 +1128,7 @@ class DB
   }
 
   /**
-   * set charset
+   * Set the current charset.
    *
    * @param string $charset
    *
@@ -1123,7 +1158,7 @@ class DB
   }
 
   /**
-   * get the names of all tables
+   * Get all table-names via "SHOW TABLES".
    *
    * @return array
    */
@@ -1136,14 +1171,14 @@ class DB
   }
 
   /**
-   * run a sql-multi-query
+   * Execute a sql-multi-query.
    *
    * @param string $sql
    *
-   * @return bool|Result[]                "Result"-Array by "<b>SELECT</b>"-queries<br />
-   *                                      "boolean" by only "<b>INSERT</b>"-queries<br />
-   *                                      "boolean" by only (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-   *                                      "boolean" by only by e.g. "DROP"-queries<br />
+   * @return false|Result[] "Result"-Array by "<b>SELECT</b>"-queries<br />
+   *                        "boolean" by only "<b>INSERT</b>"-queries<br />
+   *                        "boolean" by only (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                        "boolean" by only by e.g. "DROP"-queries<br />
    *
    * @throws \Exception
    */
@@ -1217,7 +1252,7 @@ class DB
   }
 
   /**
-   * alias for "beginTransaction()"
+   * alias: "beginTransaction()"
    */
   public function startTransaction()
   {
@@ -1225,7 +1260,7 @@ class DB
   }
 
   /**
-   * Begins a transaction, by turning off auto commit
+   * Begins a transaction, by turning off auto commit.
    *
    * @return boolean this will return true or false indicating success of transaction
    */
@@ -1251,7 +1286,7 @@ class DB
   }
 
   /**
-   * clear errors
+   * Clear the errors in "$this->_errors".
    *
    * @return bool
    */
@@ -1263,7 +1298,7 @@ class DB
   }
 
   /**
-   * Check if in transaction
+   * Check if we are in a transaction.
    *
    * @return boolean
    */
@@ -1273,7 +1308,7 @@ class DB
   }
 
   /**
-   * Ends a transaction and commits if no errors, then ends autocommit
+   * Ends a transaction and commits if no errors, then ends autocommit.
    *
    * @return boolean this will return true or false indicating success of transactions
    */
@@ -1295,9 +1330,9 @@ class DB
   }
 
   /**
-   * get all errors
+   * Get all errors from "$this->_errors".
    *
-   * @return array false === on errors
+   * @return array|false false === on errors
    */
   public function errors()
   {
@@ -1305,7 +1340,7 @@ class DB
   }
 
   /**
-   * rollback in a transaction
+   * Rollback in a transaction.
    */
   public function rollback()
   {
@@ -1322,7 +1357,7 @@ class DB
   }
 
   /**
-   * insert
+   * Execute a "insert"-query.
    *
    * @param string $table
    * @param array  $data
@@ -1353,7 +1388,7 @@ class DB
   }
 
   /**
-   * Parses arrays with value pairs and generates SQL to use in queries
+   * Parses arrays with value pairs and generates SQL to use in queries.
    *
    * @param array  $arrayPair
    * @param string $glue this is the separator
@@ -1471,7 +1506,7 @@ class DB
   }
 
   /**
-   * Quote && Escape e.g. a table name string
+   * Quote && Escape e.g. a table name string.
    *
    * @param string $str
    *
@@ -1483,7 +1518,7 @@ class DB
   }
 
   /**
-   * get errors
+   * Get errors from "$this->_errors".
    *
    * @return array
    */
@@ -1493,7 +1528,7 @@ class DB
   }
 
   /**
-   * replace
+   * Execute a "replace"-query.
    *
    * @param string $table
    * @param array  $data
@@ -1539,7 +1574,7 @@ class DB
   }
 
   /**
-   * update
+   * Execute a "update"-query.
    *
    * @param string       $table
    * @param array        $data
@@ -1579,7 +1614,7 @@ class DB
   }
 
   /**
-   * delete
+   * Execute a "delete"-query.
    *
    * @param string       $table
    * @param string|array $where
@@ -1611,7 +1646,7 @@ class DB
   }
 
   /**
-   * select
+   * Execute a "select"-query.
    *
    * @param string       $table
    * @param string|array $where
@@ -1641,7 +1676,7 @@ class DB
   }
 
   /**
-   * get the last error
+   * Get the last sql-error.
    *
    * @return string false on error
    */
@@ -1663,7 +1698,7 @@ class DB
   }
 
   /**
-   * close
+   * Closes a previously opened database connection.
    */
   public function close()
   {

@@ -26,12 +26,12 @@
   ],
   "require": {
     "php": ">=5.3.0",
-    "voku/arrayy": "2.*",
-    "voku/simple-cache": "2.*",
-    "voku/portable-utf8": "2.*"
+    "voku/arrayy": "~2.0",
+    "voku/simple-cache": "~2.0",
+    "voku/portable-utf8": "~2.1"
   },
   "require-dev": {
-    "phpunit/phpunit": "4.*"
+    "phpunit/phpunit": "~4.0"
   },
   "autoload": {
     "psr-4": {

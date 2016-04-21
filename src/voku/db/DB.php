@@ -395,23 +395,11 @@ class DB
       ) {
         $file = $referrer[$key]['file'];
         $line = $referrer[$key]['line'];
-
-        break;
-      }
-
-      if ($ref['function'] == '_logQuery') {
-        $file = $referrer[$key + 1]['file'];
-        $line = $referrer[$key + 1]['line'];
-
-        break;
-      }
-
-      if ($ref['function'] == 'execSQL') {
+      } else if ($ref['function'] == 'execSQL') {
         $file = $referrer[$key]['file'];
         $line = $referrer[$key]['line'];
-
-        break;
       }
+
     }
 
     $return['file'] = $file;

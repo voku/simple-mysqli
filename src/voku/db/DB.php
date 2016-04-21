@@ -389,13 +389,20 @@ class DB
     foreach ($referrer as $key => $ref) {
 
       if (
+          $ref['function'] == 'execSQL'
+          ||
           $ref['function'] == 'query'
           ||
           $ref['function'] == 'qry'
+          ||
+          $ref['function'] == 'insert'
+          ||
+          $ref['function'] == 'update'
+          ||
+          $ref['function'] == 'replace'
+          ||
+          $ref['function'] == 'delete'
       ) {
-        $file = $referrer[$key]['file'];
-        $line = $referrer[$key]['line'];
-      } else if ($ref['function'] == 'execSQL') {
         $file = $referrer[$key]['file'];
         $line = $referrer[$key]['line'];
       }

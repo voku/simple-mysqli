@@ -212,7 +212,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
 
   public function testBasics()
   {
-    require_once 'Foobar.php';
+    require_once __DIR__ . '/Foobar.php';
 
     // insert - true
     $pageArray = array(

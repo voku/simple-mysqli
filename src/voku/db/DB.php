@@ -384,7 +384,7 @@ class DB
     $file = '';
     $line = '';
 
-    $referrer = debug_backtrace();
+    $referrer = debug_backtrace(false, 10);
 
     foreach ($referrer as $key => $ref) {
 
@@ -896,18 +896,13 @@ class DB
       return false;
     }
 
-    $info = 'time => ' . round(
-            $duration,
-            5
-        ) . ' - ' . 'results => ' . $results . ' - ' . 'SQL => ' . UTF8::htmlentities($sql);
-
+    $info = 'time => ' . round($duration, 5) . ' - ' . 'results => ' . $results . ' - ' . 'SQL => ' . UTF8::htmlentities($sql);
     $fileInfo = $this->getFileAndLineFromSql();
+
     $this->logger(
         array(
             'debug',
-            '<strong>' . date(
-                'd. m. Y G:i:s'
-            ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
+            '<strong>' . date('d. m. Y G:i:s') . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
             'sql',
         )
     );

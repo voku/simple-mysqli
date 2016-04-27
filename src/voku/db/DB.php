@@ -3,6 +3,7 @@
 namespace voku\db;
 
 use voku\cache\Cache;
+use voku\helper\Bootup;
 use voku\helper\UTF8;
 
 /**
@@ -384,7 +385,11 @@ class DB
     $file = '';
     $line = '';
 
-    $referrer = debug_backtrace(false, 10);
+    if (Bootup::is_php('5.4') === true) {
+      $referrer = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+    } else {
+      $referrer = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+    }
 
     foreach ($referrer as $key => $ref) {
 

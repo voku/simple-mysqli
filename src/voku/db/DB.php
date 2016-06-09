@@ -745,7 +745,13 @@ class DB
       $varInt = (int)$var;
     }
 
-    if ((isset($varInt) && "$varInt" == $var) || is_int($var) || is_bool($var)) {
+    if (
+        (isset($varInt, $var[0]) && $var[0] != '0' && "$varInt" == $var)
+        ||
+        is_int($var)
+        ||
+        is_bool($var)
+    ) {
 
       // "int" || int || bool
 
@@ -813,7 +819,13 @@ class DB
       $varInt = (int)$var;
     }
 
-    if ((isset($varInt) && "$varInt" == $var) || is_int($var) || is_bool($var)) {
+    if (
+        (isset($varInt, $var[0]) && $var[0] != '0' && "$varInt" == $var)
+        ||
+        is_int($var)
+        ||
+        is_bool($var)
+    ) {
 
       // "int" || int || bool
 

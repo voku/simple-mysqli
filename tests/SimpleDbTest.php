@@ -85,7 +85,7 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     self::assertEquals(false, $this->db->isReady());
 
     // insert - false
-    $false = $db_1->query('INSERT INTO lall SET false=1');
+    $false = $db_1->query('INSERT INTO lall SET false = 1');
     self::assertEquals(false, $false);
   }
 
@@ -443,6 +443,28 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
     $newData = $this->db->escape($data, true, true, true);
 
     self::assertEquals('tpl_test_\\\'new2,1.10000000', $newData);
+
+    // ---
+
+    $data = array(
+        'page_template' => "tpl_test_'new2",
+        'page_type'     => '0111',
+    );
+
+    $newData = $this->db->escape($data, true, false, true);
+
+    self::assertEquals('tpl_test_\\\'new2,0111', $newData);
+
+    // ---
+
+    $data = array(
+        'page_template' => "tpl_test_'new2",
+        'page_type'     => '111',
+    );
+
+    $newData = $this->db->escape($data, true, false, true);
+
+    self::assertEquals('tpl_test_\\\'new2,111', $newData);
 
     // ---
 

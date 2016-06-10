@@ -5,9 +5,9 @@ use voku\db\Result;
 use voku\helper\UTF8;
 
 /**
- * Class SimpleMySQLiTest
+ * Class SimpleDbTest
  */
-class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
+class SimpleDbTest extends PHPUnit_Framework_TestCase
 {
 
   /**
@@ -15,6 +15,9 @@ class SimpleMySQLiTest extends PHPUnit_Framework_TestCase
    */
   protected $db;
 
+  /**
+   * @var string
+   */
   protected $tableName = 'test_page';
 
   public function setUp()

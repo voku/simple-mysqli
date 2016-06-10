@@ -38,7 +38,7 @@ class Helper
       $db = DB::getInstance();
     }
 
-    $sql = "SHOW COLUMNS FROM `" . $db->escape($table) . "`";
+    $sql = 'SHOW COLUMNS FROM `' . $db->escape($table) . '`';
     $result = $db->query($sql);
 
     if ($result && $result->num_rows > 0) {
@@ -82,10 +82,10 @@ class Helper
     }
 
     // get the row
-    $query = "SELECT * FROM " . $table . "
+    $query = 'SELECT * FROM ' . $table . '
       WHERE 1 = 1
-      " . $whereSQL . "
-    ";
+      ' . $whereSQL . '
+    ';
     $result = $db->query($query);
 
     // make sure the row exists
@@ -118,9 +118,9 @@ class Helper
         }
 
         // insert the "copied" row
-        $new_query = "INSERT INTO `" . $table . "` (" . ltrim($insert_keys, ',') . ")
-          VALUES (" . ltrim($insert_values, ',') . ")
-        ";
+        $new_query = 'INSERT INTO `' . $table . '` (' . ltrim($insert_keys, ',') . ')
+          VALUES (' . ltrim($insert_values, ',') . ')
+        ';
         $return = $db->query($new_query, $bindings);
       }
     }

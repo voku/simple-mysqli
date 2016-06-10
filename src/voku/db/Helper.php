@@ -12,8 +12,8 @@ class Helper
   /**
    * return all db-fields from a table
    *
-   * @param string $table
-   * @param bool   $useStaticCache
+   * @param string  $table
+   * @param bool    $useStaticCache
    * @param DB|null $db
    *
    * @return array

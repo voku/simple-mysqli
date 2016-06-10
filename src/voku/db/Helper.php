@@ -15,10 +15,11 @@ class Helper
    * @param string $database
    * @param string $table
    * @param bool   $useStaticCache
+   * @param DB|null $db
    *
    * @return array
    */
-  public static function getDbFields($table, $useStaticCache = true)
+  public static function getDbFields($table, $useStaticCache = true, DB $db = null)
   {
     static $dbFieldsCache = array();
 
@@ -33,7 +34,10 @@ class Helper
 
     // init
     $dbFields = array();
-    $db = DB::getInstance();
+
+    if ($db === null) {
+      $db = DB::getInstance();
+    }
 
     $sql = "SHOW COLUMNS FROM `" . $db->escape($table) . "`";
     $result = $db->query($sql);
@@ -53,20 +57,24 @@ class Helper
   /**
    * copy row within a DB table and making updates to columns
    *
-   * @param string $table
-   * @param array  $whereArray
-   * @param array  $updateArray
-   * @param array  $ignoreArray
+   * @param string  $table
+   * @param array   $whereArray
+   * @param array   $updateArray
+   * @param array   $ignoreArray
+   * @param DB|null $db
    *
    * @return bool|int "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
    *                   "false" on error
    */
-  public static function copyTableRow($table, array $whereArray, array $updateArray = array(), array $ignoreArray = array())
+  public static function copyTableRow($table, array $whereArray, array $updateArray = array(), array $ignoreArray = array(), DB $db = null)
   {
     // init
     $whereSQL = '';
-    $db = DB::getInstance();
     $return = false;
+
+    if ($db === null) {
+      $db = DB::getInstance();
+    }
 
     $table = $db->escape($table);
 

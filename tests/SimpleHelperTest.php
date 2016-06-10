@@ -54,7 +54,7 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
 
     // test static-cache
 
-    $dbFields = Helper::getDbFields($this->tableName, true);
+    $dbFields = Helper::getDbFields($this->tableName, true, $this->db);
 
     self::assertEquals(
         array(

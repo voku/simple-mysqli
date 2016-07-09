@@ -286,8 +286,10 @@ class DB
 
     mysqli_report(MYSQLI_REPORT_STRICT);
     try {
-      /** @noinspection PhpUsageOfSilenceOperatorInspection */
-      $this->link = @mysqli_connect(
+      $this->link = mysqli_init();
+
+      $this->connected = @mysqli_real_connect(
+          $this->link,
           $this->hostname,
           $this->username,
           $this->password,
@@ -300,11 +302,10 @@ class DB
     }
     mysqli_report(MYSQLI_REPORT_OFF);
 
-    if (!$this->link) {
+    if (!$this->connected) {
       $this->_displayError('Error connecting to mysql server: ' . mysqli_connect_error(), true);
     } else {
       $this->set_charset($this->charset);
-      $this->connected = true;
     }
 
     return $this->isReady();
@@ -394,19 +395,19 @@ class DB
     foreach ($referrer as $key => $ref) {
 
       if (
-          $ref['function'] == 'execSQL'
+          $ref['function'] === 'execSQL'
           ||
-          $ref['function'] == 'query'
+          $ref['function'] === 'query'
           ||
-          $ref['function'] == 'qry'
+          $ref['function'] === 'qry'
           ||
-          $ref['function'] == 'insert'
+          $ref['function'] === 'insert'
           ||
-          $ref['function'] == 'update'
+          $ref['function'] === 'update'
           ||
-          $ref['function'] == 'replace'
+          $ref['function'] === 'replace'
           ||
-          $ref['function'] == 'delete'
+          $ref['function'] === 'delete'
       ) {
         $file = $referrer[$key]['file'];
         $line = $referrer[$key]['line'];
@@ -486,11 +487,11 @@ class DB
           $noDev != 1
           &&
           (
-              $remoteIpAddress == '127.0.0.1'
+              $remoteIpAddress === '127.0.0.1'
               ||
-              $remoteIpAddress == '::1'
+              $remoteIpAddress === '::1'
               ||
-              PHP_SAPI == 'cli'
+              PHP_SAPI === 'cli'
           )
       ) {
         $return = true;
@@ -654,16 +655,13 @@ class DB
     }
     $this->_logQuery($sql, $query_duration, $resultCount);
 
-    if (
-        $result !== null
-        &&
-        $result instanceof \mysqli_result
-    ) {
+    if ($result instanceof \mysqli_result) {
 
       // return query result object
       return new Result($sql, $result);
 
     } else {
+
       // is the query successful
       if ($result === true) {
 
@@ -699,7 +697,6 @@ class DB
    */
   private function _parseQueryParams($sql, array $params)
   {
-
     // is there anything to parse?
     if (strpos($sql, '?') === false) {
       return $sql;
@@ -906,14 +903,19 @@ class DB
     $logLevelUse = strtolower($this->logger_level);
 
     if (
-        $logLevelUse != 'trace'
+        $logLevelUse !== 'trace'
         &&
-        $logLevelUse != 'debug'
+        $logLevelUse !== 'debug'
     ) {
-      return false;
+      //return false;
     }
 
-    $info = 'time => ' . round($duration, 5) . ' - ' . 'results => ' . $results . ' - ' . 'SQL => ' . UTF8::htmlentities($sql);
+    $infoExtra = mysqli_info($this->link);
+    if ($infoExtra) {
+      $infoExtra = ' | info => ' . $infoExtra;
+    }
+
+    $info = 'time => ' . round($duration, 5) . ' | results => ' . (int)$results . $infoExtra . ' | SQL => ' . UTF8::htmlentities($sql);
     $fileInfo = $this->getFileAndLineFromSql();
 
     $this->logger(
@@ -958,7 +960,7 @@ class DB
    */
   protected function queryErrorHandling($errorMsg, $sql, $sqlParams = false)
   {
-    if ($errorMsg == 'DB server has gone away' || $errorMsg == 'MySQL server has gone away') {
+    if ($errorMsg === 'DB server has gone away' || $errorMsg === 'MySQL server has gone away') {
       static $reconnectCounter;
 
       // exit if we have more then 3 "DB server has gone away"-errors
@@ -1149,7 +1151,7 @@ class DB
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
     @mysqli_query($this->link, 'SET CHARACTER SET ' . $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    @mysqli_query($this->link, "SET NAMES '" . ($charset == 'utf8' ? 'utf8mb4' : $charset) . "'");
+    @mysqli_query($this->link, "SET NAMES '" . ($charset === 'utf8' ? 'utf8mb4' : $charset) . "'");
 
     return $return;
   }
@@ -1213,11 +1215,7 @@ class DB
       do {
         $resultTmpInner = mysqli_store_result($this->link);
 
-        if (
-            null !== $resultTmpInner
-            &&
-            $resultTmpInner instanceof \mysqli_result
-        ) {
+        if ($resultTmpInner instanceof \mysqli_result) {
           $returnTheResult = true;
           $result[] = new Result($sql, $resultTmpInner);
         } else {
@@ -1470,34 +1468,17 @@ class DB
           $_connector = '<>';
         }
 
-        if (
-            is_array($_value)
-            &&
-            (
-                $_connector == 'NOT IN'
-                ||
-                $_connector == 'IN'
-            )
-        ) {
+        if (is_array($_value) === true) {
           foreach ($_value as $oldKey => $oldValue) {
-            /** @noinspection AlterInForeachInspection */
             $_value[$oldKey] = $this->secure($oldValue);
           }
-          $_value = '(' . implode(',', $_value) . ')';
-        } elseif (
-            is_array($_value)
-            &&
-            (
-                $_connector == 'NOT BETWEEN'
-                ||
-                $_connector == 'BETWEEN'
-            )
-        ) {
-          foreach ($_value as $oldKey => $oldValue) {
-            /** @noinspection AlterInForeachInspection */
-            $_value[$oldKey] = $this->secure($oldValue);
+
+          if ($_connector === 'NOT IN' || $_connector === 'IN') {
+            $_value = '(' . implode(',', $_value) . ')';
+          } elseif ($_connector === 'NOT BETWEEN' || $_connector === 'BETWEEN') {
+            $_value = '(' . implode(' AND ', $_value) . ')';
           }
-          $_value = '(' . implode(' AND ', $_value) . ')';
+
         } else {
           $_value = $this->secure($_value);
         }

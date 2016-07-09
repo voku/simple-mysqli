@@ -23,7 +23,7 @@ class Result
   public $sql;
 
   /**
-   * @var \mysqli_result|null
+   * @var \mysqli_result
    */
   private $_result;
 
@@ -38,18 +38,12 @@ class Result
    * @param string         $sql
    * @param \mysqli_result $result
    */
-  public function __construct($sql = '', $result = null)
+  public function __construct($sql = '', \mysqli_result $result)
   {
     $this->sql = $sql;
 
-    if ($result === null) {
-      return;
-    }
-
-    if ($result instanceof \mysqli_result) {
-      $this->_result = $result;
-      $this->num_rows = $this->_result->num_rows;
-    }
+    $this->_result = $result;
+    $this->num_rows = $this->_result->num_rows;
   }
 
   /**
@@ -69,7 +63,7 @@ class Result
    */
   public function setDefaultResultType($default_result_type = 'object')
   {
-    if ($default_result_type == 'object' || $default_result_type == 'array') {
+    if ($default_result_type === 'object' || $default_result_type === 'array') {
       $this->_default_result_type = $default_result_type;
     }
   }
@@ -178,11 +172,7 @@ class Result
    */
   public function reset()
   {
-    if (
-        $this->_result
-        &&
-        !$this->is_empty()
-    ) {
+    if (!$this->is_empty()) {
       mysqli_data_seek($this->_result, 0);
     }
 
@@ -215,9 +205,7 @@ class Result
    */
   public function free()
   {
-    if ($this->_result && $this->_result instanceof \mysqli_result) {
-      mysqli_free_result($this->_result);
-    }
+    mysqli_free_result($this->_result);
   }
 
   /**
@@ -241,9 +229,9 @@ class Result
   {
     $return = false;
 
-    if ($this->_default_result_type == 'object') {
+    if ($this->_default_result_type === 'object') {
       $return = $this->fetchObject('', '', $reset);
-    } elseif ($this->_default_result_type == 'array') {
+    } elseif ($this->_default_result_type === 'array') {
       $return = $this->fetchArray($reset);
     }
 
@@ -265,17 +253,15 @@ class Result
       $this->reset();
     }
 
-    if ($this->_result) {
-      if ($class && $params) {
-        return ($row = mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
-      } elseif ($class) {
-        return ($row = mysqli_fetch_object($this->_result, $class)) ? $row : false;
-      } else {
-        return ($row = mysqli_fetch_object($this->_result)) ? $row : false;
-      }
+    if ($class && $params) {
+      return ($row = mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
     }
 
-    return false;
+    if ($class) {
+      return ($row = mysqli_fetch_object($this->_result, $class)) ? $row : false;
+    }
+
+    return ($row = mysqli_fetch_object($this->_result)) ? $row : false;
   }
 
   /**
@@ -291,11 +277,9 @@ class Result
       $this->reset();
     }
 
-    if ($this->_result) {
-      $row = mysqli_fetch_assoc($this->_result);
-      if ($row) {
-        return $row;
-      }
+    $row = mysqli_fetch_assoc($this->_result);
+    if ($row) {
+      return $row;
     }
 
     return false;
@@ -314,11 +298,9 @@ class Result
       $this->reset();
     }
 
-    if ($this->_result) {
-      $row = mysqli_fetch_assoc($this->_result);
-      if ($row) {
-        return Arrayy::create($row);
-      }
+    $row = mysqli_fetch_assoc($this->_result);
+    if ($row) {
+      return Arrayy::create($row);
     }
 
     return false;
@@ -343,9 +325,9 @@ class Result
   {
     $return = array();
 
-    if ($this->_default_result_type == 'object') {
+    if ($this->_default_result_type === 'object') {
       $return = $this->fetchAllObject();
-    } elseif ($this->_default_result_type == 'array') {
+    } elseif ($this->_default_result_type === 'array') {
       $return = $this->fetchAllArray();
     }
 
@@ -365,11 +347,7 @@ class Result
     // init
     $data = array();
 
-    if (
-        $this->_result
-        &&
-        !$this->is_empty()
-    ) {
+    if (!$this->is_empty()) {
       $this->reset();
 
       if ($class && $params) {

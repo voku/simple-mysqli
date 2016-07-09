@@ -37,6 +37,25 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     );
     $tmpId = $db_1->insert($this->tableName, $pageArray);
     self::assertEquals(true, $tmpId > 0);
+
+    // sql - true v2
+    $pageArray = array(
+        'page_template' => 'this_is_a_new_test',
+        'page_type'     => 'fooooo',
+    );
+    $tmpId = $db_1->insert($this->tableName, $pageArray);
+    self::assertEquals(true, $tmpId > 0);
+
+    // update - true
+    $pageArray = array(
+        'page_template' => 'this_is_a_new_test__update',
+    );
+    $this->db->update($this->tableName, $pageArray, "page_id = $tmpId");
+
+    // update - false
+    $false = $this->db->update($this->tableName, array(), "page_id = $tmpId");
+    self::assertEquals(false, $false);
+
   }
 
   public function testEchoOnError1()
@@ -407,14 +426,13 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testQry()
   {
-    /** @noinspection StaticInvocationViaThisInspection */
-    $result = $this->db->qry(
-        'UPDATE ' . $this->db->escape($this->tableName) . "
+    $sql = 'UPDATE ' . $this->db->escape($this->tableName) . "
       SET
         page_template = 'tpl_test'
       WHERE page_id = ?
-    ", 1
-    );
+    ";
+    /** @noinspection StaticInvocationViaThisInspection */
+    $result = $this->db->qry($sql, 1);
     self::assertEquals(1, $result);
 
     $sql = "SELECT * FROM " . $this->db->escape($this->tableName) . "
@@ -1121,19 +1139,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $tmpPage = $result->fetchObject();
     self::assertEquals('http://foo.com/?foo=1', $tmpPage->page_template);
     self::assertEquals('foo\'bar', $tmpPage->page_type);
-
-    //
-    // select - false
-    //
-    $result = new Result();
-    $tmpPage = $result->fetch();
-    self::assertEquals(false, $tmpPage);
-    $tmpPage = $result->fetchObject();
-    self::assertEquals(false, $tmpPage);
-    $tmpPage = $result->fetchArray();
-    self::assertEquals(false, $tmpPage);
-    $tmpPage = $result->fetchArrayy();
-    self::assertEquals(false, $tmpPage);
 
     //
     // query - false

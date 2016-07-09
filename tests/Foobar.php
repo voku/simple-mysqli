@@ -5,7 +5,15 @@
  */
 class Foobar extends stdClass
 {
+  /**
+   * @var array
+   */
   protected $data = array();
+
+  /**
+   * @var bool
+   */
+  public $test = true;
 
   /**
    * @param array $attributes

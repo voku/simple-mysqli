@@ -253,12 +253,16 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             ),
         )
     );
+
+    /* @var $tmpPage Foobar */
+
     self::assertEquals(1, $tmpPage->foo);
     self::assertEquals(2, $tmpPage->bar);
+    self::assertEquals(true, $tmpPage->test);
     self::assertEquals(null, $tmpPage->nothing);
     self::assertEquals('tpl_new_中', $tmpPage->page_template);
 
-    $tmpPage = $result->fetchAllObject(
+    $tmpPages = $result->fetchAllObject(
         'Foobar',
         array(
             array(
@@ -267,18 +271,26 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             ),
         )
     );
-    self::assertEquals(1, $tmpPage[0]->foo);
-    self::assertEquals(2, $tmpPage[0]->bar);
-    self::assertEquals(null, $tmpPage[0]->nothing);
-    self::assertEquals('tpl_new_中', $tmpPage[0]->page_template);
 
-    $tmpPage = $result->fetchAllObject(
+    /* @var $tmpPages [] Foobar */
+
+    self::assertEquals(1, $tmpPages[0]->foo);
+    self::assertEquals(2, $tmpPages[0]->bar);
+    self::assertEquals(true, $tmpPages[0]->test);
+    self::assertEquals(null, $tmpPages[0]->nothing);
+    self::assertEquals('tpl_new_中', $tmpPages[0]->page_template);
+
+    $tmpPages = $result->fetchAllObject(
         'Foobar'
     );
-    self::assertEquals(null, $tmpPage[0]->foo);
-    self::assertEquals(null, $tmpPage[0]->bar);
-    self::assertEquals('lall', $tmpPage[0]->page_type);
-    self::assertEquals('tpl_new_中', $tmpPage[0]->page_template);
+
+    /* @var $tmpPages [] Foobar */
+
+    self::assertEquals(null, $tmpPages[0]->foo);
+    self::assertEquals(null, $tmpPages[0]->bar);
+    self::assertEquals(true, $tmpPages[0]->test);
+    self::assertEquals('lall', $tmpPages[0]->page_type);
+    self::assertEquals('tpl_new_中', $tmpPages[0]->page_template);
 
     // update - true
     $pageArray = array(
@@ -405,20 +417,18 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     );
     self::assertEquals(1, $result);
 
-    /** @noinspection StaticInvocationViaThisInspection */
-    $result = (array)$this->db->qry(
-        'SELECT * FROM ' . $this->db->escape($this->tableName) . '
+    $sql = "SELECT * FROM " . $this->db->escape($this->tableName) . "
       WHERE page_id = 1
-    '
-    );
+    ";
+    /** @noinspection StaticInvocationViaThisInspection */
+    $result = (array)$this->db->qry($sql);
     self::assertEquals('tpl_test', $result[0]['page_template']);
 
-    /** @noinspection StaticInvocationViaThisInspection */
-    $result = $this->db->qry(
-        'SELECT * FROM ' . $this->db->escape($this->tableName) . '
+    $sql = "SELECT * FROM " . $this->db->escape($this->tableName) . "
       WHERE page_id_lall = 1
-    '
-    );
+    ";
+    /** @noinspection StaticInvocationViaThisInspection */
+    $result = $this->db->qry($sql);
     self::assertEquals(false, $result);
   }
 

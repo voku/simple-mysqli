@@ -1089,10 +1089,11 @@ final class DB
    *
    * @param string $table
    * @param array  $data
-   *
+   * @param boolean|string $ignore
+   * 
    * @return false|int false on error
    */
-  public function insert($table, $data = array())
+  public function insert($table, $data = array(), $ignore = false)
   {
     $table = trim($table);
 
@@ -1110,7 +1111,7 @@ final class DB
 
     $SET = $this->_parseArrayPair($data);
 
-    $sql = 'INSERT INTO ' . $this->quote_string($table) . " SET $SET;";
+    $sql = 'INSERT '.($ignore?'IGNORE':''). 'INTO ' . $this->quote_string($table) . " SET $SET;";
 
     return $this->query($sql);
   }

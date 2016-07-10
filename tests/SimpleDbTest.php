@@ -440,16 +440,16 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $result = $this->db->qry($sql, 1);
     self::assertEquals(1, $result);
 
-    $sql = "SELECT * FROM " . $this->db->escape($this->tableName) . "
+    $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
       WHERE page_id = 1
-    ";
+    ';
     /** @noinspection StaticInvocationViaThisInspection */
     $result = (array)$this->db->qry($sql);
     self::assertEquals('tpl_test', $result[0]['page_template']);
 
-    $sql = "SELECT * FROM " . $this->db->escape($this->tableName) . "
+    $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
       WHERE page_id_lall = 1
-    ";
+    ';
     /** @noinspection StaticInvocationViaThisInspection */
     $result = $this->db->qry($sql);
     self::assertEquals(false, $result);

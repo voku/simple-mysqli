@@ -65,7 +65,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // insert - false
     $false = $db_1->insert($this->tableName, array());
-    $this->expectOutputRegex('/(.)*empty-data-for-INSERT(.)*/');
+    $this->expectOutputRegex('/(.)*empty data for INSERT(.)*/');
     self::assertEquals(false, $false);
   }
 
@@ -112,7 +112,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   }
 
   /**
-   * @expectedException Exception invalid-table-name
+   * @expectedException        Exception
+   * @expectedExceptionMessage invalid table name
    */
   public function testExitOnError1()
   {
@@ -129,7 +130,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   }
 
   /**
-   * @expectedException Exception empty-data-for-INSERT
+   * @expectedException        Exception
+   * @expectedExceptionMessage empty data for INSERT
    */
   public function testExitOnError2()
   {
@@ -201,7 +203,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   }
 
   /**
-   * @expectedException Exception no-sql-hostname
+   * @expectedException Exception
+   * @expectedExceptionMessage no-sql-hostname
    */
   public function testGetInstanceHostnameException()
   {
@@ -209,7 +212,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   }
 
   /**
-   * @expectedException Exception no-sql-username
+   * @expectedException Exception
+   * @expectedExceptionMessage no-sql-username
    */
   public function testGetInstanceUsernameException()
   {
@@ -217,7 +221,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   }
 
   /**
-   * @expectedException Exception no-sql-database
+   * @expectedException Exception
+   * @expectedExceptionMessage no-sql-database
    */
   public function testGetInstanceDatabaseException()
   {

@@ -3,7 +3,6 @@
 namespace voku\db;
 
 use voku\cache\Cache;
-use voku\helper\Bootup;
 use voku\helper\UTF8;
 
 /**
@@ -11,7 +10,7 @@ use voku\helper\UTF8;
  *
  * @package   voku\db
  */
-class DB
+final class DB
 {
 
   /**
@@ -20,51 +19,19 @@ class DB
   public $query_count = 0;
 
   /**
-   * @var bool
-   */
-  protected $exit_on_error = true;
-
-  /**
-   * @var bool
-   */
-  protected $echo_on_error = true;
-
-  /**
-   * @var string
-   */
-  protected $css_mysql_box_border = '3px solid red';
-
-  /**
-   * @var string
-   */
-  protected $css_mysql_box_bg = '#FFCCCC';
-
-  /**
    * @var \mysqli
    */
-  protected $link = false;
+  private $link = false;
 
   /**
    * @var bool
    */
-  protected $connected = false;
+  private $connected = false;
 
   /**
    * @var array
    */
-  protected $mysqlDefaultTimeFunctions;
-
-  /**
-   * @var string
-   */
-  private $logger_class_name;
-
-  /**
-   * @var string
-   *
-   * 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'
-   */
-  private $logger_level;
+  private $mysqlDefaultTimeFunctions;
 
   /**
    * @var string
@@ -102,11 +69,6 @@ class DB
   private $socket = '';
 
   /**
-   * @var array
-   */
-  private $_errors = array();
-
-  /**
    * @var bool
    */
   private $session_to_db = false;
@@ -115,6 +77,11 @@ class DB
    * @var bool
    */
   private $_in_transaction = false;
+
+  /**
+   * @var Debug
+   */
+  private $_debug;
 
   /**
    * __construct()
@@ -134,6 +101,8 @@ class DB
   protected function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db)
   {
     $this->connected = false;
+
+    $this->_debug = new Debug($this);
 
     $this->_loadConfig(
         $hostname,
@@ -222,15 +191,15 @@ class DB
     }
 
     if ($exit_on_error === true || $exit_on_error === false) {
-      $this->exit_on_error = (boolean)$exit_on_error;
+      $this->_debug->setExitOnError($exit_on_error);
     }
 
     if ($echo_on_error === true || $echo_on_error === false) {
-      $this->echo_on_error = (boolean)$echo_on_error;
+      $this->_debug->setEchoOnError($echo_on_error);
     }
 
-    $this->logger_class_name = (string)$logger_class_name;
-    $this->logger_level = (string)$logger_level;
+    $this->_debug->setLoggerClassName($logger_class_name);
+    $this->_debug->setLoggerLevel($logger_level);
 
     $this->session_to_db = (boolean)$session_to_db;
 
@@ -298,12 +267,12 @@ class DB
           $this->socket
       );
     } catch (\Exception $e) {
-      $this->_displayError('Error connecting to mysql server: ' . $e->getMessage(), true);
+      $this->_debug->displayError('Error connecting to mysql server: ' . $e->getMessage(), true);
     }
     mysqli_report(MYSQLI_REPORT_OFF);
 
     if (!$this->connected) {
-      $this->_displayError('Error connecting to mysql server: ' . mysqli_connect_error(), true);
+      $this->_debug->displayError('Error connecting to mysql server: ' . mysqli_connect_error(), true);
     } else {
       $this->set_charset($this->charset);
     }
@@ -322,183 +291,15 @@ class DB
   }
 
   /**
-   * Display SQL-Errors or throw Exceptions (for dev).
+   * Get a new "Prepare"-Object for your sql-query.
    *
-   * @param string       $error
-   * @param null|boolean $force_exception_after_error
+   * @param string $query
    *
-   * @throws \Exception
+   * @return Prepare
    */
-  private function _displayError($error, $force_exception_after_error = null)
+  public function prepare($query)
   {
-    $fileInfo = $this->getFileAndLineFromSql();
-
-    $this->logger(
-        array(
-            'error',
-            '<strong>' . date(
-                'd. m. Y G:i:s'
-            ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . ') (sql-error):</strong> ' . $error . '<br>',
-        )
-    );
-
-    $this->_errors[] = $error;
-
-    if ($this->checkForDev() === true) {
-
-      if ($this->echo_on_error) {
-        $box_border = $this->css_mysql_box_border;
-        $box_bg = $this->css_mysql_box_bg;
-
-        echo '
-        <div class="OBJ-mysql-box" style="border:' . $box_border . '; background:' . $box_bg . '; padding:10px; margin:10px;">
-          <b style="font-size:14px;">MYSQL Error:</b>
-          <code style="display:block;">
-            file / line: ' . $fileInfo['file'] . ' / ' . $fileInfo['line'] . '
-            ' . $error . '
-          </code>
-        </div>
-        ';
-      }
-
-      if ($force_exception_after_error === true) {
-        throw new \Exception($error);
-      } elseif ($force_exception_after_error === false) {
-        // nothing
-      } elseif ($force_exception_after_error === null) {
-        // default
-        if ($this->exit_on_error === true) {
-          throw new \Exception($error);
-        }
-      }
-    }
-  }
-
-  /**
-   * Try to get the file & line from the current sql-query.
-   *
-   * @return array will return array['file'] and array['line']
-   */
-  private function getFileAndLineFromSql()
-  {
-    // init
-    $return = array();
-    $file = '';
-    $line = '';
-
-    if (Bootup::is_php('5.4') === true) {
-      $referrer = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
-    } else {
-      $referrer = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-    }
-
-    foreach ($referrer as $key => $ref) {
-
-      if (
-          $ref['function'] === 'execSQL'
-          ||
-          $ref['function'] === 'query'
-          ||
-          $ref['function'] === 'qry'
-          ||
-          $ref['function'] === 'insert'
-          ||
-          $ref['function'] === 'update'
-          ||
-          $ref['function'] === 'replace'
-          ||
-          $ref['function'] === 'delete'
-      ) {
-        $file = $referrer[$key]['file'];
-        $line = $referrer[$key]['line'];
-      }
-
-    }
-
-    $return['file'] = $file;
-    $return['line'] = $line;
-
-    return $return;
-  }
-
-  /**
-   * Wrapper-Function for a "Logger"-Class.
-   *
-   * INFO:
-   * The "Logger"-ClassName is set by "$this->logger_class_name",<br />
-   * the "Logger"-Method is the [0] element from the "$log"-parameter,<br />
-   * the text you want to log is the [1] element and<br />
-   * the type you want to log is the next [2] element.
-   *
-   * @param string[] $log [method, text, type]<br />e.g.: array('error', 'this is a error', 'sql')
-   */
-  private function logger(array $log)
-  {
-    $logMethod = '';
-    $logText = '';
-    $logType = '';
-    $logClass = $this->logger_class_name;
-
-    if (isset($log[0])) {
-      $logMethod = $log[0];
-    }
-    if (isset($log[1])) {
-      $logText = $log[1];
-    }
-    if (isset($log[2])) {
-      $logType = $log[2];
-    }
-
-    if (
-        $logClass
-        &&
-        class_exists($logClass)
-        &&
-        method_exists($logClass, $logMethod)
-    ) {
-      $logClass::$logMethod($logText, $logType);
-    }
-  }
-
-  /**
-   * Check is the current user is a developer.
-   *
-   * INFO:
-   * By default we will return "true" if the remote-ip-address is localhost or
-   * if the script is called via CLI. But you can also overwrite this method or
-   * you can implement a global "checkForDev()"-function.
-   *
-   * @return bool
-   */
-  protected function checkForDev()
-  {
-    // init
-    $return = false;
-
-    if (function_exists('checkForDev')) {
-      $return = checkForDev();
-    } else {
-
-      // for testing with dev-address
-      $noDev = isset($_GET['noDev']) ? (int)$_GET['noDev'] : 0;
-      $remoteIpAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : false;
-
-      if (
-          $noDev != 1
-          &&
-          (
-              $remoteIpAddress === '127.0.0.1'
-              ||
-              $remoteIpAddress === '::1'
-              ||
-              PHP_SAPI === 'cli'
-          )
-      ) {
-        $return = true;
-      }
-    }
-
-    return $return;
+    return new Prepare($this, $query);
   }
 
   /**
@@ -629,7 +430,7 @@ class DB
     }
 
     if (!$sql || $sql === '') {
-      $this->_displayError('Can\'t execute an empty Query', false);
+      $this->_debug->displayError('Can\'t execute an empty Query', false);
 
       return false;
     }
@@ -653,7 +454,7 @@ class DB
     if ($result instanceof \mysqli_result) {
       $resultCount = (int)$result->num_rows;
     }
-    $this->_logQuery($sql, $query_duration, $resultCount);
+    $this->_debug->logQuery($sql, $query_duration, $resultCount);
 
     if ($result instanceof \mysqli_result) {
 
@@ -742,12 +543,13 @@ class DB
       $varInt = (int)$var;
     }
 
+    /** @noinspection TypeUnsafeComparisonInspection */
     if (
-        (isset($varInt, $var[0]) && $var[0] != '0' && "$varInt" == $var)
-        ||
         is_int($var)
         ||
         is_bool($var)
+        ||
+        (isset($varInt, $var[0]) && $var[0] != '0' && "$varInt" == $var)
     ) {
 
       // "int" || int || bool
@@ -816,12 +618,13 @@ class DB
       $varInt = (int)$var;
     }
 
+    /** @noinspection TypeUnsafeComparisonInspection */
     if (
-        (isset($varInt, $var[0]) && $var[0] != '0' && "$varInt" == $var)
-        ||
         is_int($var)
         ||
         is_bool($var)
+        ||
+        (isset($varInt, $var[0]) && $var[0] != '0' && "$varInt" == $var)
     ) {
 
       // "int" || int || bool
@@ -890,46 +693,6 @@ class DB
   }
 
   /**
-   * Log the current query via "$this->logger".
-   *
-   * @param string $sql     sql-query
-   * @param int    $duration
-   * @param int    $results result counter
-   *
-   * @return bool
-   */
-  private function _logQuery($sql, $duration, $results)
-  {
-    $logLevelUse = strtolower($this->logger_level);
-
-    if (
-        $logLevelUse !== 'trace'
-        &&
-        $logLevelUse !== 'debug'
-    ) {
-      //return false;
-    }
-
-    $infoExtra = mysqli_info($this->link);
-    if ($infoExtra) {
-      $infoExtra = ' | info => ' . $infoExtra;
-    }
-
-    $info = 'time => ' . round($duration, 5) . ' | results => ' . (int)$results . $infoExtra . ' | SQL => ' . UTF8::htmlentities($sql);
-    $fileInfo = $this->getFileAndLineFromSql();
-
-    $this->logger(
-        array(
-            'debug',
-            '<strong>' . date('d. m. Y G:i:s') . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
-            'sql',
-        )
-    );
-
-    return true;
-  }
-
-  /**
    * Returns the auto generated id used in the last query.
    *
    * @return int|string
@@ -965,10 +728,10 @@ class DB
 
       // exit if we have more then 3 "DB server has gone away"-errors
       if ($reconnectCounter > 3) {
-        $this->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
+        $this->_debug->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
         throw new \Exception($errorMsg);
       } else {
-        $this->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
+        $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
 
         // reconnect
         $reconnectCounter++;
@@ -978,49 +741,10 @@ class DB
         $this->query($sql, $sqlParams);
       }
     } else {
-      $this->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
+      $this->_debug->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
 
       // this query returned an error, we must display it (only for dev) !!!
-      $this->_displayError($errorMsg . ' | ' . $sql);
-    }
-  }
-
-  /**
-   * send a error mail to the admin / dev
-   *
-   * @param string $subject
-   * @param string $htmlBody
-   * @param int    $priority
-   */
-  private function mailToAdmin($subject, $htmlBody, $priority = 3)
-  {
-    if (function_exists('mailToAdmin')) {
-      mailToAdmin($subject, $htmlBody, $priority);
-    } else {
-
-      if ($priority == 3) {
-        $this->logger(
-            array(
-                'debug',
-                $subject . ' | ' . $htmlBody,
-            )
-        );
-      } elseif ($priority > 3) {
-        $this->logger(
-            array(
-                'error',
-                $subject . ' | ' . $htmlBody,
-            )
-        );
-      } elseif ($priority < 3) {
-        $this->logger(
-            array(
-                'info',
-                $subject . ' | ' . $htmlBody,
-            )
-        );
-      }
-
+      $this->_debug->displayError($errorMsg . ' | ' . $sql);
     }
   }
 
@@ -1079,7 +803,6 @@ class DB
    *               "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
    *               "true" by e.g. "DROP"-queries<br />
    *               "false" on error
-   *
    */
   public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
   {
@@ -1198,7 +921,7 @@ class DB
     }
 
     if (!$sql || $sql === '') {
-      $this->_displayError('Can\'t execute an empty Query', false);
+      $this->_debug->displayError('Can\'t execute an empty Query', false);
 
       return false;
     }
@@ -1207,7 +930,7 @@ class DB
     $resultTmp = mysqli_multi_query($this->link, $sql);
     $query_duration = microtime(true) - $query_start_time;
 
-    $this->_logQuery($sql, $query_duration, 0);
+    $this->_debug->logQuery($sql, $query_duration, 0);
 
     $returnTheResult = false;
     $result = array();
@@ -1236,12 +959,12 @@ class DB
 
       $errorMsg = mysqli_error($this->link);
 
-      if ($this->checkForDev() === true) {
+      if ($this->_debug->checkForDev() === true) {
         echo "Info: maybe you have to increase your 'max_allowed_packet = 30M' in the config: 'my.conf' \n<br />";
         echo 'Error:' . $errorMsg;
       }
 
-      $this->mailToAdmin('SQL-Error in mysqli_multi_query', $errorMsg . ":\n<br />" . $sql);
+      $this->_debug->mailToAdmin('SQL-Error in mysqli_multi_query', $errorMsg . ":\n<br />" . $sql);
     }
 
     // return the result only if there was a "SELECT"-query
@@ -1274,11 +997,11 @@ class DB
     $this->clearErrors();
 
     if ($this->inTransaction() === true) {
-      $this->_displayError('Error mysql server already in transaction!', true);
+      $this->_debug->displayError('Error mysql server already in transaction!', true);
 
       return false;
     } elseif (mysqli_connect_errno()) {
-      $this->_displayError('Error connecting to mysql server: ' . mysqli_connect_error(), true);
+      $this->_debug->displayError('Error connecting to mysql server: ' . mysqli_connect_error(), true);
 
       return false;
     } else {
@@ -1291,15 +1014,13 @@ class DB
   }
 
   /**
-   * Clear the errors in "$this->_errors".
+   * Clear the errors in "_debug->_errors".
    *
    * @return bool
    */
   public function clearErrors()
   {
-    $this->_errors = array();
-
-    return true;
+    return $this->_debug->clearErrors();
   }
 
   /**
@@ -1341,7 +1062,9 @@ class DB
    */
   public function errors()
   {
-    return count($this->_errors) > 0 ? $this->_errors : false;
+    $errors = $this->_debug->getErrors();
+
+    return count($errors) > 0 ? $errors : false;
   }
 
   /**
@@ -1374,13 +1097,13 @@ class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_displayError('invalid-table-name');
+      $this->_debug->displayError('invalid table name');
 
       return false;
     }
 
-    if (count($data) == 0) {
-      $this->_displayError('empty-data-for-INSERT');
+    if (count($data) === 0) {
+      $this->_debug->displayError('empty data for INSERT');
 
       return false;
     }
@@ -1406,6 +1129,7 @@ class DB
     $sql = '';
     $pairs = array();
 
+    /** @noinspection IsEmptyFunctionUsageInspection */
     if (!empty($arrayPair)) {
 
       foreach ($arrayPair as $_key => $_value) {
@@ -1512,7 +1236,7 @@ class DB
    */
   public function getErrors()
   {
-    return $this->_errors;
+    return $this->_debug->getErrors();
   }
 
   /**
@@ -1529,13 +1253,13 @@ class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_displayError('invalid table name');
+      $this->_debug->displayError('invalid table name');
 
       return false;
     }
 
-    if (count($data) == 0) {
-      $this->_displayError('empty data for REPLACE');
+    if (count($data) === 0) {
+      $this->_debug->displayError('empty data for REPLACE');
 
       return false;
     }
@@ -1575,13 +1299,13 @@ class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_displayError('invalid table name');
+      $this->_debug->displayError('invalid table name');
 
       return false;
     }
 
-    if (count($data) == 0) {
-      $this->_displayError('empty data for UPDATE');
+    if (count($data) === 0) {
+      $this->_debug->displayError('empty data for UPDATE');
 
       return false;
     }
@@ -1615,7 +1339,7 @@ class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_displayError('invalid table name');
+      $this->_debug->displayError('invalid table name');
 
       return false;
     }
@@ -1645,7 +1369,7 @@ class DB
   {
 
     if ($table === '') {
-      $this->_displayError('invalid table name');
+      $this->_debug->displayError('invalid table name');
 
       return false;
     }
@@ -1670,7 +1394,17 @@ class DB
    */
   public function lastError()
   {
-    return count($this->_errors) > 0 ? end($this->_errors) : false;
+    $errors = $this->_debug->getErrors();
+
+    return count($errors) > 0 ? end($errors) : false;
+  }
+
+  /**
+   * @return Debug
+   */
+  public function getDebugger()
+  {
+    return $this->_debug;
   }
 
   /**

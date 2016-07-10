@@ -9,7 +9,7 @@ use Arrayy\Arrayy;
  *
  * @package   voku\db
  */
-class Result
+final class Result
 {
 
   /**

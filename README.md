@@ -29,7 +29,7 @@ You can download it from here, or require it using [composer](https://packagist.
 ```json
 {
     "require": {
-      "voku/simple-mysqli": "1.*"
+      "voku/simple-mysqli": "2.*"
     }
 }
 ```
@@ -204,6 +204,43 @@ $data = $result->fetchAllObject();  // fetch all result data as Object
 
 $data = $result->fetchColumn(String $Column);                  // fetch a single column in a 1 dimention Array
 $data = $result->fetchArrayPair(String $key, String $Value);   // fetch data as a key/value pair Array.
+```
+
+###Using the Prepare-Class
+
+Prepare statements have the advantage that they are built together in the MySQL-Server, so the performance is better.
+But the debugging is harder.
+
+```php
+  use voku\db\DB;
+
+  $db = DB::getInstance();
+
+  $query = 'INSERT INTO users
+    SET 
+      name = ?, 
+      email = ?
+  ';
+
+  $prepare = $db->prepare($query);
+
+  // -------------
+
+  $name = 'name_1_中';
+  $email = 'foo@bar.com';
+  
+  $prepare->bind_param('ss', $name, $email);
+
+  $prepare->execute();
+
+  // -------------
+
+  $name = 'Lars';
+  $email = 'lars@moelleken.org';
+  
+  $prepare->bind_param('ss', $name, $email);
+
+  $prepare->execute();
 ```
 
 ####Aliases

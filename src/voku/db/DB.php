@@ -338,11 +338,7 @@ final class DB
       $return = $result;
     }
 
-    if ($return || is_array($return)) {
-      return $return;
-    } else {
-      return false;
-    }
+    return $return;
   }
 
   /**

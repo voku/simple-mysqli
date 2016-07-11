@@ -159,7 +159,7 @@ final class Result
           settype($data[$type_name], $type);
         }
       }
-    } else if (is_object($data)) {
+    } elseif (is_object($data)) {
       foreach ($types[$result_hash] as $type_name => $type) {
         if (isset($data->{$type_name})) {
           settype($data->{$type_name}, $type);

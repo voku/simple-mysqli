@@ -469,7 +469,7 @@ final class DB
       // return query result object
       return new Result($sql, $result);
 
-    } else if ($query_result === true) {
+    } elseif ($query_result === true) {
 
       // "INSERT" || "REPLACE"
       if (preg_match('/^\s*"?(INSERT|REPLACE)\s+/i', $sql)) {

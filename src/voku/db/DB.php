@@ -333,12 +333,10 @@ final class DB
     $result = $db->query($query);
 
     if ($result instanceof Result) {
-      $return = $result->fetchAllArray();
+      return $result->fetchAllArray();
     } else {
-      $return = $result;
+      return $result;
     }
-
-    return $return;
   }
 
   /**

@@ -257,6 +257,9 @@ final class DB
     try {
       $this->link = mysqli_init();
 
+      mysqli_options($this->link, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
+
+      /** @noinspection PhpUsageOfSilenceOperatorInspection */
       $this->connected = @mysqli_real_connect(
           $this->link,
           $this->hostname,
@@ -461,31 +464,25 @@ final class DB
       // return query result object
       return new Result($sql, $result);
 
-    } else {
+    } else if ($result === true) {
 
-      // is the query successful
-      if ($result === true) {
+      if (preg_match('/^\s*"?(INSERT|UPDATE|DELETE|REPLACE)\s+/i', $sql)) {
 
-        if (preg_match('/^\s*"?(INSERT|UPDATE|DELETE|REPLACE)\s+/i', $sql)) {
-
-          // it is an "INSERT" || "REPLACE"
-          if ($this->insert_id() > 0) {
-            return (int)$this->insert_id();
-          }
-
-          // it is an "UPDATE" || "DELETE"
-          if ($this->affected_rows() > 0) {
-            return (int)$this->affected_rows();
-          }
+        // it is an "INSERT" || "REPLACE"
+        if ($this->insert_id() > 0) {
+          return (int)$this->insert_id();
         }
 
-        return true;
-      } else {
-        $this->queryErrorHandling(mysqli_error($this->link), $sql, $params);
+        // it is an "UPDATE" || "DELETE"
+        if ($this->affected_rows() > 0) {
+          return (int)$this->affected_rows();
+        }
       }
+
+      return true;
     }
 
-    return false;
+    return $this->queryErrorHandling(mysqli_error($this->link), $sql, $params);
   }
 
   /**
@@ -581,7 +578,7 @@ final class DB
       // "DateTime"-object
 
       try {
-        $var = "'" . $this->escape($var->format('Y-m-d H:i:s'), false, false) . "'";
+        $var = "'" . $this->escape($var->format('Y-m-d H:i:s'), false) . "'";
       } catch (\Exception $e) {
         $var = null;
       }
@@ -611,7 +608,7 @@ final class DB
    *
    * @return array|bool|float|int|string
    */
-  public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = true, $array_to_string = false)
+  public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = false, $array_to_string = false)
   {
     // save the current value as int (for later usage)
     if (!is_object($var)) {
@@ -720,6 +717,8 @@ final class DB
    * @param array|bool $sqlParams false if there wasn't any parameter
    *
    * @throws \Exception
+   *
+   * @return bool
    */
   protected function queryErrorHandling($errorMsg, $sql, $sqlParams = false)
   {
@@ -738,7 +737,7 @@ final class DB
         $this->reconnect(true);
 
         // re-run the current query
-        $this->query($sql, $sqlParams);
+        return $this->query($sql, $sqlParams);
       }
     } else {
       $this->_debug->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
@@ -746,6 +745,8 @@ final class DB
       // this query returned an error, we must display it (only for dev) !!!
       $this->_debug->displayError($errorMsg . ' | ' . $sql);
     }
+
+    return false;
   }
 
   /**
@@ -948,9 +949,7 @@ final class DB
           if ($resultTmpInner === true || !$errorMsg) {
             $result[] = true;
           } else {
-            $result[] = false;
-
-            $this->queryErrorHandling($errorMsg, $sql);
+            $result[] = $this->queryErrorHandling($errorMsg, $sql);
           }
         }
       } while (mysqli_more_results($this->link) === true ? mysqli_next_result($this->link) : false);
@@ -1226,7 +1225,7 @@ final class DB
    */
   public function quote_string($str)
   {
-    return '`' . $this->escape($str, false, false) . '`';
+    return '`' . $this->escape($str, false) . '`';
   }
 
   /**
@@ -1313,7 +1312,7 @@ final class DB
     $SET = $this->_parseArrayPair($data);
 
     if (is_string($where)) {
-      $WHERE = $this->escape($where, false, false);
+      $WHERE = $this->escape($where, false);
     } elseif (is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {
@@ -1345,7 +1344,7 @@ final class DB
     }
 
     if (is_string($where)) {
-      $WHERE = $this->escape($where, false, false);
+      $WHERE = $this->escape($where, false);
     } elseif (is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {
@@ -1375,7 +1374,7 @@ final class DB
     }
 
     if (is_string($where)) {
-      $WHERE = $this->escape($where, false, false);
+      $WHERE = $this->escape($where, false);
     } elseif (is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {

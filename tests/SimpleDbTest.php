@@ -433,11 +433,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   {
     $sql = 'UPDATE ' . $this->db->escape($this->tableName) . "
       SET
-        page_template = 'tpl_test'
+        page_template = '?'
       WHERE page_id = ?
     ";
     /** @noinspection StaticInvocationViaThisInspection */
-    $result = $this->db->qry($sql, 1);
+    $result = $this->db->qry($sql, 'tpl_test_?', 1);
     self::assertEquals(1, $result);
 
     $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
@@ -445,7 +445,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     ';
     /** @noinspection StaticInvocationViaThisInspection */
     $result = (array)$this->db->qry($sql);
-    self::assertEquals('tpl_test', $result[0]['page_template']);
+    self::assertEquals('tpl_test_?', $result[0]['page_template']);
 
     $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
       WHERE page_id_lall = 1

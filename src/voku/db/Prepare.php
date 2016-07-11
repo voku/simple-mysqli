@@ -2,6 +2,8 @@
 
 namespace voku\db;
 
+use voku\helper\Bootup;
+
 /**
  * Prepare: this handles the prepare-statement from "DB"-Class
  *
@@ -11,9 +13,24 @@ final class Prepare extends \mysqli_stmt
 {
 
   /**
-   * @var string
+   * @var string $_sql - the unchanged query string provided to the constructor
    */
   private $_sql;
+
+  /**
+   * @var string $_sql_with_bound_parameters - the query string with bound parameters interpolated
+   */
+  private $_sql_with_bound_parameters;
+
+  /**
+   * @var bool
+   */
+  private $_use_bound_parameters_interpolated = false;
+
+  /**
+   * @var array $_boundParams - array of arrays containing values that have been bound to the query as parameters
+   */
+  private $_boundParams = array();
 
   /**
    * @var DB
@@ -42,6 +59,150 @@ final class Prepare extends \mysqli_stmt
   }
 
   /**
+   * Prepare destructor.
+   */
+  public function __destruct()
+  {
+    $this->close();
+  }
+
+  /**
+   * Combines the values stored in $this->boundParams into one array suitable for pushing as the input arguments to
+   * parent::bind_param when used with call_user_func_array
+   *
+   * @return array
+   */
+  private function _buildArguments()
+  {
+    $arguments = array();
+    $arguments[0] = '';
+
+    foreach ($this->_boundParams as $param) {
+      $arguments[0] .= $param['type'];
+      $arguments[] = &$param['value'];
+    }
+
+    return $arguments;
+  }
+
+  /**
+   * Escapes the supplied value.
+   *
+   * @param mixed  $value
+   * @param string $type (one of 'i', 'b', 's', 'd')
+   *
+   * @return array 0 => "$value" escaped and 1 => "$valueForSqlWithBoundParameters" for insertion into the interpolated
+   *               query string
+   */
+  private function _prepareValue(&$value, $type)
+  {
+    /** @noinspection ReferenceMismatchInspection */
+    $value = $this->_db->escape($value);
+
+    if ('s' === $type) {
+      $valueForSqlWithBoundParameters = "'" . $value . "'";
+    } else {
+      $valueForSqlWithBoundParameters = $value;
+    }
+
+    return array($value, $valueForSqlWithBoundParameters);
+  }
+
+  /**
+   * @return int
+   */
+  public function affected_rows()
+  {
+    return $this->affected_rows;
+  }
+
+  /**
+   * This is a wrapper for "bind_param" what binds variables to a prepared statement as parameters. If you use this
+   * wrapper, you can debug your query with e.g. "$this->get_sql_with_bound_parameters()".
+   *
+   * @param string $types <strong>i<strong> corresponding variable has type integer<br />
+   *                      <strong>d</strong> corresponding variable has type double<br />
+   *                      <strong>s</strong> corresponding variable has type string<br />
+   *                      <strong>b</strong> corresponding variable is a blob and will be sent in packets
+   *
+   * INFO: We have to explicitly declare all parameters as references, otherwise it does not seem possible to pass them
+   * on without losing the reference property.
+   *
+   * @param null   $v1
+   * @param null   $v2
+   * @param null   $v3
+   * @param null   $v4
+   * @param null   $v5
+   * @param null   $v6
+   * @param null   $v7
+   * @param null   $v8
+   * @param null   $v9
+   * @param null   $v10
+   * @param null   $v11
+   * @param null   $v12
+   * @param null   $v13
+   * @param null   $v14
+   * @param null   $v15
+   * @param null   $v16
+   * @param null   $v17
+   * @param null   $v18
+   * @param null   $v19
+   * @param null   $v20
+   * @param null   $v21
+   * @param null   $v22
+   * @param null   $v23
+   * @param null   $v24
+   * @param null   $v25
+   * @param null   $v26
+   * @param null   $v27
+   * @param null   $v28
+   * @param null   $v29
+   * @param null   $v30
+   * @param null   $v31
+   * @param null   $v32
+   * @param null   $v33
+   * @param null   $v34
+   * @param null   $v35
+   *
+   * @return mixed
+   */
+  public function bind_param_debug($types, &$v1 = null, &$v2 = null, &$v3 = null, &$v4 = null, &$v5 = null, &$v6 = null, &$v7 = null, &$v8 = null, &$v9 = null, &$v10 = null, &$v11 = null, &$v12 = null, &$v13 = null, &$v14 = null, &$v15 = null, &$v16 = null, &$v17 = null, &$v18 = null, &$v19 = null, &$v20 = null, &$v21 = null, &$v22 = null, &$v23 = null, &$v24 = null, &$v25 = null, &$v26 = null, &$v27 = null, &$v28 = null, &$v29 = null, &$v30 = null, &$v31 = null, &$v32 = null, &$v33 = null, &$v34 = null, &$v35 = null)
+  {
+    $this->_use_bound_parameters_interpolated = true;
+
+    // debug_backtrace returns arguments by reference, see comments at http://php.net/manual/de/function.func-get-args.php
+    if (Bootup::is_php('5.4')) {
+      $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1);
+    } else {
+      $trace = debug_backtrace();
+    }
+
+    $args = &$trace[0]['args'];
+    $types = str_split($types);
+
+    $args_count = count($args) - 1;
+    $types_count = count($types);
+
+    if ($args_count !== $types_count) {
+      trigger_error('Number of variables doesn\'t match number of parameters in prepared statement', E_WARNING);
+
+      return false;
+    }
+
+    $arg = 1;
+    foreach ($types as $typeInner) {
+      $val = &$args[$arg];
+      $this->_boundParams[] = array(
+          'type'  => $typeInner,
+          'value' => &$val,
+      );
+      $arg++;
+    }
+
+    return true;
+  }
+
+  /**
    * Executes a prepared Query
    *
    * @link  http://php.net/manual/en/mysqli-stmt.execute.php
@@ -50,52 +211,36 @@ final class Prepare extends \mysqli_stmt
    */
   public function execute()
   {
+    if ($this->_use_bound_parameters_interpolated === true) {
+      $this->interpolateQuery();
+      call_user_func_array(array('parent', 'bind_param'), $this->_buildArguments());
+    }
+
     $query_start_time = microtime(true);
-    $bool = parent::execute();
+    $result = parent::execute();
     $query_duration = microtime(true) - $query_start_time;
 
-    $this->_debug->logQuery($this->_sql, $query_duration, $this->num_rows);
+    $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $this->num_rows);
 
-    if ($bool === false) {
-      $this->queryErrorHandling($this->error, $this->_sql);
-    }
+    if ($result === true) {
 
-    return $bool;
-  }
+      if (preg_match('/^\s*"?(INSERT|UPDATE|DELETE|REPLACE)\s+/i', $this->_sql)) {
 
-  /**
-   * Error-handling for the sql-query.
-   *
-   * @param string $errorMsg
-   * @param string $sql
-   *
-   * @throws \Exception
-   */
-  protected function queryErrorHandling($errorMsg, $sql)
-  {
-    if ($errorMsg === 'DB server has gone away' || $errorMsg === 'MySQL server has gone away') {
-      static $reconnectCounter;
+        // it is an "INSERT" || "REPLACE"
+        if ($this->insert_id > 0) {
+          return (int)$this->insert_id;
+        }
 
-      // exit if we have more then 3 "DB server has gone away"-errors
-      if ($reconnectCounter > 3) {
-        $this->_debug->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
-        throw new \Exception($errorMsg);
-      } else {
-        $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
-
-        // reconnect
-        $reconnectCounter++;
-        $this->_db->reconnect(true);
-
-        // re-run the current query
-        $this->execute();
+        // it is an "UPDATE" || "DELETE"
+        if ($this->affected_rows > 0) {
+          return (int)$this->affected_rows;
+        }
       }
-    } else {
-      $this->_debug->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
 
-      // this query returned an error, we must display it (only for dev) !!!
-      $this->_debug->displayError($errorMsg . ' | ' . $sql);
+      return true;
     }
+
+    return $this->queryErrorHandling($this->error, $this->_sql_with_bound_parameters);
   }
 
   /**
@@ -131,12 +276,16 @@ final class Prepare extends \mysqli_stmt
    *                      (DDL) statements.
    *                      </p>
    *
-   * @return mixed true on success or false on failure.
+   * @return bool|int     "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+   *                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                      "true" by e.g. "SELECT"-queries<br />
+   *                      "false" on error
    * @since 5.0
    */
   public function prepare($query)
   {
     $this->_sql = $query;
+    $this->_sql_with_bound_parameters = $query;
 
     if (!$this->_db->isReady()) {
       return false;
@@ -156,4 +305,110 @@ final class Prepare extends \mysqli_stmt
 
     return true;
   }
+
+  /**
+   * Ger the bound parameters from sql-query as array, if you use the "$this->bind_param_debug()" method.
+   *
+   * @return array
+   */
+  public function get_bound_params()
+  {
+    return $this->_boundParams;
+  }
+
+  /**
+   * @return string
+   */
+  public function get_sql()
+  {
+    return $this->_sql;
+  }
+
+  /**
+   * Get the sql-query with bound parameters, if you use the "$this->bind_param_debug()" method.
+   *
+   * @return string
+   */
+  public function get_sql_with_bound_parameters()
+  {
+    return $this->_sql_with_bound_parameters;
+  }
+
+  /**
+   * @return int
+   */
+  public function insert_id()
+  {
+    return $this->insert_id;
+  }
+
+  /**
+   * Copies $this->_sql then replaces bound markers with associated values ($this->_sql is not modified
+   * but the resulting query string is assigned to $this->sql_bound_parameters)
+   *
+   * @return string $testQuery - interpolated db query string
+   */
+  private function interpolateQuery()
+  {
+    $testQuery = $this->_sql;
+    if ($this->_boundParams) {
+      foreach ($this->_boundParams as &$param) {
+        $type = &$param['type'];
+        $value = &$param['value'];
+        $values = $this->_prepareValue($value, $type);
+
+        // set new values
+        $param['value'] = $values[0];
+        // we need to replace the question mark "?" here
+        $values[1] = str_replace('?', '###simple_mysqli__prepare_question_mark###', $values[1]);
+        // build the query (only for debugging)
+        $testQuery = preg_replace("/\?/", $values[1], $testQuery, 1);
+      }
+      unset($param);
+      $testQuery = str_replace('###simple_mysqli__prepare_question_mark###', '?', $testQuery);
+    }
+    $this->_sql_with_bound_parameters = $testQuery;
+
+    return $testQuery;
+  }
+
+  /**
+   * Error-handling for the sql-query.
+   *
+   * @param string $errorMsg
+   * @param string $sql
+   *
+   * @throws \Exception
+   *
+   * @return bool
+   */
+  private function queryErrorHandling($errorMsg, $sql)
+  {
+    if ($errorMsg === 'DB server has gone away' || $errorMsg === 'MySQL server has gone away') {
+      static $reconnectCounter;
+
+      // exit if we have more then 3 "DB server has gone away"-errors
+      if ($reconnectCounter > 3) {
+        $this->_debug->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
+        throw new \Exception($errorMsg);
+      } else {
+        $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
+
+        // reconnect
+        $reconnectCounter++;
+        $this->_db->reconnect(true);
+
+        // re-run the current query
+        return $this->execute();
+      }
+    } else {
+      $this->_debug->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
+
+      // this query returned an error, we must display it (only for dev) !!!
+      $this->_debug->displayError($errorMsg . ' | ' . $sql);
+    }
+
+    return false;
+  }
+
 }

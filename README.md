@@ -209,7 +209,11 @@ $data = $result->fetchArrayPair(String $key, String $Value);   // fetch data as 
 ###Using the Prepare-Class
 
 Prepare statements have the advantage that they are built together in the MySQL-Server, so the performance is better.
-But the debugging is harder.
+
+But the debugging is harder and logging is impossible (via PHP), so we added a wrapper for "bind_param" called "bind_param_debug". 
+With this wrapper we pre-build the sql-query via php (only for debugging / logging). Now you can e.g. echo the query.
+
+INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you need better performance.
 
 ```php
   use voku\db\DB;
@@ -229,18 +233,25 @@ But the debugging is harder.
   $name = 'name_1_中';
   $email = 'foo@bar.com';
   
-  $prepare->bind_param('ss', $name, $email);
+  $prepare->bind_param_debug('ss', $name, $email);
 
   $prepare->execute();
+  
+  // DEBUG
+  echo $prepare->get_sql_with_bound_parameters();
 
   // -------------
 
+  // INFO: "$template" and "$type" are references, since we use "bind_param" or "bind_param_debug"  
   $name = 'Lars';
   $email = 'lars@moelleken.org';
-  
-  $prepare->bind_param('ss', $name, $email);
 
   $prepare->execute();
+  
+  // DEBUG
+  echo $prepare->get_sql_with_bound_parameters();
+  
+  // -------------
 ```
 
 ####Aliases

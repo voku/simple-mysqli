@@ -33,6 +33,11 @@ final class Result
   private $_default_result_type = 'object';
 
   /**
+   * @var bool
+   */
+  private static $_mysqlnd_is_used;
+
+  /**
    * Result
    *
    * @param string         $sql
@@ -44,6 +49,10 @@ final class Result
 
     $this->_result = $result;
     $this->num_rows = $this->_result->num_rows;
+
+    if (self::$_mysqlnd_is_used === null) {
+      self::$_mysqlnd_is_used = extension_loaded('mysqlnd') && function_exists('mysqli_fetch_all');
+    }
   }
 
   /**
@@ -100,6 +109,68 @@ final class Result
   }
 
   /**
+   * Cast data into int, float or string.
+   *
+   * INFO: install / use "mysqlnd"-driver for better performance
+   *
+   * @param array|object $data
+   *
+   * @return array|false false on error
+   */
+  private function cast(&$data)
+  {
+    if (self::$_mysqlnd_is_used === true) {
+      return $data;
+    }
+
+    // init
+    static $fields = array();
+    static $types = array();
+
+    $result_hash = spl_object_hash($this->_result);
+
+    if (!isset($fields[$result_hash])) {
+      $fields[$result_hash] = mysqli_fetch_fields($this->_result);
+    }
+
+    if ($fields[$result_hash] === false) {
+      return false;
+    }
+
+    if (!isset($types[$result_hash])) {
+      foreach ($fields[$result_hash] as $field) {
+        switch ($field->type) {
+          case 3:
+            $types[$result_hash][$field->name] = 'int';
+            break;
+          case 4:
+            $types[$result_hash][$field->name] = 'float';
+            break;
+          default:
+            $types[$result_hash][$field->name] = 'string';
+            break;
+        }
+      }
+    }
+
+    if (is_array($data) === true) {
+      foreach ($types[$result_hash] as $type_name => $type) {
+        if (isset($data[$type_name])) {
+          settype($data[$type_name], $type);
+        }
+      }
+    } else if (is_object($data)) {
+      foreach ($types[$result_hash] as $type_name => $type) {
+        if (isset($data->{$type_name})) {
+          settype($data->{$type_name}, $type);
+        }
+      }
+    }
+
+    return $data;
+  }
+
+  /**
    * fetchAllArray
    *
    * @return array
@@ -118,7 +189,7 @@ final class Result
 
       /** @noinspection PhpAssignmentInConditionInspection */
       while ($row = mysqli_fetch_assoc($this->_result)) {
-        $data[] = $row;
+        $data[] = $this->cast($row);
       }
     }
 
@@ -144,7 +215,7 @@ final class Result
 
       /** @noinspection PhpAssignmentInConditionInspection */
       while ($row = mysqli_fetch_assoc($this->_result)) {
-        $data[] = $row;
+        $data[] = $this->cast($row);
       }
     }
 
@@ -261,7 +332,7 @@ final class Result
       return ($row = mysqli_fetch_object($this->_result, $class)) ? $row : false;
     }
 
-    return ($row = mysqli_fetch_object($this->_result)) ? $row : false;
+    return ($row = mysqli_fetch_object($this->_result)) ? $this->cast($row) : false;
   }
 
   /**
@@ -279,7 +350,7 @@ final class Result
 
     $row = mysqli_fetch_assoc($this->_result);
     if ($row) {
-      return $row;
+      return $this->cast($row);
     }
 
     return false;
@@ -300,7 +371,7 @@ final class Result
 
     $row = mysqli_fetch_assoc($this->_result);
     if ($row) {
-      return Arrayy::create($row);
+      return Arrayy::create($this->cast($row));
     }
 
     return false;
@@ -363,7 +434,7 @@ final class Result
       } else {
         /** @noinspection PhpAssignmentInConditionInspection */
         while ($row = mysqli_fetch_object($this->_result)) {
-          $data[] = $row;
+          $data[] = $this->cast($row);
         }
       }
     }

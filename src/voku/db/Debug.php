@@ -55,6 +55,11 @@ class Debug
    */
   private $logger_level;
 
+  /**
+   * Debug constructor.
+   *
+   * @param DB $db
+   */
   public function __construct(DB $db)
   {
     $this->_db = $db;
@@ -202,6 +207,8 @@ class Debug
           $ref['function'] === 'query'
           ||
           $ref['function'] === 'qry'
+          ||
+          $ref['function'] === 'execute'
           ||
           $ref['function'] === 'insert'
           ||

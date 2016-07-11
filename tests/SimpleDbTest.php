@@ -398,6 +398,10 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $result = $this->db->select($this->tableName);
     self::assertEquals(true, $result->num_rows > 0);
 
+    // select - true (but empty)
+    $result = $this->db->select($this->tableName, array('page_id' => -1));
+    self::assertEquals(0, $result->num_rows);
+
     // select - false
     $false = $this->db->select($this->tableName, null);
     self::assertEquals(false, $false);

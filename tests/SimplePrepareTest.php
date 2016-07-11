@@ -144,7 +144,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     self::assertEquals(true, '1.5' === $resultSelect['page_type']);
   }
 
-    public function testInsertWithBindParamHelper()
+  public function testInsertWithBindParamHelper()
   {
     $query = 'INSERT INTO ' . $this->tableName . ' 
       SET 
@@ -190,7 +190,6 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
     $resultSelect = $resultSelect->fetchArray();
 
-
     $expectedSql = 'INSERT INTO test_page 
       SET 
         page_template = \'tpl_new_中_123_?\', 
@@ -215,7 +214,6 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
     $resultSelect = $resultSelect->fetchArray();
 
-
     $expectedSql = 'INSERT INTO test_page 
       SET 
         page_template = \'tpl_new_中_123_?\', 
@@ -226,6 +224,122 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     self::assertEquals($new_page_id, $resultSelect['page_id']);
     self::assertEquals('tpl_new_中_123_?', $resultSelect['page_template']);
     self::assertEquals('lall_foo', $resultSelect['page_type']);
+  }
+
+  public function testUpdateWithBindParamHelper()
+  {
+    $query = 'UPDATE ' . $this->tableName . ' 
+      SET 
+        page_template = ?, 
+        page_type = ?
+      WHERE page_id = 1
+    ';
+
+    $prepare = new Prepare($this->db, $query);
+
+    // -------------
+
+    $template = 'tpl_new_中_update';
+    $type = 'lall_update';
+
+    $prepare->bind_param_debug('ss', $template, $type);
+
+    $affected_rows = $prepare->execute();
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id' => $affected_rows));
+    $resultSelect = $resultSelect->fetchArray();
+
+    $expectedSql = 'UPDATE test_page 
+      SET 
+        page_template = \'tpl_new_中_update\', 
+        page_type = \'lall_update\'
+      WHERE page_id = 1
+    ';
+
+    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
+    self::assertEquals($affected_rows, $resultSelect['page_id']);
+    self::assertEquals('tpl_new_中_update', $resultSelect['page_template']);
+    self::assertEquals('lall_update', $resultSelect['page_type']);
+
+    // -------------
+
+    // INFO: "$template" and "$type" are references, since we use "bind_param_debug"
+    /** @noinspection PhpUnusedLocalVariableInspection */
+    $template = 'tpl_new_中_123_?_update';
+    /** @noinspection PhpUnusedLocalVariableInspection */
+    $type = 'lall_foo_update';
+
+    $affected_rows = $prepare->execute();
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id' => $affected_rows));
+    $resultSelect = $resultSelect->fetchArray();
+
+    $expectedSql = 'UPDATE test_page 
+      SET 
+        page_template = \'tpl_new_中_123_?_update\', 
+        page_type = \'lall_foo_update\'
+      WHERE page_id = 1
+    ';
+
+    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
+    self::assertEquals($affected_rows, $resultSelect['page_id']);
+    self::assertEquals('tpl_new_中_123_?_update', $resultSelect['page_template']);
+    self::assertEquals('lall_foo_update', $resultSelect['page_type']);
+
+    // -------------
+  }
+
+  public function testUpdateWithBindParamHelper_v2()
+  {
+    $query = 'UPDATE ' . $this->tableName . ' 
+      SET 
+        page_template = ?, 
+        page_type = ?
+      WHERE page_type = \'lall_update_fdsfsdfsdfdsfsdfsd_non\' 
+    ';
+
+    $prepare = new Prepare($this->db, $query);
+
+    // -------------
+
+    $template = 'tpl_new_中_update';
+    $type = 'lall_update';
+
+    $prepare->bind_param_debug('ss', $template, $type);
+
+    $affected_rows = $prepare->execute();
+
+    $expectedSql = 'UPDATE test_page 
+      SET 
+        page_template = \'tpl_new_中_update\', 
+        page_type = \'lall_update\'
+      WHERE page_type = \'lall_update_fdsfsdfsdfdsfsdfsd_non\' 
+    ';
+
+    self::assertEquals(true, 0 === $affected_rows, 'tested: ' . $affected_rows);
+    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
+
+    // -------------
+
+    // INFO: "$template" and "$type" are references, since we use "bind_param_debug"
+    /** @noinspection PhpUnusedLocalVariableInspection */
+    $template = 'tpl_new_中_123_?_update';
+    /** @noinspection PhpUnusedLocalVariableInspection */
+    $type = 'lall_foo_update';
+
+    $affected_rows = $prepare->execute();
+
+    $expectedSql = 'UPDATE test_page 
+      SET 
+        page_template = \'tpl_new_中_123_?_update\', 
+        page_type = \'lall_foo_update\'
+      WHERE page_type = \'lall_update_fdsfsdfsdfdsfsdfsd_non\' 
+    ';
+
+    self::assertEquals(true, 0 === $affected_rows);
+    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
+
+    // -------------
   }
 
   public function testInsertWithoutBindParamHelper()

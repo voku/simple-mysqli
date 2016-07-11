@@ -267,35 +267,51 @@ class Debug
    *
    * @param string $sql     sql-query
    * @param int    $duration
-   * @param int    $results result counter
+   * @param int    $results field_count | insert_id | affected_rows
+   * @param bool   $sql_error
    *
    * @return bool
    */
-  public function logQuery($sql, $duration, $results)
+  public function logQuery($sql, $duration, $results, $sql_error = false)
   {
     $logLevelUse = strtolower($this->logger_level);
 
-    if ($logLevelUse !== 'trace' && $logLevelUse !== 'debug') {
+    if (
+        $sql_error === false
+        &&
+        ($logLevelUse !== 'trace' && $logLevelUse !== 'debug')
+    ) {
       return false;
     }
 
+    // set log-level
+    if ($sql_error === true) {
+      $logLevel = 'error';
+    } else {
+      $logLevel = $logLevelUse;
+    }
+
+    // get extra info
     $infoExtra = mysqli_info($this->_db->getLink());
     if ($infoExtra) {
       $infoExtra = ' | info => ' . $infoExtra;
     }
 
+    //
+    // logging
+    //
+
     $info = 'time => ' . round($duration, 5) . ' | results => ' . (int)$results . $infoExtra . ' | SQL => ' . UTF8::htmlentities($sql);
+
     $fileInfo = $this->getFileAndLineFromSql();
 
-    $this->logger(
+    return $this->logger(
         array(
-            'debug',
+            $logLevel,
             '<strong>' . date('d. m. Y G:i:s') . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
             'sql',
         )
     );
-
-    return true;
   }
 
   /**
@@ -308,6 +324,8 @@ class Debug
    * the type you want to log is the next [2] element.
    *
    * @param string[] $log [method, text, type]<br />e.g.: array('error', 'this is a error', 'sql')
+   *
+   * @return bool
    */
   public function logger(array $log)
   {
@@ -333,8 +351,10 @@ class Debug
         &&
         method_exists($logClass, $logMethod)
     ) {
-      $logClass::$logMethod($logText, $logType);
+      return $logClass::$logMethod($logText, $logType);
     }
+
+    return false;
   }
 
   /**

@@ -449,38 +449,52 @@ final class DB
     }
 
     $query_start_time = microtime(true);
-    $result = mysqli_query($this->link, $sql);
+    $query_result = mysqli_real_query($this->link, $sql);
     $query_duration = microtime(true) - $query_start_time;
+
     $this->query_count++;
 
-    $resultCount = 0;
-    if ($result instanceof \mysqli_result) {
-      $resultCount = (int)$result->num_rows;
+    $mysqli_field_count = mysqli_field_count($this->link);
+    if ($mysqli_field_count) {
+      $result = mysqli_store_result($this->link);
+    } else {
+      $result = $query_result;
     }
-    $this->_debug->logQuery($sql, $query_duration, $resultCount);
 
     if ($result instanceof \mysqli_result) {
+
+      // log the select query
+      $this->_debug->logQuery($sql, $query_duration, $mysqli_field_count);
 
       // return query result object
       return new Result($sql, $result);
 
-    } else if ($result === true) {
+    } else if ($query_result === true) {
 
-      if (preg_match('/^\s*"?(INSERT|UPDATE|DELETE|REPLACE)\s+/i', $sql)) {
+      // "INSERT" || "REPLACE"
+      if (preg_match('/^\s*"?(INSERT|REPLACE)\s+/i', $sql)) {
+        $insert_id = (int)$this->insert_id();
+        $this->_debug->logQuery($sql, $query_duration, $insert_id);
 
-        // it is an "INSERT" || "REPLACE"
-        if ($this->insert_id() > 0) {
-          return (int)$this->insert_id();
-        }
-
-        // it is an "UPDATE" || "DELETE"
-        if ($this->affected_rows() > 0) {
-          return (int)$this->affected_rows();
-        }
+        return $insert_id;
       }
+
+      // "UPDATE" || "DELETE"
+      if (preg_match('/^\s*"?(UPDATE|DELETE)\s+/i', $sql)) {
+        $affected_rows = (int)$this->affected_rows();
+        $this->_debug->logQuery($sql, $query_duration, $affected_rows);
+
+        return $affected_rows;
+      }
+
+      // log the ? query
+      $this->_debug->logQuery($sql, $query_duration, 0);
 
       return true;
     }
+
+    // log the error query
+    $this->_debug->logQuery($sql, $query_duration, 0, true);
 
     return $this->queryErrorHandling(mysqli_error($this->link), $sql, $params);
   }

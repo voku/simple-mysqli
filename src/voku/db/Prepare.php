@@ -206,7 +206,10 @@ final class Prepare extends \mysqli_stmt
    * Executes a prepared Query
    *
    * @link  http://php.net/manual/en/mysqli-stmt.execute.php
-   * @return bool true on success or false on failure.
+   * @return bool         "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+   *                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                      "true" by e.g. "SELECT"-queries<br />
+   *                      "false" on error
    * @since 5.0
    */
   public function execute()
@@ -220,25 +223,40 @@ final class Prepare extends \mysqli_stmt
     $result = parent::execute();
     $query_duration = microtime(true) - $query_start_time;
 
-    $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $this->num_rows);
-
     if ($result === true) {
 
-      if (preg_match('/^\s*"?(INSERT|UPDATE|DELETE|REPLACE)\s+/i', $this->_sql)) {
+      // "INSERT" || "REPLACE"
+      if (preg_match('/^\s*"?(INSERT|REPLACE)\s+/i', $this->_sql)) {
+        $insert_id = (int)$this->insert_id;
+        $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $insert_id);
 
-        // it is an "INSERT" || "REPLACE"
-        if ($this->insert_id > 0) {
-          return (int)$this->insert_id;
-        }
-
-        // it is an "UPDATE" || "DELETE"
-        if ($this->affected_rows > 0) {
-          return (int)$this->affected_rows;
-        }
+        return $insert_id;
       }
+
+      // "UPDATE" || "DELETE"
+      if (preg_match('/^\s*"?(UPDATE|DELETE)\s+/i', $this->_sql)) {
+        $affected_rows = (int)$this->affected_rows;
+        $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $affected_rows);
+
+        return $affected_rows;
+      }
+
+      // "SELECT"
+      if (preg_match('/^\s*"?(SELECT)\s+/i', $this->_sql)) {
+        $num_rows = (int)$this->num_rows;
+        $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $num_rows);
+
+        return true;
+      }
+
+      // log the ? query
+      $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, 0);
 
       return true;
     }
+
+    // log the error query
+    $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, 0, true);
 
     return $this->queryErrorHandling($this->error, $this->_sql_with_bound_parameters);
   }
@@ -276,10 +294,7 @@ final class Prepare extends \mysqli_stmt
    *                      (DDL) statements.
    *                      </p>
    *
-   * @return bool|int     "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
-   *                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-   *                      "true" by e.g. "SELECT"-queries<br />
-   *                      "false" on error
+   * @return bool false on error
    * @since 5.0
    */
   public function prepare($query)

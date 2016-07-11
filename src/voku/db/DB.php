@@ -464,7 +464,7 @@ final class DB
       // return query result object
       return new Result($sql, $result);
 
-    } else if ($result === true) {
+    } elseif ($result === true) {
 
       if (preg_match('/^\s*"?(INSERT|UPDATE|DELETE|REPLACE)\s+/i', $sql)) {
 

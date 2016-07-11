@@ -37,10 +37,5 @@
     "psr-4": {
       "voku\\db\\": "src/voku/db/"
     }
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-master": "1.8.x-dev"
-    }
   }
 }

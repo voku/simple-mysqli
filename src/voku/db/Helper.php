@@ -10,6 +10,22 @@ namespace voku\db;
 class Helper
 {
   /**
+   * Check if "mysqlnd"-driver is used.
+   *
+   * @return bool
+   */
+  public static function isMysqlndIsUsed()
+  {
+    static $_mysqlnd_is_used = null;
+
+    if ($_mysqlnd_is_used === null) {
+      $_mysqlnd_is_used = (extension_loaded('mysqlnd') && function_exists('mysqli_fetch_all'));
+    }
+
+    return $_mysqlnd_is_used;
+  }
+
+  /**
    * return all db-fields from a table
    *
    * @param string  $table

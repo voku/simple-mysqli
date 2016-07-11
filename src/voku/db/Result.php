@@ -33,11 +33,6 @@ final class Result
   private $_default_result_type = 'object';
 
   /**
-   * @var bool
-   */
-  private static $_mysqlnd_is_used;
-
-  /**
    * Result
    *
    * @param string         $sql
@@ -49,10 +44,6 @@ final class Result
 
     $this->_result = $result;
     $this->num_rows = $this->_result->num_rows;
-
-    if (self::$_mysqlnd_is_used === null) {
-      self::$_mysqlnd_is_used = extension_loaded('mysqlnd') && function_exists('mysqli_fetch_all');
-    }
   }
 
   /**
@@ -119,7 +110,7 @@ final class Result
    */
   private function cast(&$data)
   {
-    if (self::$_mysqlnd_is_used === true) {
+    if (Helper::isMysqlndIsUsed() === true) {
       return $data;
     }
 

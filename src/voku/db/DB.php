@@ -257,7 +257,9 @@ final class DB
     try {
       $this->link = mysqli_init();
 
-      mysqli_options($this->link, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
+      if (Helper::isMysqlndIsUsed() === true) {
+        mysqli_options($this->link, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
+      }
 
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
       $this->connected = @mysqli_real_connect(

@@ -1,6 +1,13 @@
 Changelog
 =========
 
+2.0.1 (2016-07-11)
+------------------
+
+ * [!]: fixed return from "DB->query()" and "Prepare->execute()"
+        -> e.g. if an update-query updated zero rows, then we return "0" instead of "true" now
+
+
 2.0.0 (2016-07-11)
 ------------------
 

@@ -46,14 +46,22 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $tmpId = $db_1->insert($this->tableName, $pageArray);
     self::assertEquals(true, $tmpId > 0);
 
-    // update - true
+    // update - true (affected_rows === 1)
     $pageArray = array(
         'page_template' => 'this_is_a_new_test__update',
     );
-    $this->db->update($this->tableName, $pageArray, "page_id = $tmpId");
+    $affected_rows = $this->db->update($this->tableName, $pageArray, 'page_id = ' . (int)$tmpId);
+    self::assertEquals(1, $affected_rows);
+
+    // update - true (affected_rows === 0)
+    $pageArray = array(
+        'page_template' => 'this_is_a_new_test__update',
+    );
+    $affected_rows = $this->db->update($this->tableName, $pageArray, 'page_id = -1');
+    self::assertEquals(0, $affected_rows);
 
     // update - false
-    $false = $this->db->update($this->tableName, array(), "page_id = $tmpId");
+    $false = $this->db->update($this->tableName, array(), 'page_id = ' . (int)$tmpId);
     self::assertEquals(false, $false);
 
   }
@@ -257,17 +265,26 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertEquals(false, $false);
 
     // select - true
-    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchObject();
     self::assertEquals('tpl_new_中', $tmpPage->page_template);
 
+    // select - true (but 0 results)
+    $result = $this->db->select($this->tableName, 'page_id = -1');
+    self::assertEquals(0, $result->num_rows);
+
     // select - true
-    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchObject('stdClass');
     self::assertEquals('tpl_new_中', $tmpPage->page_template);
 
+    // select - true (but 0 results)
+    $result = $this->db->select($this->tableName, 'page_id = -1');
+    $result->fetchObject('stdClass');
+    self::assertEquals(0, $result->num_rows);
+
     // select - true
-    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchObject(
         'Foobar',
         array(
@@ -320,10 +337,10 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $pageArray = array(
         'page_template' => 'tpl_update',
     );
-    $this->db->update($this->tableName, $pageArray, "page_id = $tmpId");
+    $this->db->update($this->tableName, $pageArray, 'page_id = ' . (int)$tmpId);
 
     // update - false
-    $false = $this->db->update($this->tableName, array(), "page_id = $tmpId");
+    $false = $this->db->update($this->tableName, array(), 'page_id = ' . (int)$tmpId);
     self::assertEquals(false, $false);
 
     // update - false
@@ -335,11 +352,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertEquals(false, $false);
 
     // update - false
-    $false = $this->db->update('', $pageArray, "page_id = $tmpId");
+    $false = $this->db->update('', $pageArray, 'page_id = ' . (int)$tmpId);
     self::assertEquals(false, $false);
 
     // check (select)
-    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchAllObject();
     self::assertEquals('tpl_update', $tmpPage[0]->page_template);
 
@@ -359,13 +376,17 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $false = $this->db->replace('', $data);
     self::assertEquals(false, $false);
 
-    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchAllObject();
     self::assertEquals('tpl_test', $tmpPage[0]->page_template);
 
     // delete - true
-    $deleteId = $this->db->delete($this->tableName, array('page_id' => $tmpId));
-    self::assertEquals(1, $deleteId);
+    $affected_rows = $this->db->delete($this->tableName, array('page_id' => $tmpId));
+    self::assertEquals(1, $affected_rows);
+
+    // delete - true (but 0 affected_rows)
+    $affected_rows = $this->db->delete($this->tableName, array('page_id' => -1));
+    self::assertEquals(0, $affected_rows);
 
     // delete - false
     $false = $this->db->delete('', array('page_id' => $tmpId));
@@ -1060,7 +1081,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $sql = 'INSERT INTO ' . $this->tableName . "
       SET
         page_template = '" . $this->db->escape(UTF8::urldecode('D%26%23xFC%3Bsseldorf')) . "',
-        page_type = '" . UTF8::urldecode('DÃ¼sseldorf') . "'
+        page_type = '" . $this->db->escape('DÃ¼sseldorf') . "'
     ";
     $return = DB::execSQL($sql);
     self::assertEquals(true, is_int($return));
@@ -1126,7 +1147,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     //
     // select - true
     //
-    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchObject();
     self::assertEquals($tmpDate->format('Y-m-d H:i:s'), $tmpPage->page_type);
 
@@ -1144,7 +1165,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     );
     self::assertEquals(true, $tmpId);
     // select - true
-    $result = $this->db->select($this->tableName, "page_id = $tmpId");
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchObject();
     self::assertEquals('http://foo.com/?foo=1', $tmpPage->page_template);
     self::assertEquals('foo\'bar', $tmpPage->page_type);

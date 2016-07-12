@@ -1272,6 +1272,22 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertEquals(true, $this->db->isReady());
   }
 
+  public function testSerializable()
+  {
+    $dbSerializable = serialize($this->db);
+    $dbTmp = unserialize($dbSerializable);
+    self::assertEquals(true, $dbTmp->isReady());
+
+    // query - true
+    $sql = 'INSERT INTO ' . $this->tableName . "
+      SET
+        page_template = '1.1',
+        page_type = '1'
+    ";
+    $return = $dbTmp->query($sql);
+    self::assertEquals(true, $return);
+  }
+
   /**
    * Call protected/private method of a class.
    *

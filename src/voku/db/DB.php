@@ -891,16 +891,6 @@ final class DB
   }
 
   /**
-   * __wakeup
-   *
-   * @return void
-   */
-  public function __wakeup()
-  {
-    $this->reconnect();
-  }
-
-  /**
    * Get all table-names via "SHOW TABLES".
    *
    * @return array
@@ -1441,12 +1431,22 @@ final class DB
   }
 
   /**
-   * prevent the instance from being cloned
+   * Prevent the instance from being cloned.
    *
    * @return void
    */
   private function __clone()
   {
+  }
+
+  /**
+   * __wakeup
+   *
+   * @return void
+   */
+  public function __wakeup()
+  {
+    $this->reconnect();
   }
 
 }

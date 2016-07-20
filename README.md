@@ -161,7 +161,7 @@ Example: REPLACE
   $tmpId = $db->replace('users', $replaceArray);
 ```
 
-###binding parameters on queries
+###Binding parameters on queries
 
 Binding parameters is a good way of preventing mysql injections as the parameters are sanitized before execution.
 
@@ -313,6 +313,8 @@ use `$db->errors()` to fetch all errors (returns false if no errors) or `$db->la
   }
 ```
 
+# Changelog
 
+See [CHANGELOG.md](CHANGELOG.md).
 
 

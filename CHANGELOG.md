@@ -1,6 +1,20 @@
 Changelog
 =========
 
+2.0.3 (2016-07-11)
+------------------
+
+* [+]: fix used of "MYSQLI_OPT_INT_AND_FLOAT_NATIVE"
+        -> "Type: Notice Message: Use of undefined constant MYSQLI_OPT_INT_AND_FLOAT_NATIVE"
+
+
+2.0.2 (2016-07-11)
+------------------
+
+* [!]: fixed return from "DB->qry()"
+        -> e.g. if an update-query updated zero rows, then we return "0" instead of "true" now
+
+
 2.0.1 (2016-07-11)
 ------------------
 

@@ -30,7 +30,7 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
 
     $dbFields = Helper::getDbFields($this->tableName, false);
 
-    self::assertEquals(
+    self::assertSame(
         array(
             0 => 'page_id',
             1 => 'page_template',
@@ -43,7 +43,7 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
 
     $dbFields = Helper::getDbFields($this->tableName, true);
 
-    self::assertEquals(
+    self::assertSame(
         array(
             0 => 'page_id',
             1 => 'page_template',
@@ -56,7 +56,7 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
 
     $dbFields = Helper::getDbFields($this->tableName, true, $this->db);
 
-    self::assertEquals(
+    self::assertSame(
         array(
             0 => 'page_id',
             1 => 'page_template',
@@ -100,7 +100,7 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
     $resultSelect = $resultSelect->fetchArray();
-    self::assertEquals(
+    self::assertSame(
         array(
             'page_id'       => $new_page_id,
             'page_template' => 'tpl_test_new6',

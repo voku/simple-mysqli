@@ -651,9 +651,10 @@ final class DB
       $varCleaned = array();
       foreach ($var as $key => $value) {
 
-        $key = (string)$this->escape($key, $stripe_non_utf8, $html_entity_decode);
-        $value = (string)$this->escape($value, $stripe_non_utf8, $html_entity_decode);
+        $key = $this->escape($key, $stripe_non_utf8, $html_entity_decode);
+        $value = $this->escape($value, $stripe_non_utf8, $html_entity_decode);
 
+        /** @noinspection OffsetOperationsInspection */
         $varCleaned[$key] = $value;
       }
 

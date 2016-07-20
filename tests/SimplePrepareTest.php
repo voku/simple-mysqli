@@ -56,8 +56,8 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
 
     $result = $prepare->execute();
 
-    self::assertEquals('Commands out of sync; you can\'t run this command now', $prepare->error);
-    self::assertEquals(false, $result);
+    self::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
+    self::assertSame(false, $result);
 
     // -------------
 
@@ -67,10 +67,10 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     /** @noinspection PhpUnusedLocalVariableInspection */
     $type = 'lall_foo';
 
-    self::assertEquals('Commands out of sync; you can\'t run this command now', $prepare->error);
+    self::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
     $result = $prepare->execute();
 
-    self::assertEquals(false, $result);
+    self::assertSame(false, $result);
   }
 
   public function testInsertErrorWithoutBindParamHelper()
@@ -92,8 +92,8 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
 
     $result = $prepare->execute();
 
-    self::assertEquals('Commands out of sync; you can\'t run this command now', $prepare->error);
-    self::assertEquals(false, $result);
+    self::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
+    self::assertSame(false, $result);
 
     // -------------
 
@@ -103,10 +103,10 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     /** @noinspection PhpUnusedLocalVariableInspection */
     $type = 'lall_foo';
 
-    self::assertEquals('Commands out of sync; you can\'t run this command now', $prepare->error);
+    self::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
     $result = $prepare->execute();
 
-    self::assertEquals(false, $result);
+    self::assertSame(false, $result);
   }
 
   public function testInsertWithBindParamHelper_v2()
@@ -137,11 +137,11 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
         page_type = 1.50000000
     ';
 
-    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
+    self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
     // INFO: mysql will return strings, but we can
-    self::assertEquals(true, $new_page_id === $resultSelect['page_id']);
-    self::assertEquals(true, '123' === $resultSelect['page_template']);
-    self::assertEquals(true, '1.5' === $resultSelect['page_type']);
+    self::assertSame(true, $new_page_id === $resultSelect['page_id']);
+    self::assertSame(true, '123' === $resultSelect['page_template']);
+    self::assertSame(true, '1.5' === $resultSelect['page_type']);
   }
 
   public function testInsertWithBindParamHelper()
@@ -172,10 +172,10 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
         page_type = \'lall\'
     ';
 
-    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
-    self::assertEquals($new_page_id, $resultSelect['page_id']);
-    self::assertEquals('tpl_new_中', $resultSelect['page_template']);
-    self::assertEquals('lall', $resultSelect['page_type']);
+    self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
+    self::assertSame($new_page_id, $resultSelect['page_id']);
+    self::assertSame('tpl_new_中', $resultSelect['page_template']);
+    self::assertSame('lall', $resultSelect['page_type']);
 
     // -------------
 
@@ -196,10 +196,10 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
         page_type = \'lall_foo\'
     ';
 
-    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
-    self::assertEquals($new_page_id, $resultSelect['page_id']);
-    self::assertEquals('tpl_new_中_123_?', $resultSelect['page_template']);
-    self::assertEquals('lall_foo', $resultSelect['page_type']);
+    self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
+    self::assertSame($new_page_id, $resultSelect['page_id']);
+    self::assertSame('tpl_new_中_123_?', $resultSelect['page_template']);
+    self::assertSame('lall_foo', $resultSelect['page_type']);
 
     // -------------
 
@@ -220,10 +220,10 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
         page_type = \'lall_foo\'
     ';
 
-    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
-    self::assertEquals($new_page_id, $resultSelect['page_id']);
-    self::assertEquals('tpl_new_中_123_?', $resultSelect['page_template']);
-    self::assertEquals('lall_foo', $resultSelect['page_type']);
+    self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
+    self::assertSame($new_page_id, $resultSelect['page_id']);
+    self::assertSame('tpl_new_中_123_?', $resultSelect['page_template']);
+    self::assertSame('lall_foo', $resultSelect['page_type']);
   }
 
   public function testUpdateWithBindParamHelper()
@@ -256,10 +256,10 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
       WHERE page_id = 1
     ';
 
-    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
-    self::assertEquals($affected_rows, $resultSelect['page_id']);
-    self::assertEquals('tpl_new_中_update', $resultSelect['page_template']);
-    self::assertEquals('lall_update', $resultSelect['page_type']);
+    self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
+    self::assertSame($affected_rows, $resultSelect['page_id']);
+    self::assertSame('tpl_new_中_update', $resultSelect['page_template']);
+    self::assertSame('lall_update', $resultSelect['page_type']);
 
     // -------------
 
@@ -281,10 +281,10 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
       WHERE page_id = 1
     ';
 
-    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
-    self::assertEquals($affected_rows, $resultSelect['page_id']);
-    self::assertEquals('tpl_new_中_123_?_update', $resultSelect['page_template']);
-    self::assertEquals('lall_foo_update', $resultSelect['page_type']);
+    self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
+    self::assertSame($affected_rows, $resultSelect['page_id']);
+    self::assertSame('tpl_new_中_123_?_update', $resultSelect['page_template']);
+    self::assertSame('lall_foo_update', $resultSelect['page_type']);
 
     // -------------
   }
@@ -316,8 +316,8 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
       WHERE page_type = \'lall_update_fdsfsdfsdfdsfsdfsd_non\' 
     ';
 
-    self::assertEquals(true, 0 === $affected_rows, 'tested: ' . $affected_rows);
-    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
+    self::assertSame(true, 0 === $affected_rows, 'tested: ' . $affected_rows);
+    self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
 
     // -------------
 
@@ -336,8 +336,8 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
       WHERE page_type = \'lall_update_fdsfsdfsdfdsfsdfsd_non\' 
     ';
 
-    self::assertEquals(true, 0 === $affected_rows);
-    self::assertEquals($expectedSql, $prepare->get_sql_with_bound_parameters());
+    self::assertSame(true, 0 === $affected_rows);
+    self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
 
     // -------------
   }
@@ -364,9 +364,9 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
     $resultSelect = $resultSelect->fetchArray();
 
-    self::assertEquals($new_page_id, $resultSelect['page_id']);
-    self::assertEquals('tpl_new_中', $resultSelect['page_template']);
-    self::assertEquals('lall', $resultSelect['page_type']);
+    self::assertSame($new_page_id, $resultSelect['page_id']);
+    self::assertSame('tpl_new_中', $resultSelect['page_template']);
+    self::assertSame('lall', $resultSelect['page_type']);
 
     // -------------
 
@@ -381,8 +381,8 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
     $resultSelect = $resultSelect->fetchArray();
 
-    self::assertEquals($new_page_id, $resultSelect['page_id']);
-    self::assertEquals('tpl_new_中_123_?', $resultSelect['page_template']);
-    self::assertEquals('lall_foo', $resultSelect['page_type']);
+    self::assertSame($new_page_id, $resultSelect['page_id']);
+    self::assertSame('tpl_new_中_123_?', $resultSelect['page_template']);
+    self::assertSame('lall_foo', $resultSelect['page_type']);
   }
 }

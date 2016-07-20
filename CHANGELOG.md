@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.0.4 (2016-07-20)
+------------------
+
+* [+]: use "assertSame" instead of "assertEquals" (PhpUnit)
+* [+]: fix "DB->escape()" usage with arrays
+
 2.0.3 (2016-07-11)
 ------------------
 

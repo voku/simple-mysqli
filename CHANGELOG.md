@@ -1,11 +1,16 @@
 Changelog
 =========
 
+2.0.7 (2016-08-15)
+------------------
+
+* [~]: merge "secure()" and "escape()" methods
+* [+]: convert "DateTime"-object to "DateTime"-string via "escape()"
 
 2.0.5/6 (2016-08-12)
 ------------------
 
-[+]: use new version of "portable-utf8" (3.0)
+* [+]: use new version of "portable-utf8" (3.0)
 
 2.0.4 (2016-07-20)
 ------------------

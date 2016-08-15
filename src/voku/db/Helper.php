@@ -26,7 +26,7 @@ class Helper
   }
 
   /**
-   * return all db-fields from a table
+   * Return all db-fields from a table.
    *
    * @param string  $table
    * @param bool    $useStaticCache
@@ -38,7 +38,7 @@ class Helper
   {
     static $dbFieldsCache = array();
 
-    // use the cache
+    // use the static cache
     if (
         $useStaticCache === true
         &&
@@ -54,7 +54,14 @@ class Helper
       $db = DB::getInstance();
     }
 
-    $sql = 'SHOW COLUMNS FROM `' . $db->escape($table) . '`';
+    $debug = new Debug($db);
+    if ($table === '') {
+      $debug->displayError('invalid table name');
+
+      return array();
+    }
+
+    $sql = 'SHOW COLUMNS FROM ' . $db->quote_string($table);
     $result = $db->query($sql);
 
     if ($result && $result->num_rows > 0) {
@@ -70,13 +77,13 @@ class Helper
   }
 
   /**
-   * copy row within a DB table and making updates to columns
+   * Copy row within a DB table and making updates to the columns.
    *
    * @param string  $table
    * @param array   $whereArray
    * @param array   $updateArray
    * @param array   $ignoreArray
-   * @param DB|null $db
+   * @param DB|null $db           <p>Use <strong>null</strong> 
    *
    * @return bool|int "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
    *                   "false" on error
@@ -84,21 +91,26 @@ class Helper
   public static function copyTableRow($table, array $whereArray, array $updateArray = array(), array $ignoreArray = array(), DB $db = null)
   {
     // init
-    $whereSQL = '';
-    $return = false;
+    $table = trim($table);
 
     if ($db === null) {
       $db = DB::getInstance();
     }
 
-    $table = $db->escape($table);
+    $debug = new Debug($db);
+    if ($table === '') {
+      $debug->displayError('invalid table name');
 
+      return false;
+    }
+
+    $whereSQL = '';
     foreach ($whereArray as $key => $value) {
-      $whereSQL = ' AND ' . $db->escape($key) . ' = ' . $db->escape($value);
+      $whereSQL .= ' AND ' . $db->escape($key) . ' = ' . $db->escape($value);
     }
 
     // get the row
-    $query = 'SELECT * FROM ' . $table . '
+    $query = 'SELECT * FROM ' . $db->quote_string($table) . '
       WHERE 1 = 1
       ' . $whereSQL . '
     ';
@@ -118,29 +130,28 @@ class Helper
 
           if (!in_array($fieldName, $ignoreArray, true)) {
             if (array_key_exists($fieldName, $updateArray)) {
-
-              if ($updateArray[$fieldName] || $updateArray[$fieldName] == 0) {
-                $insert_keys .= ',' . $fieldName;
-                $insert_values .= ',?';
-                $bindings[] = $updateArray[$fieldName];
-              }
-
+              $insert_keys .= ',' . $fieldName;
+              $insert_values .= ',?';
+              $bindings[] = $db->escape($updateArray[$fieldName]);
             } else {
               $insert_keys .= ',' . $fieldName;
               $insert_values .= ',?';
-              $bindings[] = $value;
+              $bindings[] = $db->escape($value);
             }
           }
         }
 
+        $insert_keys = ltrim($insert_keys, ',');
+        $insert_values = ltrim($insert_values, ',');
+
         // insert the "copied" row
-        $new_query = 'INSERT INTO `' . $table . '` (' . ltrim($insert_keys, ',') . ')
-          VALUES (' . ltrim($insert_values, ',') . ')
+        $new_query = 'INSERT INTO ' . $db->quote_string($table) . ' (' . $insert_keys . ')
+          VALUES (' . $insert_values . ')
         ';
-        $return = $db->query($new_query, $bindings);
+        return $db->query($new_query, $bindings);
       }
     }
 
-    return $return;
+    return false;
   }
 }

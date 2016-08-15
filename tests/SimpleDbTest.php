@@ -1,5 +1,6 @@
 <?php
 
+use Arrayy\Arrayy;
 use voku\db\DB;
 use voku\db\Result;
 use voku\helper\UTF8;
@@ -482,6 +483,96 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testEscape()
   {
+    $date = new DateTime('2016-08-15 09:22:18');
+
+    self::assertSame($date->format('Y-m-d H:i:s'), $this->db->escape($date));
+
+    // ---
+
+    $object = new stdClass();
+    $object->bar = 'foo';
+
+    self::assertSame(false, $this->db->escape($object));
+
+    // ---
+
+    $object = new Arrayy(array('foo', 123, 'öäü'));
+
+    self::assertSame('foo,123,öäü', $this->db->escape($object));
+
+    // ---
+
+    $testArray = array(
+        'NOW()'                                  => 'NOW()',
+        'fooo'                                   => 'fooo',
+        123                                      => 123,
+        'κόσμε'                                  => 'κόσμε',
+        '&lt;abcd&gt;\'$1\'(&quot;&amp;2&quot;)' => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
+        '&#246;&#228;&#252;'                     => '&#246;&#228;&#252;',
+    );
+
+    foreach ($testArray as $before => $after) {
+      self::assertSame($after, $this->db->escape($before));
+    }
+
+    self::assertSame(array_values($testArray), $this->db->escape(array_keys($testArray)));
+
+    self::assertSame('NOW(),fooo,123,κόσμε,<abcd>\\\'$1\\\'(\"&2\"),öäü', $this->db->escape(array_keys($testArray), false, true, true));
+    self::assertSame('NOW(),fooo,123,κόσμε,&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;),&#246;&#228;&#252;', $this->db->escape(array_keys($testArray), true, false, true));
+    self::assertSame('NOW(),fooo,123,κόσμε,&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;),&#246;&#228;&#252;', $this->db->escape(array_keys($testArray), false, false, true));
+    self::assertSame('NOW(),fooo,123,κόσμε,<abcd>\\\'$1\\\'(\"&2\"),öäü', $this->db->escape(array_keys($testArray), true, true, true));
+
+    self::assertSame(
+        array(
+            0 => 'NOW()',
+            1 => 'fooo',
+            2 => 123,
+            3 => 'κόσμε',
+            4 => '<abcd>\\\'$1\\\'(\"&2\")',
+            5 => 'öäü',
+        ),
+        $this->db->escape(array_keys($testArray), false, true, false)
+    );
+    self::assertSame(
+        array(
+            0 => 'NOW()',
+            1 => 'fooo',
+            2 => 123,
+            3 => 'κόσμε',
+            4 => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
+            5 => '&#246;&#228;&#252;',
+        )
+        , $this->db->escape(array_keys($testArray), true, false, false)
+    );
+    self::assertSame(
+        array(
+            0 => 'NOW()',
+            1 => 'fooo',
+            2 => 123,
+            3 => 'κόσμε',
+            4 => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
+            5 => '&#246;&#228;&#252;',
+        ),
+        $this->db->escape(array_keys($testArray), false, false, false));
+    self::assertSame(
+        array(
+            0 => 'NOW()',
+            1 => 'fooo',
+            2 => 123,
+            3 => 'κόσμε',
+            4 => '<abcd>\\\'$1\\\'(\"&2\")',
+            5 => 'öäü',
+        ),
+        $this->db->escape(array_keys($testArray), true, true, false));
+
+    self::assertSame(null, $this->db->escape(array_keys($testArray), false, true, null));
+    self::assertSame(null, $this->db->escape(array_keys($testArray), true, false, null));
+    self::assertSame(null, $this->db->escape(array_keys($testArray), false, false, null));
+    self::assertSame(null, $this->db->escape(array_keys($testArray), true, true, null));
+
+
+    // ---
+
     $this->db = DB::getInstance();
 
     $data = array(
@@ -1074,6 +1165,43 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $return = DB::execSQL($sql);
     self::assertSame(true, is_int($return));
     self::assertSame(true, $return > 0);
+  }
+
+  public function testSecure()
+  {
+    $date = new DateTime('2016-08-15 09:22:18');
+
+    self::assertSame("'" . $date->format('Y-m-d H:i:s') . "'", $this->db->secure($date));
+
+    // ---
+
+    $object = new stdClass();
+    $object->bar = 'foo';
+
+    self::assertSame(false, $this->db->secure($object));
+
+    // ---
+
+    $object = new Arrayy(array('foo', 123, 'öäü'));
+
+    self::assertSame('\'foo,123,öäü\'', $this->db->secure($object));
+
+    // ---
+
+    $testArray = array(
+        'NOW()'                                  => 'NOW()',
+        'fooo'                                   => '\'fooo\'',
+        123                                      => 123,
+        'κόσμε'                                  => '\'κόσμε\'',
+        '&lt;abcd&gt;\'$1\'(&quot;&amp;2&quot;)' => '\'&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)\'',
+        '&#246;&#228;&#252;'                     => '\'&#246;&#228;&#252;\'',
+    );
+
+    foreach ($testArray as $before => $after) {
+      self::assertSame($after, $this->db->secure($before));
+    }
+
+    self::assertSame(null, $this->db->secure(array_keys($testArray)));
   }
 
   public function testUtf8Query()

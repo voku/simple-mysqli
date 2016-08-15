@@ -528,16 +528,30 @@ final class DB
   /**
    * Try to secure a variable, so can you use it in sql-queries.
    *
-   * int: (also strings that contains only an int-value)
+   * <p>
+   * <strong>int:</strong> (also strings that contains only an int-value)<br />
    * 1. parse into (int)
+   * </p><br />
    *
-   * strings:
-   * 1. check if the string isn't a default mysql-time-function e.g. 'CURDATE()'
-   * 2. trim whitespace
-   * 3. trim '
-   * 4. escape the string (and remove non utf-8 chars)
-   * 5. trim ' again (because we maybe removed some chars)
-   * 6. add ' around the new string
+   * <p>
+   * <strong>string:</strong><br />
+   * 1. check if the string isn't a default mysql-time-function e.g. 'CURDATE()'<br />
+   * 2. trim whitespace<br />
+   * 3. trim '<br />
+   * 4. escape the string (and remove non utf-8 chars)<br />
+   * 5. trim ' again (because we maybe removed some chars)<br />
+   * 6. add ' around the new string<br />
+   * </p><br />
+   *
+   * <p>
+   * <strong>array:</strong><br />
+   * 1. return null
+   * </p><br />
+   *
+   * <p>
+   * <strong>object:</strong><br />
+   * 1. return false
+   * </p>
    *
    * @param mixed $var
    *
@@ -545,60 +559,18 @@ final class DB
    */
   public function secure($var)
   {
-    // save the current value as int (for later usage)
-    if (!is_object($var)) {
-      $varInt = (int)$var;
+    if (in_array($var, $this->mysqlDefaultTimeFunctions, true)) {
+      return $var;
     }
 
-    /** @noinspection TypeUnsafeComparisonInspection */
-    if (
-        is_int($var)
-        ||
-        is_bool($var)
-        ||
-        (isset($varInt, $var[0]) && $var[0] != '0' && "$varInt" == $var)
-    ) {
+    if (is_string($var)) {
+      $var = trim(trim($var), "'");
+    }
 
-      // "int" || int || bool
+    $var = $this->escape($var, false, false, null);
 
-      $var = (int)$var;
-
-    } elseif (is_string($var)) {
-
-      // "string"
-
-      if (!in_array($var, $this->mysqlDefaultTimeFunctions, true)) {
-        $var = "'" . trim($this->escape(trim(trim((string)$var), "'")), "'") . "'";
-      }
-
-    } elseif (is_float($var)) {
-
-      // float
-
-      $var = number_format((float)str_replace(',', '.', $var), 8, '.', '');
-
-    } elseif (is_array($var)) {
-
-      // array
-
-      $var = null;
-
-    } elseif ($var instanceof \DateTime) {
-
-      // "DateTime"-object
-
-      try {
-        $var = "'" . $this->escape($var->format('Y-m-d H:i:s'), false) . "'";
-      } catch (\Exception $e) {
-        $var = null;
-      }
-
-    } else {
-
-      // fallback ...
-
-      $var = "'" . trim($this->escape(trim(trim((string)$var), "'")), "'") . "'";
-
+    if (is_string($var)) {
+      $var = "'" . trim($var, "'") . "'";
     }
 
     return $var;
@@ -614,11 +586,13 @@ final class DB
    *                   string: run UTF8::cleanup() and mysqli_real_escape_string()<br />
    * @param bool  $stripe_non_utf8
    * @param bool  $html_entity_decode
-   * @param bool  $array_to_string
+   * @param bool|null $convert_array <strong>false</strong> => Keep the array.<br />
+   *                                 <strong>true</strong> => Convert to string var1,var2,var3...<br />
+   *                                 <strong>null</strong> => Convert the array into null, every time.
    *
    * @return array|bool|float|int|string
    */
-  public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = false, $array_to_string = false)
+  public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = false, $convert_array = false)
   {
     // save the current value as int (for later usage)
     if (!is_object($var)) {
@@ -648,6 +622,10 @@ final class DB
 
       // array
 
+      if ($convert_array === null) {
+        return null;
+      }
+
       $varCleaned = array();
       foreach ($var as $key => $value) {
 
@@ -658,7 +636,7 @@ final class DB
         $varCleaned[$key] = $value;
       }
 
-      if ($array_to_string === true) {
+      if ($convert_array === true) {
         $varCleaned = implode(',', $varCleaned);
 
         return $varCleaned;
@@ -685,6 +663,17 @@ final class DB
       $var = mysqli_real_escape_string($this->getLink(), $var);
 
       return (string)$var;
+
+    } elseif ($var instanceof \DateTime) {
+
+      // "DateTime"-object
+
+      try {
+        return $this->escape($var->format('Y-m-d H:i:s'), false);
+      } catch (\Exception $e) {
+        return null;
+      }
+
     } else {
       return false;
     }

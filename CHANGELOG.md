@@ -6,6 +6,7 @@ Changelog
 
 * [~]: merge "secure()" and "escape()" methods
 * [+]: convert "DateTime"-object to "DateTime"-string via "escape()"
+* [+]: check magic method "__toString" for "escape()"-input
 
 2.0.5/6 (2016-08-12)
 ------------------

@@ -579,13 +579,13 @@ final class DB
   /**
    * Escape
    *
-   * @param mixed $var boolean: convert into "integer"<br />
-   *                   int: convert into "integer"<br />
-   *                   float: convert into "float" and replace "," with "."<br />
-   *                   array: run escape() for every key => value<br />
-   *                   string: run UTF8::cleanup() and mysqli_real_escape_string()<br />
-   * @param bool  $stripe_non_utf8
-   * @param bool  $html_entity_decode
+   * @param mixed     $var           boolean: convert into "integer"<br />
+   *                                 int: convert into "integer"<br />
+   *                                 float: convert into "float" and replace "," with "."<br />
+   *                                 array: run escape() for every key => value<br />
+   *                                 string: run UTF8::cleanup() and mysqli_real_escape_string()<br />
+   * @param bool      $stripe_non_utf8
+   * @param bool      $html_entity_decode
    * @param bool|null $convert_array <strong>false</strong> => Keep the array.<br />
    *                                 <strong>true</strong> => Convert to string var1,var2,var3...<br />
    *                                 <strong>null</strong> => Convert the array into null, every time.

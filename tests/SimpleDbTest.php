@@ -541,8 +541,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             3 => 'κόσμε',
             4 => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
             5 => '&#246;&#228;&#252;',
-        )
-        , $this->db->escape(array_keys($testArray), true, false, false)
+        ),
+        $this->db->escape(array_keys($testArray), true, false, false)
     );
     self::assertSame(
         array(

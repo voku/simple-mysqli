@@ -83,7 +83,7 @@ class Helper
    * @param array   $whereArray
    * @param array   $updateArray
    * @param array   $ignoreArray
-   * @param DB|null $db           <p>Use <strong>null</strong> 
+   * @param DB|null $db           <p>Use <strong>null</strong>
    *
    * @return bool|int "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
    *                   "false" on error

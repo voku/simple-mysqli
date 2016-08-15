@@ -539,6 +539,11 @@ final class DB
    * </p><br />
    *
    * <p>
+   * <strong>float:</strong><br />
+   * 1. parse into "float" and replace "," with "."
+   * </p><br />
+   *
+   * <p>
    * <strong>string:</strong><br />
    * 1. check if the string isn't a default mysql-time-function e.g. 'CURDATE()'<br />
    * 2. trim whitespace<br />
@@ -556,6 +561,11 @@ final class DB
    * <p>
    * <strong>object:</strong><br />
    * 1. return false
+   * </p><br />
+   *
+   * <p>
+   * <strong>null:</strong><br />
+   * 1. return null
    * </p>
    *
    * @param mixed $var
@@ -590,11 +600,12 @@ final class DB
   }
 
   /**
-   * Escape
+   * Escape: Use "mysqli_real_escape_string" and clean non UTF-8 chars + some extra optional stuff.
    *
    * @param mixed     $var           boolean: convert into "integer"<br />
    *                                 int: convert into "integer"<br />
    *                                 float: convert into "float" and replace "," with "."<br />
+   *                                 null: null (don't change it)<br />
    *                                 array: run escape() for every key => value<br />
    *                                 string: run UTF8::cleanup() and mysqli_real_escape_string()<br />
    * @param bool      $stripe_non_utf8

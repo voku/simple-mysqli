@@ -535,12 +535,12 @@ final class DB
    *
    * <p>
    * <strong>int:</strong> (also strings that contains only an int-value)<br />
-   * 1. parse into (int)
+   * 1. parse into "int"
    * </p><br />
    *
    * <p>
    * <strong>float:</strong><br />
-   * 1. parse into "float" and replace "," with "."
+   * 1. return "float"
    * </p><br />
    *
    * <p>
@@ -603,8 +603,8 @@ final class DB
    * Escape: Use "mysqli_real_escape_string" and clean non UTF-8 chars + some extra optional stuff.
    *
    * @param mixed     $var           boolean: convert into "integer"<br />
-   *                                 int: convert into "integer"<br />
-   *                                 float: convert into "float" and replace "," with "."<br />
+   *                                 int: int (don't change it)<br />
+   *                                 float: float (don't change it)<br />
    *                                 null: null (don't change it)<br />
    *                                 array: run escape() for every key => value<br />
    *                                 string: run UTF8::cleanup() and mysqli_real_escape_string()<br />
@@ -644,7 +644,7 @@ final class DB
 
       // float
 
-      return number_format((float)str_replace(',', '.', $var), 8, '.', '');
+      return $var;
 
     } elseif (is_array($var)) {
 

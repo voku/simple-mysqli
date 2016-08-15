@@ -602,7 +602,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     $newData = $this->db->escape($data, true, true, true);
 
-    self::assertSame('tpl_test_\\\'new2,1.10000000', $newData);
+    self::assertSame('tpl_test_\\\'new2,1.1', $newData);
 
     // ---
 
@@ -1193,6 +1193,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $object = new Arrayy(array('foo', 123, 'öäü'));
 
     self::assertSame('\'foo,123,öäü\'', $this->db->secure($object));
+
+    // ---
+
+    self::assertSame(0.0, $this->db->secure(0.0));
+    self::assertSame("'0,0'", $this->db->secure('0,0'));
 
     // ---
 

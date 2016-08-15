@@ -134,7 +134,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $expectedSql = 'INSERT INTO test_page 
       SET 
         page_template = 123, 
-        page_type = 1.50000000
+        page_type = 1.5
     ';
 
     self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());

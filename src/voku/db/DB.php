@@ -645,9 +645,15 @@ final class DB
       }
     }
 
-    if (is_string($var)) {
+    if (
+        is_string($var)
+        ||
+        (is_object($var) && method_exists($var, '__toString'))
+    ) {
 
       // "string"
+
+      $var = (string)$var;
 
       if ($stripe_non_utf8 === true) {
         $var = UTF8::cleanup($var);

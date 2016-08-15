@@ -1,12 +1,14 @@
 Changelog
 =========
 
-2.0.7 (2016-08-15)
+3.0.0 (2016-08-15)
 ------------------
 
 * [~]: merge "secure()" and "escape()" methods
 * [+]: convert "DateTime"-object to "DateTime"-string via "escape()"
 * [+]: check magic method "__toString" for "escape()"-input
+
+WARNING: Use "set_convert_null_to_empty_string(true)" to be compatible with the <= 2.0.x tags.
 
 2.0.5/6 (2016-08-12)
 ------------------

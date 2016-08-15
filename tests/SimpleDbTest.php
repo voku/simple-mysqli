@@ -502,6 +502,14 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // ---
 
+    self::assertSame('', $this->db->escape(''));
+
+    // ---
+
+    self::assertSame(null, $this->db->escape(null));
+
+    // ---
+
     $testArray = array(
         'NOW()'                                  => 'NOW()',
         'fooo'                                   => 'fooo',
@@ -1185,6 +1193,18 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $object = new Arrayy(array('foo', 123, 'öäü'));
 
     self::assertSame('\'foo,123,öäü\'', $this->db->secure($object));
+
+    // ---
+
+    self::assertSame("''", $this->db->secure(''));
+
+    // ---
+
+    $this->db->set_convert_null_to_empty_string(true);
+    self::assertSame("''", $this->db->secure(null));
+
+    $this->db->set_convert_null_to_empty_string(false);
+    self::assertSame(null, $this->db->secure(null));
 
     // ---
 

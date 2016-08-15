@@ -79,6 +79,11 @@ final class DB
   private $_in_transaction = false;
 
   /**
+   * @var bool
+   */
+  private $_convert_null_to_empty_string = false;
+
+  /**
    * @var Debug
    */
   private $_debug;
@@ -555,10 +560,18 @@ final class DB
    *
    * @param mixed $var
    *
-   * @return string | null
+   * @return mixed
    */
   public function secure($var)
   {
+    if (
+        $var === ''
+        ||
+        ($this->_convert_null_to_empty_string === true && $var === null)
+    ) {
+      return "''";
+    }
+
     if (in_array($var, $this->mysqlDefaultTimeFunctions, true)) {
       return $var;
     }
@@ -590,10 +603,14 @@ final class DB
    *                                 <strong>true</strong> => Convert to string var1,var2,var3...<br />
    *                                 <strong>null</strong> => Convert the array into null, every time.
    *
-   * @return array|bool|float|int|string
+   * @return mixed
    */
   public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = false, $convert_array = false)
   {
+    if ($var === null) {
+      return null;
+    }
+
     // save the current value as int (for later usage)
     if (!is_object($var)) {
       $varInt = (int)$var;
@@ -884,6 +901,18 @@ final class DB
     @mysqli_query($this->link, "SET NAMES '" . ($charset === 'utf8' ? 'utf8mb4' : $charset) . "'");
 
     return $return;
+  }
+
+  /**
+   * Set the option to convert null to "''" (empty string).
+   *
+   * Used in secure() => select(), insert(), update(), delete()
+   *
+   * @param $bool
+   */
+  public function set_convert_null_to_empty_string($bool)
+  {
+    $this->_convert_null_to_empty_string = (bool)$bool;
   }
 
   /**

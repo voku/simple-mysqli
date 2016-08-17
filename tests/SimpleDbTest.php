@@ -240,10 +240,12 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testCharset()
   {
-    self::assertSame('utf8', $this->db->get_charset());
+    self::assertSame('utf8mb4', $this->db->get_charset());
+
     $return = $this->db->set_charset('utf8');
     self::assertSame(true, $return);
-    self::assertSame('utf8', $this->db->get_charset());
+
+    self::assertSame('utf8mb4', $this->db->get_charset());
   }
 
   public function testBasics()

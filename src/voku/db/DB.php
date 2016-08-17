@@ -354,8 +354,7 @@ final class DB
    * @param string      $password
    * @param string      $database
    * @param string      $port          default is (int)3306
-   * @param string      $charset       default is 'utf8', but if you need 4-byte chars, then your tables need
-   *                                   the 'utf8mb4'-charset
+   * @param string      $charset       default is 'utf8' or 'utf8mb4' (if supported)
    * @param bool|string $exit_on_error use a empty string "" or false to disable it
    * @param bool|string $echo_on_error use a empty string "" or false to disable it
    * @param string      $logger_class_name
@@ -903,13 +902,21 @@ final class DB
    */
   public function set_charset($charset)
   {
+    $charsetLower = strtolower($charset);
+    if ($charsetLower === 'utf8' || $charsetLower === 'utf-8') {
+      $charset = 'utf8';
+    }
+    if ($charset === 'utf8' && Helper::isUtf8mb4Supported($this) === true) {
+      $charset = 'utf8mb4';
+    }
+
     $this->charset = (string)$charset;
 
     $return = mysqli_set_charset($this->link, $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
     @mysqli_query($this->link, 'SET CHARACTER SET ' . $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    @mysqli_query($this->link, "SET NAMES '" . ($charset === 'utf8' ? 'utf8mb4' : $charset) . "'");
+    @mysqli_query($this->link, "SET NAMES '" . $charset . "'");
 
     return $return;
   }

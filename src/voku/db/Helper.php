@@ -26,6 +26,89 @@ class Helper
   }
 
   /**
+   * Check if the current environment supports "utf8mb4".
+   *
+   * @param DB $db
+   *
+   * @return bool
+   */
+  public static function isUtf8mb4Supported(DB $db)
+  {
+    /**
+     *  https://make.wordpress.org/core/2015/04/02/the-utf8mb4-upgrade/
+     *
+     * - You’re currently using the utf8 character set.
+     * - Your MySQL server is version 5.5.3 or higher (including all 10.x versions of MariaDB).
+     * - Your MySQL client libraries are version 5.5.3 or higher. If you’re using mysqlnd, 5.0.9 or higher.
+     *
+     * INFO: utf8mb4 is 100% backwards compatible with utf8.
+     */
+
+    $server_version = self::get_mysql_server_version($db);
+    $client_version = self::get_mysql_client_version($db);
+
+    if (
+        $server_version >= 50503
+        &&
+        (
+            (
+                Helper::isMysqlndIsUsed() === true
+                &&
+                $client_version >= 50009
+            )
+            ||
+            (
+                Helper::isMysqlndIsUsed() === false
+                &&
+                $client_version >= 50503
+            )
+        )
+
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * A string that represents the MySQL client library version.
+   *
+   * @param DB $db
+   *
+   * @return string
+   */
+  public static function get_mysql_client_version(DB $db)
+  {
+    static $_mysqli_client_version = null;
+
+    if ($_mysqli_client_version === null) {
+      $_mysqli_client_version = mysqli_get_client_version($db->getLink());
+    }
+
+    return $_mysqli_client_version;
+  }
+
+
+  /**
+   * Returns a string representing the version of the MySQL server that the MySQLi extension is connected to.
+   *
+   * @param DB $db
+   *
+   * @return string
+   */
+  public static function get_mysql_server_version(DB $db)
+  {
+    static $_mysqli_server_version = null;
+
+    if ($_mysqli_server_version === null) {
+      $_mysqli_server_version = mysqli_get_server_version($db->getLink());
+    }
+
+    return $_mysqli_server_version;
+  }
+
+  /**
    * Return all db-fields from a table.
    *
    * @param string  $table

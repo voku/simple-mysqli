@@ -240,12 +240,20 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testCharset()
   {
-    self::assertSame('utf8mb4', $this->db->get_charset());
+    if (\voku\db\Helper::isUtf8mb4Supported($this->db) === true) {
+      self::assertSame('utf8mb4', $this->db->get_charset());
+    } else {
+      self::assertSame('utf8', $this->db->get_charset());
+    }
 
     $return = $this->db->set_charset('utf8');
     self::assertSame(true, $return);
 
-    self::assertSame('utf8mb4', $this->db->get_charset());
+    if (\voku\db\Helper::isUtf8mb4Supported($this->db) === true) {
+      self::assertSame('utf8mb4', $this->db->get_charset());
+    } else {
+      self::assertSame('utf8', $this->db->get_charset());
+    }
   }
 
   public function testBasics()

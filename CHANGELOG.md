@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.0.2 (2016-08-18)
+
+* [+]: use "utf8mb4" if it's supported
+
 3.0.1 (2016-08-15)
 
 * [!]: fixed usage of (float)

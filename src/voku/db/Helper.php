@@ -52,13 +52,13 @@ class Helper
         &&
         (
             (
-                Helper::isMysqlndIsUsed() === true
+                self::isMysqlndIsUsed() === true
                 &&
                 $client_version >= 50009
             )
             ||
             (
-                Helper::isMysqlndIsUsed() === false
+                self::isMysqlndIsUsed() === false
                 &&
                 $client_version >= 50503
             )

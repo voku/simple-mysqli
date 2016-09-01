@@ -215,11 +215,11 @@ class Helper
             if (array_key_exists($fieldName, $updateArray)) {
               $insert_keys .= ',' . $fieldName;
               $insert_values .= ',?';
-              $bindings[] = $db->escape($updateArray[$fieldName]);
+              $bindings[] = $updateArray[$fieldName]; // INFO: do not escape non selected data
             } else {
               $insert_keys .= ',' . $fieldName;
               $insert_values .= ',?';
-              $bindings[] = $db->escape($value);
+              $bindings[] = $value; // INFO: do not escape non selected data
             }
           }
         }

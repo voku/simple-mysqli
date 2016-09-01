@@ -71,7 +71,7 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
 
     $data = array(
         'page_template' => 'tpl_test_new5',
-        'page_type'     => 'öäü',
+        'page_type'     => 'ö\'ä"ü',
     );
 
     // will return the auto-increment value of the new row
@@ -104,7 +104,7 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
         array(
             'page_id'       => $new_page_id,
             'page_template' => 'tpl_test_new6',
-            'page_type'     => 'öäü',
+            'page_type'     => 'ö\'ä"ü',
         ),
         $resultSelect
     );

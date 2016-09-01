@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.03 (2016-09-01)
+
+* [+]: fixed "copyTableRow()" (do not escape non selected data)
+
 3.0.2 (2016-08-18)
 
 * [+]: use "utf8mb4" if it's supported

@@ -128,41 +128,41 @@ final class Prepare extends \mysqli_stmt
    * INFO: We have to explicitly declare all parameters as references, otherwise it does not seem possible to pass them
    * on without losing the reference property.
    *
-   * @param null   $v1
-   * @param null   $v2
-   * @param null   $v3
-   * @param null   $v4
-   * @param null   $v5
-   * @param null   $v6
-   * @param null   $v7
-   * @param null   $v8
-   * @param null   $v9
-   * @param null   $v10
-   * @param null   $v11
-   * @param null   $v12
-   * @param null   $v13
-   * @param null   $v14
-   * @param null   $v15
-   * @param null   $v16
-   * @param null   $v17
-   * @param null   $v18
-   * @param null   $v19
-   * @param null   $v20
-   * @param null   $v21
-   * @param null   $v22
-   * @param null   $v23
-   * @param null   $v24
-   * @param null   $v25
-   * @param null   $v26
-   * @param null   $v27
-   * @param null   $v28
-   * @param null   $v29
-   * @param null   $v30
-   * @param null   $v31
-   * @param null   $v32
-   * @param null   $v33
-   * @param null   $v34
-   * @param null   $v35
+   * @param mixed  $v1
+   * @param mixed  $v2
+   * @param mixed  $v3
+   * @param mixed  $v4
+   * @param mixed  $v5
+   * @param mixed  $v6
+   * @param mixed  $v7
+   * @param mixed  $v8
+   * @param mixed  $v9
+   * @param mixed  $v10
+   * @param mixed  $v11
+   * @param mixed  $v12
+   * @param mixed  $v13
+   * @param mixed  $v14
+   * @param mixed  $v15
+   * @param mixed  $v16
+   * @param mixed  $v17
+   * @param mixed  $v18
+   * @param mixed  $v19
+   * @param mixed  $v20
+   * @param mixed  $v21
+   * @param mixed  $v22
+   * @param mixed  $v23
+   * @param mixed  $v24
+   * @param mixed  $v25
+   * @param mixed  $v26
+   * @param mixed  $v27
+   * @param mixed  $v28
+   * @param mixed  $v29
+   * @param mixed  $v30
+   * @param mixed  $v31
+   * @param mixed  $v32
+   * @param mixed  $v33
+   * @param mixed  $v34
+   * @param mixed  $v35
    *
    * @return mixed
    */

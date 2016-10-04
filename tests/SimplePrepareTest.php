@@ -57,7 +57,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $result = $prepare->execute();
 
     self::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
-    self::assertSame(false, $result);
+    self::assertFalse($result);
 
     // -------------
 
@@ -70,7 +70,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     self::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
     $result = $prepare->execute();
 
-    self::assertSame(false, $result);
+    self::assertFalse($result);
   }
 
   public function testInsertErrorWithoutBindParamHelper()
@@ -93,7 +93,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $result = $prepare->execute();
 
     self::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
-    self::assertSame(false, $result);
+    self::assertFalse($result);
 
     // -------------
 
@@ -106,42 +106,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     self::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
     $result = $prepare->execute();
 
-    self::assertSame(false, $result);
-  }
-
-  public function testInsertWithBindParamHelper_v2()
-  {
-    $query = 'INSERT INTO ' . $this->tableName . ' 
-      SET 
-        page_template = ?, 
-        page_type = ?
-    ';
-
-    $prepare = new Prepare($this->db, $query);
-
-    // -------------
-
-    $template = 123;
-    $type = 1.5;
-
-    $prepare->bind_param_debug('id', $template, $type);
-
-    $new_page_id = $prepare->execute();
-
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
-    $resultSelect = $resultSelect->fetchArray();
-
-    $expectedSql = 'INSERT INTO test_page 
-      SET 
-        page_template = 123, 
-        page_type = 1.5
-    ';
-
-    self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
-    // INFO: mysql will return strings, but we can
-    self::assertSame(true, $new_page_id === $resultSelect['page_id']);
-    self::assertSame(true, '123' === $resultSelect['page_template']);
-    self::assertSame(true, '1.5' === $resultSelect['page_type']);
+    self::assertFalse($result);
   }
 
   public function testInsertWithBindParamHelper()
@@ -164,7 +129,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $new_page_id = $prepare->execute();
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
-    $resultSelect = $resultSelect->fetchArray();
+    $result = $resultSelect->fetchArray();
 
     $expectedSql = 'INSERT INTO test_page 
       SET 
@@ -173,9 +138,9 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     ';
 
     self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
-    self::assertSame($new_page_id, $resultSelect['page_id']);
-    self::assertSame('tpl_new_中', $resultSelect['page_template']);
-    self::assertSame('lall', $resultSelect['page_type']);
+    self::assertSame($new_page_id, $result['page_id']);
+    self::assertSame('tpl_new_中', $result['page_template']);
+    self::assertSame('lall', $result['page_type']);
 
     // -------------
 
@@ -188,7 +153,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $new_page_id = $prepare->execute();
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
-    $resultSelect = $resultSelect->fetchArray();
+    $result = $resultSelect->fetchArray();
 
     $expectedSql = 'INSERT INTO test_page 
       SET 
@@ -197,9 +162,9 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     ';
 
     self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
-    self::assertSame($new_page_id, $resultSelect['page_id']);
-    self::assertSame('tpl_new_中_123_?', $resultSelect['page_template']);
-    self::assertSame('lall_foo', $resultSelect['page_type']);
+    self::assertSame($new_page_id, $result['page_id']);
+    self::assertSame('tpl_new_中_123_?', $result['page_template']);
+    self::assertSame('lall_foo', $result['page_type']);
 
     // -------------
 
@@ -212,7 +177,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $new_page_id = $prepare->execute();
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
-    $resultSelect = $resultSelect->fetchArray();
+    $result = $resultSelect->fetchArray();
 
     $expectedSql = 'INSERT INTO test_page 
       SET 
@@ -221,9 +186,88 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     ';
 
     self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
-    self::assertSame($new_page_id, $resultSelect['page_id']);
-    self::assertSame('tpl_new_中_123_?', $resultSelect['page_template']);
-    self::assertSame('lall_foo', $resultSelect['page_type']);
+    self::assertSame($new_page_id, $result['page_id']);
+    self::assertSame('tpl_new_中_123_?', $result['page_template']);
+    self::assertSame('lall_foo', $result['page_type']);
+  }
+
+  public function testInsertWithBindParamHelper_v2()
+  {
+    $query = 'INSERT INTO ' . $this->tableName . ' 
+      SET 
+        page_template = ?, 
+        page_type = ?
+    ';
+
+    $prepare = new Prepare($this->db, $query);
+
+    // -------------
+
+    $template = 123;
+    $type = 1.5;
+
+    $prepare->bind_param_debug('id', $template, $type);
+
+    $new_page_id = $prepare->execute();
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
+    $result = $resultSelect->fetchArray();
+
+    $expectedSql = 'INSERT INTO test_page 
+      SET 
+        page_template = 123, 
+        page_type = 1.5
+    ';
+
+    self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
+    // INFO: mysql will return strings, but we can
+    self::assertSame($new_page_id, $result['page_id']);
+    self::assertSame('123', $result['page_template']);
+    self::assertSame('1.5', $result['page_type']);
+  }
+
+  public function testInsertWithoutBindParamHelper()
+  {
+    $query = 'INSERT INTO ' . $this->tableName . ' 
+      SET 
+        page_template = ?, 
+        page_type = ?
+    ';
+
+    $prepare = new Prepare($this->db, $query);
+
+    // -------------
+
+    $template = 'tpl_new_中';
+    $type = 'lall';
+
+    $prepare->bind_param('ss', $template, $type);
+
+    $new_page_id = $prepare->execute();
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
+    $result = $resultSelect->fetchArray();
+
+    self::assertSame($new_page_id, $result['page_id']);
+    self::assertSame('tpl_new_中', $result['page_template']);
+    self::assertSame('lall', $result['page_type']);
+
+    // -------------
+
+    // INFO: "$template" and "$type" are references, since we use "bind_param_debug"
+    /** @noinspection PhpUnusedLocalVariableInspection */
+    $template = 'tpl_new_中_123_?';
+    /** @noinspection PhpUnusedLocalVariableInspection */
+    $type = 'lall_foo';
+
+    $new_page_id = $prepare->execute();
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
+    $result = $resultSelect->fetchArray();
+
+    self::assertSame($new_page_id, $result['page_id']);
+    self::assertSame('tpl_new_中_123_?', $result['page_template']);
+    self::assertSame('lall_foo', $result['page_type']);
   }
 
   public function testUpdateWithBindParamHelper()
@@ -247,7 +291,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $affected_rows = $prepare->execute();
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $affected_rows));
-    $resultSelect = $resultSelect->fetchArray();
+    $result = $resultSelect->fetchArray();
 
     $expectedSql = 'UPDATE test_page 
       SET 
@@ -257,9 +301,9 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     ';
 
     self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
-    self::assertSame($affected_rows, $resultSelect['page_id']);
-    self::assertSame('tpl_new_中_update', $resultSelect['page_template']);
-    self::assertSame('lall_update', $resultSelect['page_type']);
+    self::assertSame($affected_rows, $result['page_id']);
+    self::assertSame('tpl_new_中_update', $result['page_template']);
+    self::assertSame('lall_update', $result['page_type']);
 
     // -------------
 
@@ -272,7 +316,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     $affected_rows = $prepare->execute();
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $affected_rows));
-    $resultSelect = $resultSelect->fetchArray();
+    $result = $resultSelect->fetchArray();
 
     $expectedSql = 'UPDATE test_page 
       SET 
@@ -282,9 +326,9 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     ';
 
     self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
-    self::assertSame($affected_rows, $resultSelect['page_id']);
-    self::assertSame('tpl_new_中_123_?_update', $resultSelect['page_template']);
-    self::assertSame('lall_foo_update', $resultSelect['page_type']);
+    self::assertSame($affected_rows, $result['page_id']);
+    self::assertSame('tpl_new_中_123_?_update', $result['page_template']);
+    self::assertSame('lall_foo_update', $result['page_type']);
 
     // -------------
   }
@@ -316,7 +360,7 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
       WHERE page_type = \'lall_update_fdsfsdfsdfdsfsdfsd_non\' 
     ';
 
-    self::assertSame(true, 0 === $affected_rows, 'tested: ' . $affected_rows);
+    self::assertSame(0, $affected_rows, 'tested: ' . $affected_rows);
     self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
 
     // -------------
@@ -336,53 +380,9 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
       WHERE page_type = \'lall_update_fdsfsdfsdfdsfsdfsd_non\' 
     ';
 
-    self::assertSame(true, 0 === $affected_rows);
+    self::assertSame(0, $affected_rows);
     self::assertSame($expectedSql, $prepare->get_sql_with_bound_parameters());
 
     // -------------
-  }
-
-  public function testInsertWithoutBindParamHelper()
-  {
-    $query = 'INSERT INTO ' . $this->tableName . ' 
-      SET 
-        page_template = ?, 
-        page_type = ?
-    ';
-
-    $prepare = new Prepare($this->db, $query);
-
-    // -------------
-
-    $template = 'tpl_new_中';
-    $type = 'lall';
-
-    $prepare->bind_param('ss', $template, $type);
-
-    $new_page_id = $prepare->execute();
-
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
-    $resultSelect = $resultSelect->fetchArray();
-
-    self::assertSame($new_page_id, $resultSelect['page_id']);
-    self::assertSame('tpl_new_中', $resultSelect['page_template']);
-    self::assertSame('lall', $resultSelect['page_type']);
-
-    // -------------
-
-    // INFO: "$template" and "$type" are references, since we use "bind_param_debug"
-    /** @noinspection PhpUnusedLocalVariableInspection */
-    $template = 'tpl_new_中_123_?';
-    /** @noinspection PhpUnusedLocalVariableInspection */
-    $type = 'lall_foo';
-
-    $new_page_id = $prepare->execute();
-
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
-    $resultSelect = $resultSelect->fetchArray();
-
-    self::assertSame($new_page_id, $resultSelect['page_id']);
-    self::assertSame('tpl_new_中_123_?', $resultSelect['page_template']);
-    self::assertSame('lall_foo', $resultSelect['page_type']);
   }
 }

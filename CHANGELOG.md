@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.03 (2016-09-01)
+3.0.3 (2016-09-01)
 
 * [+]: fixed "copyTableRow()" (do not escape non selected data)
 

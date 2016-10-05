@@ -24,6 +24,11 @@ This is a simple MySQL Abstraction Layer for PHP>=5.3 that provides a simple and
 
 You can download it from here, or require it using [composer](https://packagist.org/packages/voku/simple-mysqli).
 ```json
+{
+    "require": {
+      "voku/simple-mysqli": "3.*"
+    }
+}
   {
       "require": {
         "voku/simple-mysqli": "2.*"

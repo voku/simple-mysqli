@@ -256,6 +256,24 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     }
   }
 
+  public function testInsertUtf84mb()
+  {
+    $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+
+    // insert - true
+    $pageArray = array(
+        'page_template' => $html,
+        'page_type'     => 'lall',
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+    self::assertTrue($tmpId > 0);
+
+    // select - true
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchObject();
+    self::assertSame('<li><a href="/">鼦վͼ</a></li>', $tmpPage->page_template);
+  }
+
   public function testBasics()
   {
     require_once __DIR__ . '/Foobar.php';

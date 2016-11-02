@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.0.4 (2016-11-02)
+
+* [+]: fixed "_parseQueryParams()" (e.g. $0 should not replaced by php)
+
 3.0.3 (2016-09-01)
 
 * [+]: fixed "copyTableRow()" (do not escape non selected data)

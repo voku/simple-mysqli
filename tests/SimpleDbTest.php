@@ -256,6 +256,43 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     }
   }
 
+  public function testInsertBugPregReplace()
+  {
+    // insert - true
+    $pageArray = array(
+        'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
+        'page_type'     => 'lall',
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+    self::assertTrue($tmpId > 0);
+
+    // select - true
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchObject();
+    self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
+
+    // --
+
+    $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = ?,
+        page_type = ?
+    ';
+    $tmpId = $this->db->query(
+        $sql,
+        array(
+            '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
+            '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
+        )
+    );
+
+    // select - true
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchObject();
+    self::assertSame('$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
+    self::assertSame('$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$', $tmpPage->page_type);
+  }
+
   public function testInsertUtf84mb()
   {
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
@@ -1134,6 +1171,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     // multi_query - true
     $result = $this->db->multi_query($sql);
     self::assertSame(true, is_array($result));
+    /** @noinspection ForeachSourceInspection */
     foreach ($result as $resultForEach) {
       /* @var $resultForEach Result */
       $tmpArray = $resultForEach->fetchArray();
@@ -1291,7 +1329,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             1,
         )
     );
-    self::assertSame(true, $return > 1);
+    self::assertSame(true, $return > 1, print_r($return, true));
 
     //
     // query - true (with empty array)

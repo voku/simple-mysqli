@@ -521,7 +521,7 @@ final class DB
       $k = 0;
       while (strpos($sql, $parseKey) !== false) {
         $value = $this->secure($params[$k]);
-        $sql = preg_replace("/$parseKey/", $value, $sql, 1);
+        $sql = UTF8::str_replace_first($parseKey, $value, $sql);
         $k++;
       }
     }

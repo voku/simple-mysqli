@@ -83,7 +83,7 @@ class Helper
     static $_mysqli_client_version = null;
 
     if ($_mysqli_client_version === null) {
-      $_mysqli_client_version = mysqli_get_client_version($db->getLink());
+      $_mysqli_client_version = \mysqli_get_client_version($db->getLink());
     }
 
     return $_mysqli_client_version;
@@ -102,7 +102,7 @@ class Helper
     static $_mysqli_server_version = null;
 
     if ($_mysqli_server_version === null) {
-      $_mysqli_server_version = mysqli_get_server_version($db->getLink());
+      $_mysqli_server_version = \mysqli_get_server_version($db->getLink());
     }
 
     return $_mysqli_server_version;

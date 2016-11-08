@@ -292,7 +292,7 @@ class Debug
     }
 
     // get extra info
-    $infoExtra = mysqli_info($this->_db->getLink());
+    $infoExtra = \mysqli_info($this->_db->getLink());
     if ($infoExtra) {
       $infoExtra = ' | info => ' . $infoExtra;
     }

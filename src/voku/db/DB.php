@@ -258,16 +258,16 @@ final class DB
       return true;
     }
 
-    mysqli_report(MYSQLI_REPORT_STRICT);
+    \mysqli_report(MYSQLI_REPORT_STRICT);
     try {
-      $this->link = mysqli_init();
+      $this->link = \mysqli_init();
 
       if (Helper::isMysqlndIsUsed() === true) {
-        mysqli_options($this->link, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
+        \mysqli_options($this->link, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
       }
 
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
-      $this->connected = @mysqli_real_connect(
+      $this->connected = @\mysqli_real_connect(
           $this->link,
           $this->hostname,
           $this->username,
@@ -279,10 +279,10 @@ final class DB
     } catch (\Exception $e) {
       $this->_debug->displayError('Error connecting to mysql server: ' . $e->getMessage(), true);
     }
-    mysqli_report(MYSQLI_REPORT_OFF);
+    \mysqli_report(MYSQLI_REPORT_OFF);
 
     if (!$this->connected) {
-      $this->_debug->displayError('Error connecting to mysql server: ' . mysqli_connect_error(), true);
+      $this->_debug->displayError('Error connecting to mysql server: ' . \mysqli_connect_error(), true);
     } else {
       $this->set_charset($this->charset);
     }
@@ -449,14 +449,14 @@ final class DB
     }
 
     $query_start_time = microtime(true);
-    $query_result = mysqli_real_query($this->link, $sql);
+    $query_result = \mysqli_real_query($this->link, $sql);
     $query_duration = microtime(true) - $query_start_time;
 
     $this->query_count++;
 
-    $mysqli_field_count = mysqli_field_count($this->link);
+    $mysqli_field_count = \mysqli_field_count($this->link);
     if ($mysqli_field_count) {
-      $result = mysqli_store_result($this->link);
+      $result = \mysqli_store_result($this->link);
     } else {
       $result = $query_result;
     }
@@ -496,7 +496,7 @@ final class DB
     // log the error query
     $this->_debug->logQuery($sql, $query_duration, 0, true);
 
-    return $this->queryErrorHandling(mysqli_error($this->link), $sql, $params);
+    return $this->queryErrorHandling(\mysqli_error($this->link), $sql, $params);
   }
 
   /**
@@ -654,7 +654,7 @@ final class DB
       }
 
       $varCleaned = array();
-      foreach ($var as $key => $value) {
+      foreach ((array)$var as $key => $value) {
 
         $key = $this->escape($key, $stripe_non_utf8, $html_entity_decode);
         $value = $this->escape($value, $stripe_non_utf8, $html_entity_decode);
@@ -693,7 +693,7 @@ final class DB
 
       $var = get_magic_quotes_gpc() ? stripslashes($var) : $var;
 
-      $var = mysqli_real_escape_string($this->getLink(), $var);
+      $var = \mysqli_real_escape_string($this->getLink(), $var);
 
       return (string)$var;
 
@@ -729,7 +729,7 @@ final class DB
    */
   public function insert_id()
   {
-    return mysqli_insert_id($this->link);
+    return \mysqli_insert_id($this->link);
   }
 
   /**
@@ -739,7 +739,7 @@ final class DB
    */
   public function affected_rows()
   {
-    return mysqli_affected_rows($this->link);
+    return \mysqli_affected_rows($this->link);
   }
 
   /**
@@ -819,7 +819,7 @@ final class DB
         $this->link instanceof \mysqli
     ) {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
-      return @mysqli_ping($this->link);
+      return @\mysqli_ping($this->link);
     } else {
       return false;
     }
@@ -914,9 +914,9 @@ final class DB
 
     $return = mysqli_set_charset($this->link, $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    @mysqli_query($this->link, 'SET CHARACTER SET ' . $charset);
+    @\mysqli_query($this->link, 'SET CHARACTER SET ' . $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    @mysqli_query($this->link, "SET NAMES '" . $charset . "'");
+    @\mysqli_query($this->link, "SET NAMES '" . $charset . "'");
 
     return $return;
   }
@@ -971,7 +971,7 @@ final class DB
     }
 
     $query_start_time = microtime(true);
-    $resultTmp = mysqli_multi_query($this->link, $sql);
+    $resultTmp = \mysqli_multi_query($this->link, $sql);
     $query_duration = microtime(true) - $query_start_time;
 
     $this->_debug->logQuery($sql, $query_duration, 0);
@@ -980,13 +980,13 @@ final class DB
     $result = array();
     if ($resultTmp) {
       do {
-        $resultTmpInner = mysqli_store_result($this->link);
+        $resultTmpInner = \mysqli_store_result($this->link);
 
         if ($resultTmpInner instanceof \mysqli_result) {
           $returnTheResult = true;
           $result[] = new Result($sql, $resultTmpInner);
         } else {
-          $errorMsg = mysqli_error($this->link);
+          $errorMsg = \mysqli_error($this->link);
 
           // is the query successful
           if ($resultTmpInner === true || !$errorMsg) {
@@ -995,11 +995,11 @@ final class DB
             $result[] = $this->queryErrorHandling($errorMsg, $sql);
           }
         }
-      } while (mysqli_more_results($this->link) === true ? mysqli_next_result($this->link) : false);
+      } while (\mysqli_more_results($this->link) === true ? \mysqli_next_result($this->link) : false);
 
     } else {
 
-      $errorMsg = mysqli_error($this->link);
+      $errorMsg = \mysqli_error($this->link);
 
       if ($this->_debug->checkForDev() === true) {
         echo "Info: maybe you have to increase your 'max_allowed_packet = 30M' in the config: 'my.conf' \n<br />";
@@ -1042,13 +1042,13 @@ final class DB
       $this->_debug->displayError('Error mysql server already in transaction!', true);
 
       return false;
-    } elseif (mysqli_connect_errno()) {
-      $this->_debug->displayError('Error connecting to mysql server: ' . mysqli_connect_error(), true);
+    } elseif (\mysqli_connect_errno()) {
+      $this->_debug->displayError('Error connecting to mysql server: ' . \mysqli_connect_error(), true);
 
       return false;
     } else {
       $this->_in_transaction = true;
-      mysqli_autocommit($this->link, false);
+      \mysqli_autocommit($this->link, false);
 
       return true;
 
@@ -1084,14 +1084,14 @@ final class DB
   {
 
     if (!$this->errors()) {
-      mysqli_commit($this->link);
+      \mysqli_commit($this->link);
       $return = true;
     } else {
       $this->rollback();
       $return = false;
     }
 
-    mysqli_autocommit($this->link, true);
+    \mysqli_autocommit($this->link, true);
     $this->_in_transaction = false;
 
     return $return;
@@ -1118,8 +1118,8 @@ final class DB
     $return = false;
 
     if ($this->_in_transaction === true) {
-      $return = mysqli_rollback($this->link);
-      mysqli_autocommit($this->link, true);
+      $return = \mysqli_rollback($this->link);
+      \mysqli_autocommit($this->link, true);
       $this->_in_transaction = false;
     }
 
@@ -1469,7 +1469,7 @@ final class DB
     $this->connected = false;
 
     if ($this->link) {
-      mysqli_close($this->link);
+      \mysqli_close($this->link);
     }
   }
 

@@ -121,7 +121,7 @@ final class Result
     $result_hash = spl_object_hash($this->_result);
 
     if (!isset($fields[$result_hash])) {
-      $fields[$result_hash] = mysqli_fetch_fields($this->_result);
+      $fields[$result_hash] = \mysqli_fetch_fields($this->_result);
     }
 
     if ($fields[$result_hash] === false) {
@@ -179,7 +179,7 @@ final class Result
       $this->reset();
 
       /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = mysqli_fetch_assoc($this->_result)) {
+      while ($row = \mysqli_fetch_assoc($this->_result)) {
         $data[] = $this->cast($row);
       }
     }
@@ -205,7 +205,7 @@ final class Result
       $this->reset();
 
       /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = mysqli_fetch_assoc($this->_result)) {
+      while ($row = \mysqli_fetch_assoc($this->_result)) {
         $data[] = $this->cast($row);
       }
     }
@@ -235,7 +235,7 @@ final class Result
   public function reset()
   {
     if (!$this->is_empty()) {
-      mysqli_data_seek($this->_result, 0);
+      \mysqli_data_seek($this->_result, 0);
     }
 
     return $this;
@@ -267,7 +267,7 @@ final class Result
    */
   public function free()
   {
-    mysqli_free_result($this->_result);
+    \mysqli_free_result($this->_result);
   }
 
   /**
@@ -316,14 +316,14 @@ final class Result
     }
 
     if ($class && $params) {
-      return ($row = mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
+      return ($row = \mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
     }
 
     if ($class) {
-      return ($row = mysqli_fetch_object($this->_result, $class)) ? $row : false;
+      return ($row = \mysqli_fetch_object($this->_result, $class)) ? $row : false;
     }
 
-    return ($row = mysqli_fetch_object($this->_result)) ? $this->cast($row) : false;
+    return ($row = \mysqli_fetch_object($this->_result)) ? $this->cast($row) : false;
   }
 
   /**
@@ -339,7 +339,7 @@ final class Result
       $this->reset();
     }
 
-    $row = mysqli_fetch_assoc($this->_result);
+    $row = \mysqli_fetch_assoc($this->_result);
     if ($row) {
       return $this->cast($row);
     }
@@ -360,7 +360,7 @@ final class Result
       $this->reset();
     }
 
-    $row = mysqli_fetch_assoc($this->_result);
+    $row = \mysqli_fetch_assoc($this->_result);
     if ($row) {
       return Arrayy::create($this->cast($row));
     }
@@ -414,17 +414,17 @@ final class Result
 
       if ($class && $params) {
         /** @noinspection PhpAssignmentInConditionInspection */
-        while ($row = mysqli_fetch_object($this->_result, $class, $params)) {
+        while ($row = \mysqli_fetch_object($this->_result, $class, $params)) {
           $data[] = $row;
         }
       } elseif ($class) {
         /** @noinspection PhpAssignmentInConditionInspection */
-        while ($row = mysqli_fetch_object($this->_result, $class)) {
+        while ($row = \mysqli_fetch_object($this->_result, $class)) {
           $data[] = $row;
         }
       } else {
         /** @noinspection PhpAssignmentInConditionInspection */
-        while ($row = mysqli_fetch_object($this->_result)) {
+        while ($row = \mysqli_fetch_object($this->_result)) {
           $data[] = $this->cast($row);
         }
       }

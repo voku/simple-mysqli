@@ -205,12 +205,13 @@ final class Prepare extends \mysqli_stmt
   /**
    * Executes a prepared Query
    *
-   * @link  http://php.net/manual/en/mysqli-stmt.execute.php
-   * @return bool         "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
-   *                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-   *                      "true" by e.g. "SELECT"-queries<br />
-   *                      "false" on error
-   * @since 5.0
+   * @link http://php.net/manual/en/mysqli-stmt.execute.php
+   *
+   * @return bool|int|Result   "Result" by "<b>SELECT</b>"-queries<br />
+   *                           "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+   *                           "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                           "true" by e.g. "DROP"-queries<br />
+   *                           "false" on error
    */
   public function execute()
   {
@@ -243,10 +244,11 @@ final class Prepare extends \mysqli_stmt
 
       // "SELECT"
       if (preg_match('/^\s*"?(SELECT)\s+/i', $this->_sql)) {
-        $num_rows = (int)$this->num_rows;
+        $result = $this->get_result();
+        $num_rows = (int)$result->num_rows;
         $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $num_rows);
 
-        return true;
+        return new Result($this->_sql_with_bound_parameters, $result);
       }
 
       // log the ? query

@@ -191,6 +191,92 @@ class SimplePrepareTest extends PHPUnit_Framework_TestCase
     self::assertSame('lall_foo', $result['page_type']);
   }
 
+  public function testSelectWithBindParamHelper()
+  {
+    $data = array(
+        'page_template' => 'tpl_test_new123123',
+        'page_type'     => 'ö\'ä"ü',
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert[0] = $this->db->insert($this->tableName, $data);
+    $resultInsert[1] = $this->db->insert($this->tableName, $data);
+
+    // -------------
+
+    $sql = 'SELECT * FROM ' . $this->tableName . ' 
+      WHERE page_id = ?
+    ';
+
+    $prepare = $this->db->prepare($sql);
+
+    // -------------
+
+    $page_id = 0;
+    $prepare->bind_param_debug('i', $page_id);
+
+    // -------------
+
+    $page_id = $resultInsert[0];
+    $result = $prepare->execute();
+    $data = $result->fetchArray();
+
+    self::assertSame($page_id, $data['page_id']);
+    self::assertSame('tpl_test_new123123', $data['page_template']);
+
+    // -------------
+
+    $page_id = $resultInsert[1];
+    $result = $prepare->execute();
+    $data = $result->fetchArray();
+
+    self::assertSame($page_id, $data['page_id']);
+    self::assertSame('tpl_test_new123123', $data['page_template']);
+  }
+
+  public function testSelectWithBindParam()
+  {
+    $data = array(
+        'page_template' => 'tpl_test_new123123',
+        'page_type'     => 'ö\'ä"ü',
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert[0] = $this->db->insert($this->tableName, $data);
+    $resultInsert[1] = $this->db->insert($this->tableName, $data);
+
+    // -------------
+
+    $sql = 'SELECT * FROM ' . $this->tableName . ' 
+      WHERE page_id = ?
+    ';
+
+    $prepare = $this->db->prepare($sql);
+
+    // -------------
+
+    $page_id = 0;
+    $prepare->bind_param('i', $page_id);
+
+    // -------------
+
+    $page_id = $resultInsert[0];
+    $result = $prepare->execute();
+    $data = $result->fetchArray();
+
+    self::assertSame($page_id, $data['page_id']);
+    self::assertSame('tpl_test_new123123', $data['page_template']);
+
+    // -------------
+
+    $page_id = $resultInsert[1];
+    $result = $prepare->execute();
+    $data = $result->fetchArray();
+
+    self::assertSame($page_id, $data['page_id']);
+    self::assertSame('tpl_test_new123123', $data['page_template']);
+  }
+
   public function testInsertWithBindParamHelper_v2()
   {
     $query = 'INSERT INTO ' . $this->tableName . ' 

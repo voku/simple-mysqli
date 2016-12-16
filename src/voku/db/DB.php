@@ -894,6 +894,51 @@ final class DB
   }
 
   /**
+   * Enables or disables internal report functions
+   *
+   * @link http://php.net/manual/en/function.mysqli-report.php
+   *
+   * @param int $flags <p>
+   *                   <table>
+   *                   Supported flags
+   *                   <tr valign="top">
+   *                   <td>Name</td>
+   *                   <td>Description</td>
+   *                   </tr>
+   *                   <tr valign="top">
+   *                   <td><b>MYSQLI_REPORT_OFF</b></td>
+   *                   <td>Turns reporting off</td>
+   *                   </tr>
+   *                   <tr valign="top">
+   *                   <td><b>MYSQLI_REPORT_ERROR</b></td>
+   *                   <td>Report errors from mysqli function calls</td>
+   *                   </tr>
+   *                   <tr valign="top">
+   *                   <td><b>MYSQLI_REPORT_STRICT</b></td>
+   *                   <td>
+   *                   Throw <b>mysqli_sql_exception</b> for errors
+   *                   instead of warnings
+   *                   </td>
+   *                   </tr>
+   *                   <tr valign="top">
+   *                   <td><b>MYSQLI_REPORT_INDEX</b></td>
+   *                   <td>Report if no index or bad index was used in a query</td>
+   *                   </tr>
+   *                   <tr valign="top">
+   *                   <td><b>MYSQLI_REPORT_ALL</b></td>
+   *                   <td>Set all options (report all)</td>
+   *                   </tr>
+   *                   </table>
+   *                   </p>
+   *
+   * @return bool
+   */
+  public function set_mysqli_report($flags)
+  {
+    return \mysqli_report($flags);
+  }
+
+  /**
    * Set the current charset.
    *
    * @param string $charset

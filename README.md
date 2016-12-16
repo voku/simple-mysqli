@@ -211,10 +211,14 @@ With this wrapper we pre-build the sql-query via php (only for debugging / loggi
 
 INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you need better performance.
 
+##### INSERT-Prepare-Query (example)
 ```php
   use voku\db\DB;
   
   $db = DB::getInstance();
+  
+  // ------------- 
+  // prepare the queries
   
   $query = 'INSERT INTO users
     SET 
@@ -224,12 +228,17 @@ INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you 
   
   $prepare = $db->prepare($query);
   
-  // -------------
-  
-  $name = 'name_1_中';
-  $email = 'foo@bar.com';
+  $name = '';
+  $email = '';
   
   $prepare->bind_param_debug('ss', $name, $email);
+  
+  // -------------
+  // execute query no. 1
+  
+  // INFO: "$template" and "$type" are references, since we use "bind_param" or "bind_param_debug" 
+  $name = 'name_1_中';
+  $email = 'foo@bar.com';
   
   $prepare->execute();
   
@@ -237,6 +246,7 @@ INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you 
   echo $prepare->get_sql_with_bound_parameters();
   
   // -------------
+  // execute query no. 2
   
   // INFO: "$template" and "$type" are references, since we use "bind_param" or "bind_param_debug"  
   $name = 'Lars';
@@ -246,8 +256,56 @@ INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you 
   
   // DEBUG
   echo $prepare->get_sql_with_bound_parameters();
+```
+
+##### SELECT-Prepare-Query (example)
+```php
+  use voku\db\DB;
+  
+  $db = DB::getInstance();
   
   // -------------
+  // insert some dummy-data, first
+  
+  $data = array(
+      'page_template' => 'tpl_test_new123123',
+      'page_type'     => 'ö\'ä"ü',
+  );
+
+  // will return the auto-increment value of the new row
+  $resultInsert[1] = $db->insert($this->tableName, $data);
+  $resultInsert[2] = $db->insert($this->tableName, $data);
+
+  // ------------- 
+  // prepare the queries
+
+  $sql = 'SELECT * FROM ' . $this->tableName . ' 
+    WHERE page_id = ?
+  ';
+
+  $prepare = $this->db->prepare($sql);
+  $page_id = 0;
+  $prepare->bind_param_debug('i', $page_id);
+
+  // ------------- 
+  // execute query no. 1
+
+  $page_id = $resultInsert[1];
+  $result = $prepare->execute();
+  $data = $result->fetchArray();
+
+  // $data['page_template'] === 'tpl_test_new123123'
+  // $data['page_id'] === $page_id
+
+  // ------------- 
+  // execute query no. 2
+
+  $page_id = $resultInsert[2];
+  $result = $prepare->execute();
+  $data = $result->fetchArray();
+
+  // $data['page_id'] === $page_id
+  // $data['page_template'] === 'tpl_test_new123123'
 ```
 
 #### Aliases

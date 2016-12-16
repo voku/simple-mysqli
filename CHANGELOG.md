@@ -1,6 +1,13 @@
 Changelog
 =========
 
+4.0.0 (2016-12-16)
+
+* [!]: edit "Prepare->execute()" -> the method will now return an "Result"-object for SELECT queries
+
+WARNING: If you already use "Prepare->execute()" for SELECT-queries, you need to change your code, 
+         because the method will now return an "Result"-object instead of true on success.
+
 3.0.4 (2016-11-02)
 
 * [+]: fixed "_parseQueryParams()" (e.g. $0 should not replaced by php)

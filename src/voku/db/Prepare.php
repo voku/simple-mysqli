@@ -103,9 +103,9 @@ final class Prepare extends \mysqli_stmt
 
     if ($type === 's') {
       $valueForSqlWithBoundParameters = "'" . $value . "'";
-    } else if ($type === 'i') {
+    } elseif ($type === 'i') {
       $valueForSqlWithBoundParameters = (int)$value;
-    } else if ($type === 'd') {
+    } elseif ($type === 'd') {
       $valueForSqlWithBoundParameters = (double)$value;
     } else {
       $valueForSqlWithBoundParameters = $value;

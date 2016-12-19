@@ -1179,7 +1179,7 @@ final class DB
    *
    * @return false|int false on error
    */
-  public function insert($table, $data = array())
+  public function insert($table, array $data = array())
   {
     $table = trim($table);
 
@@ -1334,7 +1334,7 @@ final class DB
    *
    * @return false|int false on error
    */
-  public function replace($table, $data = array())
+  public function replace($table, array $data = array())
   {
 
     $table = trim($table);
@@ -1381,7 +1381,7 @@ final class DB
    *
    * @return false|int false on error
    */
-  public function update($table, $data = array(), $where = '1=1')
+  public function update($table, array $data = array(), $where = '1=1')
   {
     $table = trim($table);
 

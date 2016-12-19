@@ -79,7 +79,7 @@ final class Prepare extends \mysqli_stmt
 
     foreach ($this->_boundParams as $param) {
       $arguments[0] .= $param['type'];
-      $arguments[] = &$param['value'];
+      $arguments[] =& $param['value'];
     }
 
     return $arguments;
@@ -88,19 +88,25 @@ final class Prepare extends \mysqli_stmt
   /**
    * Escapes the supplied value.
    *
-   * @param mixed  $value
-   * @param string $type (one of 'i', 'b', 's', 'd')
+   * @param array $param
    *
-   * @return array 0 => "$value" escaped and 1 => "$valueForSqlWithBoundParameters" for insertion into the interpolated
-   *               query string
+   * @return array 0 => "$value" escaped<br />
+   *               1 => "$valueForSqlWithBoundParameters" for insertion into the interpolated query string
    */
-  private function _prepareValue(&$value, $type)
+  private function _prepareValue(&$param)
   {
+    $type = $param['type']; // 'i', 'b', 's', 'd'
+    $value = $param['value'];
+
     /** @noinspection ReferenceMismatchInspection */
     $value = $this->_db->escape($value);
 
-    if ('s' === $type) {
+    if ($type === 's') {
       $valueForSqlWithBoundParameters = "'" . $value . "'";
+    } else if ($type === 'i') {
+      $valueForSqlWithBoundParameters = (int)$value;
+    } else if ($type === 'd') {
+      $valueForSqlWithBoundParameters = (double)$value;
     } else {
       $valueForSqlWithBoundParameters = $value;
     }
@@ -177,7 +183,7 @@ final class Prepare extends \mysqli_stmt
       $trace = debug_backtrace();
     }
 
-    $args = &$trace[0]['args'];
+    $args =& $trace[0]['args'];
     $types = str_split($types);
 
     $args_count = count($args) - 1;
@@ -191,7 +197,7 @@ final class Prepare extends \mysqli_stmt
 
     $arg = 1;
     foreach ($types as $typeInner) {
-      $val = &$args[$arg];
+      $val =& $args[$arg];
       $this->_boundParams[] = array(
           'type'  => $typeInner,
           'value' => &$val,
@@ -370,9 +376,7 @@ final class Prepare extends \mysqli_stmt
     $testQuery = $this->_sql;
     if ($this->_boundParams) {
       foreach ($this->_boundParams as &$param) {
-        $type = &$param['type'];
-        $value = &$param['value'];
-        $values = $this->_prepareValue($value, $type);
+        $values = $this->_prepareValue($param);
 
         // set new values
         $param['value'] = $values[0];

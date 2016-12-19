@@ -1,6 +1,12 @@
 Changelog
 =========
 
+4.0.1 (2016-12-19)
+
+* [+]: use parameter (array) check for DB->update() / DB->insert() / DB->replace()
+* [~]: optimize memory usage from Helper->copyTableRow()
+* [~]: simplify some code
+
 4.0.0 (2016-12-16)
 
 * [!]: edit "Prepare->execute()" -> the method will now return an "Result"-object for SELECT queries

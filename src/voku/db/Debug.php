@@ -285,10 +285,9 @@ class Debug
     }
 
     // set log-level
+    $logLevel = $logLevelUse;
     if ($sql_error === true) {
       $logLevel = 'error';
-    } else {
-      $logLevel = $logLevelUse;
     }
 
     // get extra info

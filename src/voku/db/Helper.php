@@ -202,7 +202,8 @@ class Helper
     // make sure the row exists
     if ($result->num_rows > 0) {
 
-      foreach ($result->fetchAllArray() as $tmpArray) {
+      /** @noinspection LoopWhichDoesNotLoopInspection */
+      while ($tmpArray = $result->fetchArray()) {
 
         // re-build a new DB query and ignore some field-names
         $bindings = array();

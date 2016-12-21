@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.1.0 (2016-12-21)
+
+* [+]: add "Prepare->exexute_raw()" -> without debugging or logging
+
 4.0.1 (2016-12-19)
 
 * [+]: use parameter (array) check for DB->update() / DB->insert() / DB->replace()

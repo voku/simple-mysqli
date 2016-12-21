@@ -209,6 +209,16 @@ final class Prepare extends \mysqli_stmt
   }
 
   /**
+   * @inheritdoc
+   *
+   * @return bool
+   */
+  public function exexute_raw()
+  {
+    return parent::execute();
+  }
+
+  /**
    * Executes a prepared Query
    *
    * @link http://php.net/manual/en/mysqli-stmt.execute.php

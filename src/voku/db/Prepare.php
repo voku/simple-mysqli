@@ -213,7 +213,7 @@ final class Prepare extends \mysqli_stmt
    *
    * @return bool
    */
-  public function exexute_raw()
+  public function execute_raw()
   {
     return parent::execute();
   }

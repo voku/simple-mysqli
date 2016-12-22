@@ -1,6 +1,12 @@
 Changelog
 =========
 
+4.1.2 (2016-12-22)
+
+* [+]: use "UTF8::json_encode()" in the "Result"-object
+* [+]: add more alias-functions for "Arrayy"-usage
+* [*]: add more php-docs for the "Result"-object
+
 4.1.0 (2016-12-21)
 
 * [+]: add "Prepare->execute_raw()" -> without debugging or logging

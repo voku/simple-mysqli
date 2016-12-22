@@ -66,7 +66,7 @@ There are numerous ways of using this library, here are some examples of the mos
 But you can also use a method for select-queries:
 
 ```php
-  $db->select(String $table, Array $where); // generate an SELECT query
+  $db->select(string $table, array $where); // generate an SELECT query
 ```
 
 Example: SELECT
@@ -79,10 +79,10 @@ Example: SELECT
   $resultSelect = $db->select('page', $where);
 ```
 
-Here is a list of connectors for the "WHERE"-Array:
+Here is a list of connectors for the "WHERE"-array:
 'NOT', 'IS', 'IS NOT', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'LIKE', 'NOT LIKE', '>', '<', '>=', '<=', '<>'
 
-INFO: use a array as $value for "[NOT] IN" and "[NOT] BETWEEN"
+INFO: use an array as $value for "[NOT] IN" and "[NOT] BETWEEN"
 
 Example: SELECT with "NOT IN"
 ```php
@@ -110,10 +110,10 @@ they all work the same way: parsing arrays of key/value pairs and forming a safe
 
 the methods are:
 ```php
-  $db->insert( String $table, Array $data );                // generate an INSERT query
-  $db->replace( String $table, Array $data );               // generate an REPLACE query
-  $db->update( String $table, Array $data, Array $where );  // generate an UPDATE query
-  $db->delete( String $table, Array $where );               // generate a DELETE query
+  $db->insert( string $table, array $data );                // generate an INSERT query
+  $db->replace( string $table, array $data );               // generate an REPLACE query
+  $db->update( string $table, array $data, Array $where );  // generate an UPDATE query
+  $db->delete( string $table, array $where );               // generate a DELETE query
 ```
 
 All methods will return the resulting `mysqli_insert_id()` or true/false depending on context.
@@ -186,20 +186,20 @@ there are different ways of accessing this data, check the examples bellow:
   $result = $db->query("SELECT * FROM users");
   $allUsers = $result->fetchAll();
 ```
-Fetching all data works as `Object` or `Array` the `fetchAll()` method will return the default based on the `$_default_result_type` config.
+Fetching all data works as `object`, `array` or `Arrayy` the `fetchAll()` method will return the default based on the `$_default_result_type` config.
 Other methods are:
 
 ```php
-  $row = $result->fetch();        // fetch a single result row as defined by the config (Array or Object)
-  $row = $result->fetchArray();   // fetch a single result row as Array
-  $row = $result->fetchObject();  // fetch a single result row as Object
+  $row = $result->fetch();        // fetch an single result row as defined by the config (array, object or Arrayy)
+  $row = $result->fetchArray();   // fetch an single result row as array
+  $row = $result->fetchObject();  // fetch an single result row as object
   
-  $data = $result->fetchAll();        // fetch all result data as defined by the config (Array or Object)
-  $data = $result->fetchAllArray();   // fetch all result data as Array
-  $data = $result->fetchAllObject();  // fetch all result data as Object
+  $data = $result->fetchAll();        // fetch all result data as defined by the config (array, object or Arrayy)
+  $data = $result->fetchAllArray();   // fetch all result data as array
+  $data = $result->fetchAllObject();  // fetch all result data as object
   
-  $data = $result->fetchColumn(String $Column);                  // fetch a single column in a 1 dimention Array
-  $data = $result->fetchArrayPair(String $key, String $Value);   // fetch data as a key/value pair Array.
+  $data = $result->fetchColumn(string $Column);                  // fetch a single column in an 1-dimension array
+  $data = $result->fetchArrayPair(string $key, string $Value);   // fetch data as a key/value pair array
 ```
 
 ###Using the Prepare-Class
@@ -314,6 +314,7 @@ INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you 
   $db->getAll()               // alias for $db->fetchAll();
   $db->getObject()            // alias for $db->fetchAllObject();
   $db->getArray()             // alias for $db->fetchAllArray();
+  $db->getArrayy()            // alias for $db->fetchAllArrayy();
   $db->getColumn($key)        // alias for $db->fetchColumn($key);
 ```
 
@@ -341,12 +342,12 @@ To iterate a result-set you can use any fetch() method listed above.
 You can hook into the "DB"-Class, so you can use your personal "Logger"-Class. But you have to cover the methods:
 
 ```php
-$this->trace(String $text, String $name) { ... }
-$this->debug(String $text, String $name) { ... }
-$this->info(String $text, String $name) { ... }
-$this->warn(String $text, String $name) { ... } 
-$this->error(String $text, String $name) { ... }
-$this->fatal(String $text, String $name) { ... }
+$this->trace(string $text, string $name) { ... }
+$this->debug(string $text, string $name) { ... }
+$this->info(string $text, string $name) { ... }
+$this->warn(string $text, string $name) { ... } 
+$this->error(string $text, string $name) { ... }
+$this->fatal(string $text, string $name) { ... }
 ```
 
 You can also disable the logging of every sql-query, with the "getInstance()"-parameter "logger_level" from "DB"-Class.

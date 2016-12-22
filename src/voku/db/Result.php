@@ -3,6 +3,7 @@
 namespace voku\db;
 
 use Arrayy\Arrayy;
+use voku\helper\UTF8;
 
 /**
  * Result: this handles the result from "DB"-Class
@@ -33,7 +34,7 @@ final class Result
   private $_default_result_type = 'object';
 
   /**
-   * Result
+   * Result constructor.
    *
    * @param string         $sql
    * @param \mysqli_result $result
@@ -55,28 +56,40 @@ final class Result
   }
 
   /**
-   * you can set the default result-type to 'object' or 'array'
+   * You can set the default result-type to 'object', 'array' or 'Arrayy'.
    *
-   * used for "fetch()" and "fetchAll()"
+   * INFO: used for "fetch()" and "fetchAll()"
    *
    * @param string $default_result_type
    */
   public function setDefaultResultType($default_result_type = 'object')
   {
-    if ($default_result_type === 'object' || $default_result_type === 'array') {
+    if (
+        $default_result_type === 'object'
+        ||
+        $default_result_type === 'array'
+        ||
+        $default_result_type === 'Arrayy'
+    ) {
       $this->_default_result_type = $default_result_type;
     }
   }
 
   /**
-   * fetch array-pair
+   * Fetch data as a key/value pair array.
    *
-   * both "key" and "value" must exists in the fetched data
-   * the key will be the new key of the result-array
+   * <p>
+   *   <br />
+   *   INFO: both "key" and "value" must exists in the fetched data
+   *   the key will be the new key of the result-array
+   *   <br /><br />
+   * </p>
    *
    * e.g.:
+   * <code>
    *    fetchArrayPair('some_id', 'some_value');
    *    // array(127 => 'some value', 128 => 'some other value')
+   * </code>
    *
    * @param string $key
    * @param string $value
@@ -102,7 +115,10 @@ final class Result
   /**
    * Cast data into int, float or string.
    *
-   * INFO: install / use "mysqlnd"-driver for better performance
+   * <p>
+   *   <br />
+   *   INFO: install / use "mysqlnd"-driver for better performance
+   * </p>
    *
    * @param array|object $data
    *
@@ -162,7 +178,7 @@ final class Result
   }
 
   /**
-   * fetchAllArray
+   * Fetch all results as array.
    *
    * @return array
    */
@@ -188,7 +204,7 @@ final class Result
   }
 
   /**
-   * fetch all results, return via Arrayy
+   * Fetch all results as "Arrayy"-object.
    *
    * @return Arrayy
    */
@@ -214,7 +230,7 @@ final class Result
   }
 
   /**
-   * is_empty
+   * Check if the result is empty.
    *
    * @return bool
    */
@@ -228,7 +244,7 @@ final class Result
   }
 
   /**
-   * reset
+   * Reset the offset (data_seek) for the results.
    *
    * @return Result
    */
@@ -242,7 +258,7 @@ final class Result
   }
 
   /**
-   * json
+   * Fetch all results as "json"-string.
    *
    * @return string
    */
@@ -250,7 +266,7 @@ final class Result
   {
     $data = $this->fetchAllArray();
 
-    return json_encode($data);
+    return UTF8::json_encode($data);
   }
 
   /**
@@ -263,7 +279,7 @@ final class Result
   }
 
   /**
-   * free
+   * free the memory
    */
   public function free()
   {
@@ -271,7 +287,9 @@ final class Result
   }
 
   /**
-   * get
+   * alias for "Result->fetch()"
+   *
+   * @see Result::fetch()
    *
    * @return array|object|false false on error
    */
@@ -281,7 +299,13 @@ final class Result
   }
 
   /**
-   * fetch (object -> not a array by default)
+   * Fetch.
+   *
+   * <p>
+   *   <br />
+   *   INFO: this will return an object by default, not an array<br />
+   *   and you can change the behaviour via "Result->setDefaultResultType()"
+   * </p>
    *
    * @param $reset
    *
@@ -295,13 +319,15 @@ final class Result
       $return = $this->fetchObject('', '', $reset);
     } elseif ($this->_default_result_type === 'array') {
       $return = $this->fetchArray($reset);
+    } elseif ($this->_default_result_type === 'Arrayy') {
+      $return = $this->fetchArrayy($reset);
     }
 
     return $return;
   }
 
   /**
-   * fetchObject
+   * Fetch as object.
    *
    * @param string     $class
    * @param null|array $params
@@ -327,7 +353,7 @@ final class Result
   }
 
   /**
-   * fetch as array
+   * Fetch as array.
    *
    * @param bool $reset
    *
@@ -348,7 +374,7 @@ final class Result
   }
 
   /**
-   * fetch as Arrayy-Object
+   * Fetch as "Arrayy"-object.
    *
    * @param bool $reset
    *
@@ -369,7 +395,9 @@ final class Result
   }
 
   /**
-   * getAll
+   * alias for "Result->fetchAll()"
+   *
+   * @see Result::fetchAll()
    *
    * @return array
    */
@@ -379,7 +407,13 @@ final class Result
   }
 
   /**
-   * fetchAll
+   * Fetch all results.
+   *
+   * <p>
+   *   <br />
+   *   INFO: this will return an object by default, not an array<br />
+   *   and you can change the behaviour via "Result->setDefaultResultType()"
+   * </p>
    *
    * @return array
    */
@@ -391,13 +425,15 @@ final class Result
       $return = $this->fetchAllObject();
     } elseif ($this->_default_result_type === 'array') {
       $return = $this->fetchAllArray();
+    } elseif ($this->_default_result_type === 'Arrayy') {
+      $return = $this->fetchAllArray();
     }
 
     return $return;
   }
 
   /**
-   * fetchAllObject
+   * Fetch all results as array with objects.
    *
    * @param string     $class
    * @param null|array $params
@@ -434,7 +470,9 @@ final class Result
   }
 
   /**
-   * getObject
+   * alias for "Result->fetchAllObject()"
+   *
+   * @see Result::fetchAllObject()
    *
    * @return array of mysql-objects
    */
@@ -444,7 +482,21 @@ final class Result
   }
 
   /**
-   * getArray
+   * alias for "Result->fetchAllArrayy()"
+   *
+   * @see Result::fetchAllArrayy()
+   *
+   * @return Arrayy
+   */
+  public function getArrayy()
+  {
+    return $this->fetchAllArrayy();
+  }
+
+  /**
+   * alias for "Result->fetchAllArray()"
+   *
+   * @see Result::fetchAllArray()
    *
    * @return array
    */
@@ -454,7 +506,9 @@ final class Result
   }
 
   /**
-   * getColumn
+   * alias for "Result->fetchColumn()"
+   *
+   * @see Result::fetchColumn()
    *
    * @param $key
    *
@@ -466,7 +520,7 @@ final class Result
   }
 
   /**
-   * fetchColumn
+   * Fetch a single column in an 1-dimension array.
    *
    * @param string $column
    *
@@ -487,7 +541,7 @@ final class Result
   }
 
   /**
-   * get the num-rows as string
+   * Get the current "num_rows" as string.
    *
    * @return string
    */

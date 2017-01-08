@@ -329,7 +329,7 @@ To iterate a result-set you can use any fetch() method listed above.
   $result = $db->select('users');
 
   // using while
-  while($row = $result->fetch()) {
+  while ($row = $result->fetch()) {
     echo $row->name;
     echo $row->email;
   }
@@ -339,6 +339,8 @@ To iterate a result-set you can use any fetch() method listed above.
     echo $row->name;
     echo $row->email;
   }
+  
+  // INFO: "while + fetch()" will use less memory that "foreach + "fetchAll()", because we will fetch each result entry seperatly
 ```
 
 #### Logging and Errors

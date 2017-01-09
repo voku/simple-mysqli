@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.2.0 (2017-01-09)
+
+* [+]: use new version of the "Arrayy"-class (vendor)
+
 4.1.2 (2016-12-22)
 
 * [+]: use "UTF8::json_encode()" in the "Result"-object

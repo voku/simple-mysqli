@@ -26,7 +26,7 @@ You can download it from here, or require it using [composer](https://packagist.
 ```json
   {
       "require": {
-        "voku/simple-mysqli": "3.*"
+        "voku/simple-mysqli": "4.*"
       }
   }
 ```
@@ -47,6 +47,10 @@ You can download it from here, or require it using [composer](https://packagist.
   // example
   // $db = DB::getInstance('localhost', 'root', '', 'test');
 ```
+
+## Multiton && Singleton
+
+You can use ```DB::getInstance()``` without any parameters and you will get your (as "singleton") first initialized connection. Or you can change the parameter and you will create an new "multiton"-instance which works like an singleton, but you need to use the same parameters again, otherwise (without the same parameter) you will get an new instance. 
 
 ## Using the "DB"-Class
 
@@ -325,7 +329,7 @@ To iterate a result-set you can use any fetch() method listed above.
   $result = $db->select('users');
 
   // using while
-  while($row = $result->fetch()) {
+  while ($row = $result->fetch()) {
     echo $row->name;
     echo $row->email;
   }
@@ -335,6 +339,8 @@ To iterate a result-set you can use any fetch() method listed above.
     echo $row->name;
     echo $row->email;
   }
+  
+  // INFO: "while + fetch()" will use less memory that "foreach + "fetchAll()", because we will fetch each result entry seperatly
 ```
 
 #### Logging and Errors

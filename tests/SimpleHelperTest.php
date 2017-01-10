@@ -64,6 +64,19 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
         ),
         $dbFields
     );
+
+    //
+
+    $dbFields = Helper::getDbFields('mysql_test.test_page', true, $this->db);
+
+    self::assertSame(
+        array(
+            0 => 'page_id',
+            1 => 'page_template',
+            2 => 'page_type',
+        ),
+        $dbFields
+    );
   }
 
   public function testLall()

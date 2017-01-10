@@ -144,7 +144,7 @@ class Helper
       return array();
     }
 
-    $sql = 'SHOW COLUMNS FROM ' . $db->quote_string($table);
+    $sql = 'SHOW COLUMNS FROM ' . $db->escape($table);
     $result = $db->query($sql);
 
     if ($result && $result->num_rows > 0) {

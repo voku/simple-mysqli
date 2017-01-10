@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.2.1 (2017-01-10)
+
+* [+]: fix "Helper::getDbFields()" for database+table name
+
 4.2.0 (2017-01-09)
 
 * [+]: use new version of the "Arrayy"-class (vendor)

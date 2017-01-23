@@ -3,6 +3,7 @@
 namespace voku\db;
 
 use Arrayy\Arrayy;
+use voku\helper\Bootup;
 use voku\helper\UTF8;
 
 /**
@@ -122,7 +123,7 @@ final class Result
    *
    * @param array|object $data
    *
-   * @return array|false false on error
+   * @return array|object|false false on error
    */
   private function cast(&$data)
   {
@@ -131,43 +132,48 @@ final class Result
     }
 
     // init
-    static $fields = array();
-    static $types = array();
+    if (Bootup::is_php('5.4')) {
+      static $FIELDS = array();
+      static $TYPES = array();
+    } else {
+      $FIELDS = array();
+      $TYPES = array();
+    }
 
     $result_hash = spl_object_hash($this->_result);
 
-    if (!isset($fields[$result_hash])) {
-      $fields[$result_hash] = \mysqli_fetch_fields($this->_result);
+    if (!isset($FIELDS[$result_hash])) {
+      $FIELDS[$result_hash] = \mysqli_fetch_fields($this->_result);
     }
 
-    if ($fields[$result_hash] === false) {
+    if ($FIELDS[$result_hash] === false) {
       return false;
     }
 
-    if (!isset($types[$result_hash])) {
-      foreach ($fields[$result_hash] as $field) {
+    if (!isset($TYPES[$result_hash])) {
+      foreach ($FIELDS[$result_hash] as $field) {
         switch ($field->type) {
           case 3:
-            $types[$result_hash][$field->name] = 'int';
+            $TYPES[$result_hash][$field->name] = 'int';
             break;
           case 4:
-            $types[$result_hash][$field->name] = 'float';
+            $TYPES[$result_hash][$field->name] = 'float';
             break;
           default:
-            $types[$result_hash][$field->name] = 'string';
+            $TYPES[$result_hash][$field->name] = 'string';
             break;
         }
       }
     }
 
     if (is_array($data) === true) {
-      foreach ($types[$result_hash] as $type_name => $type) {
+      foreach ($TYPES[$result_hash] as $type_name => $type) {
         if (isset($data[$type_name])) {
           settype($data[$type_name], $type);
         }
       }
     } elseif (is_object($data)) {
-      foreach ($types[$result_hash] as $type_name => $type) {
+      foreach ($TYPES[$result_hash] as $type_name => $type) {
         if (isset($data->{$type_name})) {
           settype($data->{$type_name}, $type);
         }

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.2.2 (2017-01-23)
+
+* [+]: fix "Result->cast()" for PHP 5.3 without mysqlnd
+
 4.2.1 (2017-01-10)
 
 * [+]: fix "Helper::getDbFields()" for database+table name

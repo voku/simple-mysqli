@@ -187,7 +187,12 @@ final class DB
       $this->port = (int)$port;
     } else {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
-      $this->port = @ini_get('mysqli.default_port');
+      $this->port = (int)@ini_get('mysqli.default_port');
+    }
+
+    // fallback
+    if (!$this->port) {
+      $this->port = 3306;
     }
 
     if (!$this->socket) {
@@ -326,6 +331,7 @@ final class DB
     $db = self::getInstance();
 
     $args = func_get_args();
+    /** @noinspection SuspiciousAssignmentsInspection */
     $query = array_shift($args);
     $query = str_replace('?', '%s', $query);
     $args = array_map(
@@ -515,7 +521,7 @@ final class DB
     }
 
     if (count($params) > 0) {
-      $parseKey = md5(uniqid(mt_rand(), true));
+      $parseKey = md5(uniqid((string)mt_rand(), true));
       $sql = str_replace('?', $parseKey, $sql);
 
       $k = 0;

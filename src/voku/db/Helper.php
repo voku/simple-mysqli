@@ -203,6 +203,7 @@ class Helper
     if ($result->num_rows > 0) {
 
       /** @noinspection LoopWhichDoesNotLoopInspection */
+      /** @noinspection PhpAssignmentInConditionInspection */
       while ($tmpArray = $result->fetchArray()) {
 
         // re-build a new DB query and ignore some field-names

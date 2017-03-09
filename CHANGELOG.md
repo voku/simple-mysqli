@@ -1,6 +1,11 @@
 Changelog
 =========
 
+4.2.3 (2017-03-09)
+
+[+]: prepare for PHP7 and "declare(strict_types=1);"
+[+]: use new version of "Portable-UTF8"-vendor via composer.json
+
 4.2.2 (2017-01-23)
 
 * [+]: fix "Result->cast()" for PHP 5.3 without mysqlnd

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.2.4 (2017-03-15)
+
+[+]: optimize "DB->escape()"
+
 4.2.3 (2017-03-09)
 
 [+]: prepare for PHP7 and "declare(strict_types=1);"

@@ -623,6 +623,10 @@ final class DB
    */
   public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = false, $convert_array = false)
   {
+    if ($var === '') {
+      return '';
+    }
+
     if ($var === null) {
       return null;
     }

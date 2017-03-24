@@ -45,7 +45,7 @@ final class Result
     $this->sql = $sql;
 
     $this->_result = $result;
-    $this->num_rows = $this->_result->num_rows;
+    $this->num_rows = (int)$this->_result->num_rows;
   }
 
   /**

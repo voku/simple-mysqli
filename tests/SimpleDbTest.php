@@ -1507,6 +1507,27 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertSame(true, $return > 1);
   }
 
+  public function testQuoteString()
+  {
+    $testArray = array(
+        'NOW()'                                  => '`NOW()`',
+        'fooo'                                   => '`fooo`',
+        '`fooo`'                                 => '`fooo`',
+        '`fo`oo`'                                => '`fo``oo`',
+        '``fooo'                                 => '`fooo`',
+        '``fooo`'                                => '`fooo`',
+        '\'fooo\''                               => '`\\\'fooo\\\'`',
+        123                                      => '`123`',
+        'κόσμε'                                  => '`κόσμε`',
+        '&lt;abcd&gt;\'$1\'(&quot;&amp;2&quot;)' => '`&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)`',
+        '&#246;&#228;&#252;'                     => '`&#246;&#228;&#252;`',
+    );
+
+    foreach ($testArray as $before => $after) {
+      self::assertSame($after, $this->db->quote_string($before));
+    }
+  }
+
   /**
    * Call protected/private method of a class.
    *

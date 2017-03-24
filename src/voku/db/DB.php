@@ -1323,7 +1323,16 @@ final class DB
    */
   public function quote_string($str)
   {
-    return '`' . $this->escape($str, false) . '`';
+    $str= str_replace(
+        '`',
+        '``',
+        trim(
+            $this->escape($str, false),
+            '`'
+        )
+    );
+
+    return '`' . $str . '`';
   }
 
   /**

@@ -66,9 +66,9 @@ class Helper
 
     ) {
       return true;
-    } else {
-      return false;
     }
+
+    return false;
   }
 
   /**

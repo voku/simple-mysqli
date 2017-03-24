@@ -422,22 +422,22 @@ final class Prepare extends \mysqli_stmt
       if ($reconnectCounter > 3) {
         $this->_debug->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
         throw new \Exception($errorMsg);
-      } else {
-        $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
-
-        // reconnect
-        $reconnectCounter++;
-        $this->_db->reconnect(true);
-
-        // re-run the current query
-        return $this->execute();
       }
-    } else {
-      $this->_debug->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
 
-      // this query returned an error, we must display it (only for dev) !!!
-      $this->_debug->displayError($errorMsg . ' | ' . $sql);
+      $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
+
+      // reconnect
+      $reconnectCounter++;
+      $this->_db->reconnect(true);
+
+      // re-run the current query
+      return $this->execute();
     }
+
+    $this->_debug->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
+
+    // this query returned an error, we must display it (only for dev) !!!
+    $this->_debug->displayError($errorMsg . ' | ' . $sql);
 
     return false;
   }

@@ -347,9 +347,9 @@ final class DB
 
     if ($result instanceof Result) {
       return $result->fetchAllArray();
-    } else {
-      return $result;
     }
+
+    return $result;
   }
 
   /**
@@ -475,7 +475,9 @@ final class DB
       // return query result object
       return new Result($sql, $result);
 
-    } elseif ($query_result === true) {
+    }
+
+    if ($query_result === true) {
 
       // "INSERT" || "REPLACE"
       if (preg_match('/^\s*"?(INSERT|REPLACE)\s+/i', $sql)) {
@@ -642,20 +644,28 @@ final class DB
         ||
         is_bool($var)
         ||
-        (isset($varInt, $var[0]) && $var[0] != '0' && "$varInt" == $var)
+        (
+            isset($varInt, $var[0])
+            &&
+            $var[0] != '0'
+            &&
+            "$varInt" == $var
+        )
     ) {
 
       // "int" || int || bool
 
       return (int)$var;
+    }
 
-    } elseif (is_float($var)) {
+    if (is_float($var)) {
 
       // float
 
       return $var;
+    }
 
-    } elseif (is_array($var)) {
+    if (is_array($var)) {
 
       // array
 
@@ -677,15 +687,19 @@ final class DB
         $varCleaned = implode(',', $varCleaned);
 
         return $varCleaned;
-      } else {
-        return (array)$varCleaned;
       }
+
+      return (array)$varCleaned;
     }
 
     if (
         is_string($var)
         ||
-        (is_object($var) && method_exists($var, '__toString'))
+        (
+            is_object($var)
+            &&
+            method_exists($var, '__toString')
+        )
     ) {
 
       // "string"
@@ -707,7 +721,9 @@ final class DB
 
       return (string)$var;
 
-    } elseif ($var instanceof \DateTime) {
+    }
+
+    if ($var instanceof \DateTime) {
 
       // "DateTime"-object
 
@@ -772,22 +788,22 @@ final class DB
       if ($reconnectCounter > 3) {
         $this->_debug->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
         throw new \Exception($errorMsg);
-      } else {
-        $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
-
-        // reconnect
-        $reconnectCounter++;
-        $this->reconnect(true);
-
-        // re-run the current query
-        return $this->query($sql, $sqlParams);
       }
-    } else {
-      $this->_debug->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
 
-      // this query returned an error, we must display it (only for dev) !!!
-      $this->_debug->displayError($errorMsg . ' | ' . $sql);
+      $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
+
+      // reconnect
+      $reconnectCounter++;
+      $this->reconnect(true);
+
+      // re-run the current query
+      return $this->query($sql, $sqlParams);
     }
+
+    $this->_debug->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
+
+    // this query returned an error, we must display it (only for dev) !!!
+    $this->_debug->displayError($errorMsg . ' | ' . $sql);
 
     return false;
   }
@@ -830,9 +846,9 @@ final class DB
     ) {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
       return @\mysqli_ping($this->link);
-    } else {
-      return false;
     }
+
+    return false;
   }
 
   /**
@@ -1069,11 +1085,11 @@ final class DB
       return $result;
     }
 
-    if (!in_array(false, $result, true)) {
+    if (in_array(false, $result, true) === false) {
       return true;
-    } else {
-      return false;
     }
+
+    return false;
   }
 
   /**
@@ -1097,17 +1113,18 @@ final class DB
       $this->_debug->displayError('Error mysql server already in transaction!', true);
 
       return false;
-    } elseif (\mysqli_connect_errno()) {
+    }
+
+    if (\mysqli_connect_errno()) {
       $this->_debug->displayError('Error connecting to mysql server: ' . \mysqli_connect_error(), true);
 
       return false;
-    } else {
-      $this->_in_transaction = true;
-      \mysqli_autocommit($this->link, false);
-
-      return true;
-
     }
+
+    $this->_in_transaction = true;
+    \mysqli_autocommit($this->link, false);
+
+    return true;
   }
 
   /**

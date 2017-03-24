@@ -1,6 +1,11 @@
 Changelog
 =========
 
+4.2.5 (2017-03-24)
+
+[+]: fix "DB->quote_string()" -> now we can also process already backtick-quoted strings
+[~]: simplify some "if"-statements
+
 4.2.4 (2017-03-15)
 
 [+]: optimize "DB->escape()"

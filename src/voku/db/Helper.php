@@ -137,8 +137,8 @@ class Helper
       $db = DB::getInstance();
     }
 
-    $debug = new Debug($db);
     if ($table === '') {
+      $debug = new Debug($db);
       $debug->displayError('invalid table name');
 
       return array();
@@ -166,7 +166,7 @@ class Helper
    * @param array   $whereArray
    * @param array   $updateArray
    * @param array   $ignoreArray
-   * @param DB|null $db           <p>Use <strong>null</strong>
+   * @param DB|null $db <p>Use <strong>null</strong> to get your first singleton instance.</p>
    *
    * @return bool|int "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
    *                   "false" on error
@@ -180,8 +180,8 @@ class Helper
       $db = DB::getInstance();
     }
 
-    $debug = new Debug($db);
     if ($table === '') {
+      $debug = new Debug($db);
       $debug->displayError('invalid table name');
 
       return false;

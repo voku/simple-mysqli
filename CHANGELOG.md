@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.2.6 (2017-03-29)
+
+[+]: fix usage of optional "$database"-parameter for $db->insert() / $db->select() / $db->update()
+
 4.2.5 (2017-03-24)
 
 [+]: fix "DB->quote_string()" -> now we can also process already backtick-quoted strings

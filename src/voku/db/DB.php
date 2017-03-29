@@ -782,10 +782,10 @@ final class DB
   protected function queryErrorHandling($errorMsg, $sql, $sqlParams = false)
   {
     if ($errorMsg === 'DB server has gone away' || $errorMsg === 'MySQL server has gone away') {
-      static $reconnectCounter;
+      static $RECONNECT_COUNTER;
 
       // exit if we have more then 3 "DB server has gone away"-errors
-      if ($reconnectCounter > 3) {
+      if ($RECONNECT_COUNTER > 3) {
         $this->_debug->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
         throw new \Exception($errorMsg);
       }
@@ -793,7 +793,7 @@ final class DB
       $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
 
       // reconnect
-      $reconnectCounter++;
+      $RECONNECT_COUNTER++;
       $this->reconnect(true);
 
       // re-run the current query
@@ -866,6 +866,8 @@ final class DB
    */
   public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
   {
+    // init
+    $cacheKey = null;
     $db = self::getInstance();
 
     if ($useCache === true) {
@@ -891,7 +893,7 @@ final class DB
       $return = $result->fetchAllArray();
 
       if (
-          isset($cacheKey)
+          $cacheKey !== null
           &&
           $useCache === true
           &&
@@ -1201,13 +1203,15 @@ final class DB
   /**
    * Execute a "insert"-query.
    *
-   * @param string $table
-   * @param array  $data
+   * @param string      $table
+   * @param array       $data
+   * @param string|null $database <p>use <strong>null</strong> if you use the current database</p>
    *
    * @return false|int false on error
    */
-  public function insert($table, array $data = array())
+  public function insert($table, array $data = array(), $database = null)
   {
+    // init
     $table = trim($table);
 
     if ($table === '') {
@@ -1224,7 +1228,11 @@ final class DB
 
     $SET = $this->_parseArrayPair($data);
 
-    $sql = 'INSERT INTO ' . $this->quote_string($table) . " SET $SET;";
+    if ($database) {
+      $database = $this->quote_string(trim($database)) . '.';
+    }
+
+    $sql = 'INSERT INTO ' . $database . $this->quote_string($table) . " SET $SET;";
 
     return $this->query($sql);
   }
@@ -1340,7 +1348,7 @@ final class DB
    */
   public function quote_string($str)
   {
-    $str= str_replace(
+    $str = str_replace(
         '`',
         '``',
         trim(
@@ -1414,10 +1422,11 @@ final class DB
    * @param string       $table
    * @param array        $data
    * @param array|string $where
+   * @param null|string  $database <p>use <strong>null</strong> if you use the current database</p>
    *
    * @return false|int false on error
    */
-  public function update($table, array $data = array(), $where = '1=1')
+  public function update($table, array $data = array(), $where = '1=1', $database = null)
   {
     $table = trim($table);
 
@@ -1443,7 +1452,11 @@ final class DB
       $WHERE = '';
     }
 
-    $sql = 'UPDATE ' . $this->quote_string($table) . " SET $SET WHERE ($WHERE);";
+    if ($database) {
+      $database = $this->quote_string(trim($database)) . '.';
+    }
+
+    $sql = 'UPDATE ' . $database . $this->quote_string($table) . " SET $SET WHERE ($WHERE);";
 
     return $this->query($sql);
   }
@@ -1453,10 +1466,11 @@ final class DB
    *
    * @param string       $table
    * @param string|array $where
+   * @param string|null  $database <p>use <strong>null</strong> if you use the current database</p>
    *
    * @return false|int false on error
    */
-  public function delete($table, $where)
+  public function delete($table, $where, $database = null)
   {
 
     $table = trim($table);
@@ -1475,7 +1489,11 @@ final class DB
       $WHERE = '';
     }
 
-    $sql = 'DELETE FROM ' . $this->quote_string($table) . " WHERE ($WHERE);";
+    if ($database) {
+      $database = $this->quote_string(trim($database)) . '.';
+    }
+
+    $sql = 'DELETE FROM ' . $database . $this->quote_string($table) . " WHERE ($WHERE);";
 
     return $this->query($sql);
   }
@@ -1485,10 +1503,11 @@ final class DB
    *
    * @param string       $table
    * @param string|array $where
+   * @param string|null  $database <p>use <strong>null</strong> if you use the current database</p>
    *
    * @return false|Result false on error
    */
-  public function select($table, $where = '1=1')
+  public function select($table, $where = '1=1', $database = null)
   {
 
     if ($table === '') {
@@ -1505,7 +1524,11 @@ final class DB
       $WHERE = '';
     }
 
-    $sql = 'SELECT * FROM ' . $this->quote_string($table) . " WHERE ($WHERE);";
+    if ($database) {
+      $database = $this->quote_string(trim($database)) . '.';
+    }
+
+    $sql = 'SELECT * FROM ' . $database . $this->quote_string($table) . " WHERE ($WHERE);";
 
     return $this->query($sql);
   }

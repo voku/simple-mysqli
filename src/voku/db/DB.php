@@ -1372,7 +1372,7 @@ final class DB
               $_glueHelperInner = ''; // first query glue e.g. for "INSERT"-query -> skip the first ","
             }
 
-          } else if ($tmpCounter === 0 && $_glueHelper === 'OR') {
+          } elseif ($tmpCounter === 0 && $_glueHelper === 'OR') {
             $_glueHelperInner = 'AND ('; // inner-loop "OR"-query glue
           }
 

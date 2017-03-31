@@ -1,23 +1,29 @@
 Changelog
 =========
 
+4.3.0 (2017-03-31)
+
+* [+]: add "Result->fetchAllColumn()"
+* [+]: add new parameter for "Result->fetchColumn()"
+* [+]: fix usage of optional "$database"-parameter for $db->replace()
+
 4.2.6 (2017-03-29)
 
-[+]: fix usage of optional "$database"-parameter for $db->insert() / $db->select() / $db->update()
+* [+]: fix usage of optional "$database"-parameter for $db->insert() / $db->select() / $db->update()
 
 4.2.5 (2017-03-24)
 
-[+]: fix "DB->quote_string()" -> now we can also process already backtick-quoted strings
-[~]: simplify some "if"-statements
+* [+]: fix "DB->quote_string()" -> now we can also process already backtick-quoted strings
+* [~]: simplify some "if"-statements
 
 4.2.4 (2017-03-15)
 
-[+]: optimize "DB->escape()"
+* [+]: optimize "DB->escape()"
 
 4.2.3 (2017-03-09)
 
-[+]: prepare for PHP7 and "declare(strict_types=1);"
-[+]: use new version of "Portable-UTF8"-vendor via composer.json
+* [+]: prepare for PHP7 and "declare(strict_types=1);"
+* [+]: use new version of "Portable-UTF8"-vendor via composer.json
 
 4.2.2 (2017-01-23)
 

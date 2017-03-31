@@ -552,8 +552,6 @@ final class Result
    * @param $asArray
    * @param $skipNullValues
    *
-   * @internal
-   *
    * @return string|array <p>Return a empty string or an empty array if the "$column" wasn't found, depend on
    *                      "$asArray"</p>
    */
@@ -568,8 +566,6 @@ final class Result
    * @param string $column
    * @param bool   $skipNullValues <p>Skip "NULL"-values. | default: true</p>
    * @param bool   $asArray        <p>Get all values and not only the last one. | default: false</p>
-   *
-   * @internal
    *
    * @return string|array <p>Return a empty string or an empty array if the "$column" wasn't found, depend on
    *                      "$asArray"</p>

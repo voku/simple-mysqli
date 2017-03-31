@@ -202,8 +202,9 @@ Other methods are:
   $data = $result->fetchAllArray();   // fetch all result data as array
   $data = $result->fetchAllObject();  // fetch all result data as object
   
-  $data = $result->fetchColumn(string $Column);                  // fetch a single column in an 1-dimension array
-  $data = $result->fetchArrayPair(string $key, string $Value);   // fetch data as a key/value pair array
+  $data = $result->fetchColumn(string $column, bool $skipNullValues);    // fetch a single column as string
+  $data = $result->fetchAllColumn(string $column, bool $skipNullValues); // fetch a single column as an 1-dimension array
+  $data = $result->fetchArrayPair(string $key, string $value);           // fetch data as a key/value pair array
 ```
 
 ###Using the Prepare-Class

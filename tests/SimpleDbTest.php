@@ -29,7 +29,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   public function testLogQuery()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true, '', 'debug');
-    self::assertSame(true, $db_1 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // sql - true
     $pageArray = array(
@@ -37,7 +37,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         'page_type'     => 'lall',
     );
     $tmpId = $db_1->insert($this->tableName, $pageArray);
-    self::assertSame(true, $tmpId > 0);
+    self::assertTrue($tmpId > 0);
 
     // sql - true v2
     $pageArray = array(
@@ -45,7 +45,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         'page_type'     => 'fooooo',
     );
     $tmpId = $db_1->insert($this->tableName, $pageArray);
-    self::assertSame(true, $tmpId > 0);
+    self::assertTrue($tmpId > 0);
 
     // update - true (affected_rows === 1)
     $pageArray = array(
@@ -63,61 +63,64 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // update - false
     $false = $this->db->update($this->tableName, array(), 'page_id = ' . (int)$tmpId);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
   }
 
   public function testEchoOnError1()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-    self::assertSame(true, $db_1 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // insert - false
     $false = $db_1->insert($this->tableName, array());
     $this->expectOutputRegex('/(.)*empty data for INSERT(.)*/');
-    self::assertSame(false, $false);
+    self::assertFalse($false);
   }
 
   public function testEchoOnError4()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-    self::assertSame(true, $db_1 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // sql - false
     $false = $db_1->query();
     $this->expectOutputRegex('/(.)*SimpleDbTest\.php \/(.)*/');
-    self::assertSame(false, $false);
+    self::assertFalse($false);
   }
 
   public function testEchoOnError3()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-    self::assertSame(true, $db_1 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // sql - false
     $false = $db_1->query();
     $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
-    self::assertSame(false, $false);
+    self::assertFalse($false);
   }
 
+  /**
+   *
+   */
   public function testEchoOnError2()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-    self::assertSame(true, $db_1 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // sql - false
     $false = $db_1->query();
     $this->expectOutputRegex('/(.)*Can\'t execute an empty Query(.)*/');
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // close db-connection
-    self::assertSame(true, $this->db->isReady());
+    self::assertTrue($this->db->isReady());
     $this->db->close();
-    self::assertSame(false, $this->db->isReady());
+    self::assertFalse($this->db->isReady());
 
     // insert - false
     $false = $db_1->query('INSERT INTO lall SET false = 1');
-    self::assertSame(false, $false);
+    self::assertFalse($false);
   }
 
   /**
@@ -127,7 +130,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   public function testExitOnError1()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
-    self::assertSame(true, $db_1 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // insert - false
     $pageArray = array(
@@ -135,7 +138,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         'page_type'     => 'lall',
     );
     $false = $db_1->insert('', $pageArray);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
   }
 
   /**
@@ -145,11 +148,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   public function testExitOnError2()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
-    self::assertSame(true, $db_1 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // insert - false
     $false = $db_1->insert($this->tableName, array());
-    self::assertSame(false, $false);
+    self::assertFalse($false);
   }
 
   /**
@@ -180,35 +183,38 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     DB::getInstance('localhost', 'root', '', 'mysql_test_foo', null, '', true, false);
   }
 
+  /**
+   *
+   */
   public function testGetInstance()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
-    self::assertSame(true, $db_1 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     $db_2 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
-    self::assertSame(true, $db_2 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_2);
 
     $db_3 = DB::getInstance('localhost', 'root', '', 'mysql_test', null, '', true, false);
-    self::assertSame(true, $db_3 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_3);
 
     $db_4 = DB::getInstance();
-    self::assertSame(true, $db_4 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_4);
     $db_4_serial = serialize($db_4);
     unset($db_4);
     $db_4 = unserialize($db_4_serial);
-    self::assertSame(true, $db_4 instanceof DB);
+    self::assertInstanceOf('\\voku\\db\\DB', $db_4);
 
     $true = $this->db->connect();
-    self::assertSame(true, $true);
+    self::assertTrue($true);
 
     $true = $this->db->connect();
-    self::assertSame(true, $true);
+    self::assertTrue($true);
 
     $true = $this->db->reconnect(false);
-    self::assertSame(true, $true);
+    self::assertTrue($true);
 
     $true = $this->db->reconnect(true);
-    self::assertSame(true, $true);
+    self::assertTrue($true);
   }
 
   /**
@@ -247,7 +253,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     }
 
     $return = $this->db->set_charset('utf8');
-    self::assertSame(true, $return);
+    self::assertTrue($return);
 
     if (\voku\db\Helper::isUtf8mb4Supported($this->db) === true) {
       self::assertSame('utf8mb4', $this->db->get_charset());
@@ -324,11 +330,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // insert - false
     $false = $this->db->insert($this->tableName);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // insert - false
     $false = $this->db->insert('', $pageArray);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // select - true
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
@@ -365,8 +371,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     self::assertSame(1, $tmpPage->foo);
     self::assertSame(2, $tmpPage->bar);
-    self::assertSame(true, $tmpPage->test);
-    self::assertSame(null, $tmpPage->nothing);
+    self::assertTrue($tmpPage->test);
+    self::assertNull($tmpPage->nothing);
     self::assertSame('tpl_new_中', $tmpPage->page_template);
 
     $tmpPages = $result->fetchAllObject(
@@ -383,8 +389,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     self::assertSame(1, $tmpPages[0]->foo);
     self::assertSame(2, $tmpPages[0]->bar);
-    self::assertSame(true, $tmpPages[0]->test);
-    self::assertSame(null, $tmpPages[0]->nothing);
+    self::assertTrue($tmpPages[0]->test);
+    self::assertNull($tmpPages[0]->nothing);
     self::assertSame('tpl_new_中', $tmpPages[0]->page_template);
 
     $tmpPages = $result->fetchAllObject(
@@ -393,9 +399,9 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     /* @var $tmpPages [] Foobar */
 
-    self::assertSame(null, $tmpPages[0]->foo);
-    self::assertSame(null, $tmpPages[0]->bar);
-    self::assertSame(true, $tmpPages[0]->test);
+    self::assertNull($tmpPages[0]->foo);
+    self::assertNull($tmpPages[0]->bar);
+    self::assertTrue($tmpPages[0]->test);
     self::assertSame('lall', $tmpPages[0]->page_type);
     self::assertSame('tpl_new_中', $tmpPages[0]->page_template);
 
@@ -407,19 +413,19 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // update - false
     $false = $this->db->update($this->tableName, array(), 'page_id = ' . (int)$tmpId);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // update - false
     $false = $this->db->update($this->tableName, $pageArray, '');
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // update - false
     $false = $this->db->update($this->tableName, $pageArray, null);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // update - false
     $false = $this->db->update('', $pageArray, 'page_id = ' . (int)$tmpId);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // check (select)
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
@@ -436,11 +442,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // replace - false
     $false = $this->db->replace($this->tableName);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // replace - false
     $false = $this->db->replace('', $data);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchAllObject();
@@ -456,7 +462,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // delete - false
     $false = $this->db->delete('', array('page_id' => $tmpId));
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // insert - true
     $pageArray = array(
@@ -467,11 +473,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // delete - false
     $false = $this->db->delete($this->tableName, '');
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // delete - false
     $false = $this->db->delete($this->tableName, null);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // delete - true
     $false = $this->db->delete($this->tableName, 'page_id = ' . $this->db->escape($tmpId));
@@ -483,7 +489,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // select - true
     $result = $this->db->select($this->tableName);
-    self::assertSame(true, $result->num_rows > 0);
+    self::assertTrue($result->num_rows > 0);
 
     // select - true (but empty)
     $result = $this->db->select($this->tableName, array('page_id' => -1));
@@ -491,11 +497,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // select - false
     $false = $this->db->select($this->tableName, null);
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // select - false
     $false = $this->db->select('', array('page_id' => 2));
-    self::assertSame(false, $false);
+    self::assertFalse($false);
 
     // insert - true (float)
     $pageArray = array(
@@ -528,6 +534,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
       WHERE page_id = ?
     ";
     /** @noinspection StaticInvocationViaThisInspection */
+    /** @noinspection PhpStaticAsDynamicMethodCallInspection */
     $result = $this->db->qry($sql, 'tpl_test_?', 1);
     self::assertSame(1, $result);
 
@@ -535,6 +542,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
       WHERE page_id = 1
     ';
     /** @noinspection StaticInvocationViaThisInspection */
+    /** @noinspection PhpStaticAsDynamicMethodCallInspection */
     $result = (array)$this->db->qry($sql);
     self::assertSame('tpl_test_?', $result[0]['page_template']);
 
@@ -542,8 +550,9 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
       WHERE page_id_lall = 1
     ';
     /** @noinspection StaticInvocationViaThisInspection */
+    /** @noinspection PhpStaticAsDynamicMethodCallInspection */
     $result = $this->db->qry($sql);
-    self::assertSame(false, $result);
+    self::assertFalse($result);
   }
 
   public function testEscape()
@@ -557,7 +566,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $object = new stdClass();
     $object->bar = 'foo';
 
-    self::assertSame(false, $this->db->escape($object));
+    self::assertFalse($this->db->escape($object));
 
     // ---
 
@@ -571,7 +580,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // ---
 
-    self::assertSame(null, $this->db->escape(null));
+    self::assertNull($this->db->escape(null));
 
     // ---
 
@@ -626,7 +635,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             4 => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
             5 => '&#246;&#228;&#252;',
         ),
-        $this->db->escape(array_keys($testArray), false, false, false));
+        $this->db->escape(array_keys($testArray), false, false, false)
+    );
     self::assertSame(
         array(
             0 => 'NOW()',
@@ -636,12 +646,13 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             4 => '<abcd>\\\'$1\\\'(\"&2\")',
             5 => 'öäü',
         ),
-        $this->db->escape(array_keys($testArray), true, true, false));
+        $this->db->escape(array_keys($testArray), true, true, false)
+    );
 
-    self::assertSame(null, $this->db->escape(array_keys($testArray), false, true, null));
-    self::assertSame(null, $this->db->escape(array_keys($testArray), true, false, null));
-    self::assertSame(null, $this->db->escape(array_keys($testArray), false, false, null));
-    self::assertSame(null, $this->db->escape(array_keys($testArray), true, true, null));
+    self::assertNull($this->db->escape(array_keys($testArray), false, true, null));
+    self::assertNull($this->db->escape(array_keys($testArray), true, false, null));
+    self::assertNull($this->db->escape(array_keys($testArray), false, false, null));
+    self::assertNull($this->db->escape(array_keys($testArray), true, true, null));
 
 
     // ---
@@ -848,7 +859,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertSame('öäü', $resultSelectTmp);
 
     $resultSelect = $this->db->select($this->tableName, $where);
-    self::assertSame(true, $resultSelect instanceof Result);
+    self::assertInstanceOf('\\voku\\db\\Result', $resultSelect);
   }
 
   public function testTransactionFalse()
@@ -865,7 +876,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // start - test a transaction - true
     $beginTransaction = $this->db->beginTransaction();
-    self::assertSame(true, $beginTransaction);
+    self::assertTrue($beginTransaction);
 
     $data = array(
         'page_type' => 'lall',
@@ -906,11 +917,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     // INFO: run all previous tests and generate some errors
 
     $error = $this->db->lastError();
-    self::assertSame(true, is_string($error));
+    self::assertTrue(is_string($error));
     self::assertContains('Unknown column \'page_lall\' in \'field list', $error);
 
     $errors = $this->db->getErrors();
-    self::assertSame(true, is_array($errors));
+    self::assertTrue(is_array($errors));
     self::assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);
   }
 
@@ -1008,11 +1019,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   {
     // start - test a transaction - true
     $beginTransaction = $this->db->beginTransaction();
-    self::assertSame(true, $beginTransaction);
+    self::assertTrue($beginTransaction);
 
     // start - test a transaction - false
     $beginTransaction = $this->db->beginTransaction();
-    self::assertSame(false, $beginTransaction);
+    self::assertFalse($beginTransaction);
   }
 
   public function testFetchColumn()
@@ -1026,12 +1037,108 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $resultInsert = $this->db->insert($this->tableName, $data);
     self::assertGreaterThan(1, $resultInsert);
 
+    $dataV2 = array(
+        'page_template' => 'tpl_test_new5V2',
+        'page_type'     => 'öäüV2',
+    );
+
+    // will return the auto-increment value of the new row (v2)
+    $resultInsertV2 = $this->db->insert($this->tableName, $dataV2);
+    self::assertGreaterThan($resultInsert, $resultInsertV2);
+
+    // ---
+
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
+
     $columnResult = $resultSelect->fetchColumn('page_template');
     self::assertSame('tpl_test_new5', $columnResult);
 
+    $columnResult = $resultSelect->fetchColumn('page_template', false, false);
+    self::assertSame('', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template', true, true);
+    self::assertSame(array('tpl_test_new5'), $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template', false, true);
+    self::assertSame(array('tpl_test_new5'), $columnResult);
+
     $columnResult = $resultSelect->fetchColumn('page_template_foo');
     self::assertSame('', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template_foo', false, false);
+    self::assertSame('', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template_foo', true, true);
+    self::assertSame(array(), $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template_foo', false, true);
+    self::assertSame(array(), $columnResult);
+
+    // ---
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id AND' => array($resultInsert, $resultInsert)));
+
+    $columnResult = $resultSelect->fetchColumn('page_template');
+    self::assertSame('tpl_test_new5', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template', false, false);
+    self::assertSame('', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template', true, true);
+    self::assertSame(array('tpl_test_new5'), $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template', false, true);
+    self::assertSame(array('tpl_test_new5'), $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template', true, false);
+    self::assertSame('tpl_test_new5', $columnResult);
+
+    // ---
+
+    $resultSelect = $this->db->select($this->tableName, array('page_id OR' => array($resultInsert, $resultInsertV2)));
+
+    $columnResult = $resultSelect->fetchColumn('page_template');
+    self::assertSame('tpl_test_new5V2', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template', false, false);
+    self::assertSame('', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template', true, true);
+    self::assertSame(array('tpl_test_new5', 'tpl_test_new5V2'), $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template', true, false);
+    self::assertSame('tpl_test_new5V2', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template', false, true);
+    self::assertSame(array('tpl_test_new5', 'tpl_test_new5V2'), $columnResult);
+
+    // ---
+
+    $columnResult = $resultSelect->fetchColumn('page_template_foo');
+    self::assertSame('', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template_foo', false, false);
+    self::assertSame('', $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template_foo', true, true);
+    self::assertSame(array(), $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template_foo', false, true);
+    self::assertSame(array(), $columnResult);
+
+    $columnResult = $resultSelect->fetchColumn('page_template_foo', true, false);
+    self::assertSame('', $columnResult);
+
+    // ---
+
+    $columnResult = $resultSelect->fetchAllColumn('page_template', false);
+    self::assertSame(array('tpl_test_new5', 'tpl_test_new5V2'), $columnResult);
+
+    $columnResult = $resultSelect->fetchAllColumn('page_template', true);
+    self::assertSame(array('tpl_test_new5', 'tpl_test_new5V2'), $columnResult);
+
+    $columnResult = $resultSelect->fetchAllColumn('page_template', true);
+    self::assertSame(array('tpl_test_new5', 'tpl_test_new5V2'), $columnResult);
   }
 
   public function testIsEmpty()
@@ -1046,10 +1153,10 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertGreaterThan(1, $resultInsert);
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
-    self::assertSame(false, $resultSelect->is_empty());
+    self::assertFalse($resultSelect->is_empty());
 
     $resultSelect = $this->db->select($this->tableName, array('page_id' => 999999));
-    self::assertSame(true, $resultSelect->is_empty());
+    self::assertTrue($resultSelect->is_empty());
   }
 
   public function testJson()
@@ -1135,13 +1242,13 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
       }
     }
 
-    self::assertSame(true, $return);
+    self::assertTrue($return);
   }
 
   public function testPing()
   {
     $ping = $this->db->ping();
-    self::assertSame(true, $ping);
+    self::assertTrue($ping);
   }
 
   public function testMultiQuery()
@@ -1162,7 +1269,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     ";
     // multi_query - true
     $result = $this->db->multi_query($sql);
-    self::assertSame(true, $result);
+    self::assertTrue($result);
 
     $sql = '
     SELECT * FROM ' . $this->tableName . ';
@@ -1170,19 +1277,19 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     ';
     // multi_query - true
     $result = $this->db->multi_query($sql);
-    self::assertSame(true, is_array($result));
+    self::assertTrue(is_array($result));
     /** @noinspection ForeachSourceInspection */
     foreach ($result as $resultForEach) {
       /* @var $resultForEach Result */
       $tmpArray = $resultForEach->fetchArray();
 
-      self::assertSame(true, is_array($tmpArray));
-      self::assertSame(true, count($tmpArray) > 0);
+      self::assertTrue(is_array($tmpArray));
+      self::assertTrue(count($tmpArray) > 0);
     }
 
     // multi_query - false
     $false = $this->db->multi_query('');
-    self::assertSame(false, $false);
+    self::assertFalse($false);
   }
 
   public function testConnector2()
@@ -1205,10 +1312,15 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             '123',
             'abc',
         ),
+        'page_type OR'        => array(
+            'öäü',
+            '123',
+            'abc',
+        ),
     );
     $resultSelect = $this->db->select($this->tableName, $where);
-    self::assertNotEquals(false, $resultSelect);
-    self::assertSame(true, $resultSelect->num_rows > 0);
+    self::assertNotEquals(false, $resultSelect, 'tested: ' . print_r($where, true));
+    self::assertTrue($resultSelect->num_rows > 0);
 
     // select - false
     $where = array(
@@ -1216,9 +1328,12 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         'page_type IS'     => 'öäü',
     );
     $resultSelect = $this->db->select($this->tableName, $where);
-    self::assertSame(false, $resultSelect);
+    self::assertFalse($resultSelect);
   }
 
+  /**
+   *
+   */
   public function testExecSQL()
   {
     // execSQL - false
@@ -1228,7 +1343,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         page_type = " . $this->db->secure('öäü') . '
     ';
     $return = DB::execSQL($sql);
-    self::assertSame(false, $return);
+    self::assertFalse($return);
 
     // execSQL - true
     $sql = 'INSERT INTO ' . $this->tableName . "
@@ -1237,8 +1352,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         page_type = " . $this->db->secure('öäü') . '
     ';
     $return = DB::execSQL($sql);
-    self::assertSame(true, is_int($return));
-    self::assertSame(true, $return > 0);
+    self::assertTrue(is_int($return));
+    self::assertTrue($return > 0);
   }
 
   public function testSecure()
@@ -1252,7 +1367,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $object = new stdClass();
     $object->bar = 'foo';
 
-    self::assertSame(false, $this->db->secure($object));
+    self::assertFalse($this->db->secure($object));
 
     // ---
 
@@ -1275,7 +1390,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertSame("''", $this->db->secure(null));
 
     $this->db->set_convert_null_to_empty_string(false);
-    self::assertSame(null, $this->db->secure(null));
+    self::assertNull($this->db->secure(null));
 
     // ---
 
@@ -1292,7 +1407,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
       self::assertSame($after, $this->db->secure($before));
     }
 
-    self::assertSame(null, $this->db->secure(array_keys($testArray)));
+    self::assertNull($this->db->secure(array_keys($testArray)));
   }
 
   public function testUtf8Query()
@@ -1303,8 +1418,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         page_type = '" . $this->db->escape('DÃ¼sseldorf') . "'
     ";
     $return = DB::execSQL($sql);
-    self::assertSame(true, is_int($return));
-    self::assertSame(true, $return > 0);
+    self::assertTrue(is_int($return));
+    self::assertTrue($return > 0);
 
     $data = $this->db->select($this->tableName, 'page_id=' . (int)$return);
     $dataArray = $data->fetchArray();
@@ -1329,7 +1444,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             1,
         )
     );
-    self::assertSame(true, $return > 1, print_r($return, true));
+    self::assertTrue($return > 1, print_r($return, true));
 
     //
     // query - true (with empty array)
@@ -1343,7 +1458,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         $sql,
         array()
     );
-    self::assertSame(true, $return > 1);
+    self::assertTrue($return > 1);
 
     //
     // query - true
@@ -1361,7 +1476,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             $tmpDate,
         )
     );
-    self::assertSame(true, $tmpId > 1);
+    self::assertTrue($tmpId > 1);
 
     //
     // select - true
@@ -1382,7 +1497,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         $sql,
         array('http://foo.com/?foo=1', 'foo\'bar')
     );
-    self::assertSame(true, $tmpId > 1);
+    self::assertTrue($tmpId > 1);
     // select - true
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchObject();
@@ -1405,7 +1520,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         )
     );
     // array('test') => null
-    self::assertSame(false, $return);
+    self::assertFalse($return);
 
     //
     // query - false
@@ -1422,7 +1537,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             1,
         )
     );
-    self::assertSame(false, $return);
+    self::assertFalse($return);
 
     //
     // query - false
@@ -1434,7 +1549,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             1,
         )
     );
-    self::assertSame(false, $return);
+    self::assertFalse($return);
   }
 
   public function testCache()
@@ -1449,7 +1564,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     } else {
       $return = false;
     }
-    self::assertSame(true, $return);
+    self::assertTrue($return);
 
     // set cache
     $sql = 'SELECT * FROM ' . $this->tableName;
@@ -1459,7 +1574,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     } else {
       $return = false;
     }
-    self::assertSame(true, $return);
+    self::assertTrue($return);
 
     $queryCount = $this->db->query_count;
 
@@ -1471,7 +1586,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     } else {
       $return = false;
     }
-    self::assertSame(true, $return);
+    self::assertTrue($return);
 
     // check cache
     self::assertSame($queryCount, $this->db->query_count);
@@ -1480,7 +1595,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   public function testQueryErrorHandling()
   {
     $this->db->close();
-    self::assertSame(false, $this->db->isReady());
+    self::assertFalse($this->db->isReady());
     $this->invokeMethod(
         $this->db, 'queryErrorHandling',
         array(
@@ -1488,14 +1603,14 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             'SELECT * FROM ' . $this->tableName . ' WHERE page_id = 1',
         )
     );
-    self::assertSame(true, $this->db->isReady());
+    self::assertTrue($this->db->isReady());
   }
 
   public function testSerializable()
   {
     $dbSerializable = serialize($this->db);
     $dbTmp = unserialize($dbSerializable);
-    self::assertSame(true, $dbTmp->isReady());
+    self::assertTrue($dbTmp->isReady());
 
     // query - true
     $sql = 'INSERT INTO ' . $this->tableName . "
@@ -1504,7 +1619,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         page_type = '1'
     ";
     $return = $dbTmp->query($sql);
-    self::assertSame(true, $return > 1);
+    self::assertTrue($return > 1);
   }
 
   public function testQuoteString()

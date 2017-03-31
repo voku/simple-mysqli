@@ -103,7 +103,11 @@ final class Result
     $data = $this->fetchAllArray();
 
     foreach ($data as $_row) {
-      if (isset($_row[$key], $_row[$value])) {
+      if (
+          array_key_exists($key, $_row) === true
+          &&
+          array_key_exists($value, $_row) === true
+      ) {
         $_key = $_row[$key];
         $_value = $_row[$value];
         $arrayPair[$_key] = $_value;
@@ -123,7 +127,7 @@ final class Result
    *
    * @param array|object $data
    *
-   * @return array|object|false false on error
+   * @return array|object|false <p><strong>false</strong> on error</p>
    */
   private function cast(&$data)
   {
@@ -133,47 +137,47 @@ final class Result
 
     // init
     if (Bootup::is_php('5.4')) {
-      static $FIELDS = array();
-      static $TYPES = array();
+      static $FIELDS_CACHE = array();
+      static $TYPES_CACHE = array();
     } else {
-      $FIELDS = array();
-      $TYPES = array();
+      $FIELDS_CACHE = array();
+      $TYPES_CACHE = array();
     }
 
     $result_hash = spl_object_hash($this->_result);
 
-    if (!isset($FIELDS[$result_hash])) {
-      $FIELDS[$result_hash] = \mysqli_fetch_fields($this->_result);
+    if (!isset($FIELDS_CACHE[$result_hash])) {
+      $FIELDS_CACHE[$result_hash] = \mysqli_fetch_fields($this->_result);
     }
 
-    if ($FIELDS[$result_hash] === false) {
+    if ($FIELDS_CACHE[$result_hash] === false) {
       return false;
     }
 
-    if (!isset($TYPES[$result_hash])) {
-      foreach ($FIELDS[$result_hash] as $field) {
+    if (!isset($TYPES_CACHE[$result_hash])) {
+      foreach ($FIELDS_CACHE[$result_hash] as $field) {
         switch ($field->type) {
           case 3:
-            $TYPES[$result_hash][$field->name] = 'int';
+            $TYPES_CACHE[$result_hash][$field->name] = 'int';
             break;
           case 4:
-            $TYPES[$result_hash][$field->name] = 'float';
+            $TYPES_CACHE[$result_hash][$field->name] = 'float';
             break;
           default:
-            $TYPES[$result_hash][$field->name] = 'string';
+            $TYPES_CACHE[$result_hash][$field->name] = 'string';
             break;
         }
       }
     }
 
     if (is_array($data) === true) {
-      foreach ($TYPES[$result_hash] as $type_name => $type) {
+      foreach ($TYPES_CACHE[$result_hash] as $type_name => $type) {
         if (isset($data[$type_name])) {
           settype($data[$type_name], $type);
         }
       }
     } elseif (is_object($data)) {
-      foreach ($TYPES[$result_hash] as $type_name => $type) {
+      foreach ($TYPES_CACHE[$result_hash] as $type_name => $type) {
         if (isset($data->{$type_name})) {
           settype($data->{$type_name}, $type);
         }
@@ -297,7 +301,7 @@ final class Result
    *
    * @see Result::fetch()
    *
-   * @return array|object|false false on error
+   * @return array|object|false <p><strong>false</strong> on error</p>
    */
   public function get()
   {
@@ -315,7 +319,7 @@ final class Result
    *
    * @param $reset
    *
-   * @return array|object|false false on error
+   * @return array|object|false <p><strong>false</strong> on error</p>
    */
   public function fetch($reset = false)
   {
@@ -339,7 +343,7 @@ final class Result
    * @param null|array $params
    * @param bool       $reset
    *
-   * @return object|false false on error
+   * @return object|false <p><strong>false</strong> on error</p>
    */
   public function fetchObject($class = '', $params = null, $reset = false)
   {
@@ -363,7 +367,7 @@ final class Result
    *
    * @param bool $reset
    *
-   * @return array|false false on error
+   * @return array|false <p><strong>false</strong> on error</p>
    */
   public function fetchArray($reset = false)
   {
@@ -384,7 +388,7 @@ final class Result
    *
    * @param bool $reset
    *
-   * @return Arrayy|false false on error
+   * @return Arrayy|false <p><strong>false</strong> on error</p>
    */
   public function fetchArrayy($reset = false)
   {
@@ -512,35 +516,108 @@ final class Result
   }
 
   /**
+   * Fetch a single column as an 1-dimension array.
+   *
+   * @param string $column
+   * @param bool   $skipNullValues <p>Skip "NULL"-values. | default: false</p>
+   *
+   * @return array <p>Return an empty array if the "$column" wasn't found</p>
+   */
+  public function fetchAllColumn($column, $skipNullValues = false)
+  {
+    return $this->fetchColumn($column, $skipNullValues, true);
+  }
+
+  /**
+   * alias for "Result->fetchAllColumn()"
+   *
+   * @see Result::fetchAllColumn()
+   *
+   * @param string $column
+   * @param bool   $skipNullValues
+   *
+   * @return array
+   */
+  public function getAllColumn($column, $skipNullValues = false)
+  {
+    return $this->fetchAllColumn($column, $skipNullValues);
+  }
+
+  /**
    * alias for "Result->fetchColumn()"
    *
    * @see Result::fetchColumn()
    *
-   * @param $key
+   * @param $column
+   * @param $asArray
+   * @param $skipNullValues
    *
-   * @return string
+   * @internal
+   *
+   * @return string|array <p>Return a empty string or an empty array if the "$column" wasn't found, depend on
+   *                      "$asArray"</p>
    */
-  public function getColumn($key)
+  public function getColumn($column, $skipNullValues = true, $asArray = false)
   {
-    return $this->fetchColumn($key);
+    return $this->fetchColumn($column, $skipNullValues, $asArray);
   }
 
   /**
-   * Fetch a single column in an 1-dimension array.
+   * Fetch a single column as string (or as 1-dimension array).
    *
    * @param string $column
+   * @param bool   $skipNullValues <p>Skip "NULL"-values. | default: true</p>
+   * @param bool   $asArray        <p>Get all values and not only the last one. | default: false</p>
    *
-   * @return string empty string if the $column wasn't found
+   * @internal
+   *
+   * @return string|array <p>Return a empty string or an empty array if the "$column" wasn't found, depend on
+   *                      "$asArray"</p>
    */
-  public function fetchColumn($column = '')
+  public function fetchColumn($column = '', $skipNullValues = true, $asArray = false)
   {
-    $columnData = '';
+    if ($asArray === false) {
+      $columnData = '';
+
+      $data = $this->fetchAllArrayy()->reverse();
+      foreach ($data as $_row) {
+
+        if ($skipNullValues === true) {
+          if (isset($_row[$column]) === false) {
+            continue;
+          }
+        } else {
+          if (array_key_exists($column, $_row) === false) {
+            break;
+          }
+        }
+
+        $columnData = $_row[$column];
+        break;
+      }
+
+      return $columnData;
+    }
+
+    // -- return as array -->
+
+    $columnData = array();
+
     $data = $this->fetchAllArray();
 
     foreach ($data as $_row) {
-      if (isset($_row[$column])) {
-        $columnData = $_row[$column];
+
+      if ($skipNullValues === true) {
+        if (isset($_row[$column]) === false) {
+          continue;
+        }
+      } else {
+        if (array_key_exists($column, $_row) === false) {
+          break;
+        }
       }
+
+      $columnData[] = $_row[$column];
     }
 
     return $columnData;

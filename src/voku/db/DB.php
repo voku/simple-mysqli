@@ -1205,7 +1205,7 @@ final class DB
    *
    * @param string      $table
    * @param array       $data
-   * @param string|null $database <p>use <strong>null</strong> if you use the current database</p>
+   * @param string|null $database <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return false|int false on error
    */
@@ -1249,13 +1249,14 @@ final class DB
   {
     // init
     $sql = '';
-    $pairs = array();
 
     /** @noinspection IsEmptyFunctionUsageInspection */
     if (!empty($arrayPair)) {
 
+      $arrayPairCounter = 0;
       foreach ($arrayPair as $_key => $_value) {
         $_connector = '=';
+        $_glueHelper = '';
         $_key_upper = strtoupper($_key);
 
         if (strpos($_key_upper, ' NOT') !== false) {
@@ -1314,6 +1315,14 @@ final class DB
           $_connector = '<>';
         }
 
+        if (strpos($_key_upper, ' OR') !== false) {
+          $_glueHelper = 'OR';
+        }
+
+        if (strpos($_key_upper, ' AND') !== false) {
+          $_glueHelper = 'AND';
+        }
+
         if (is_array($_value) === true) {
           foreach ($_value as $oldKey => $oldValue) {
             $_value[$oldKey] = $this->secure($oldValue);
@@ -1329,11 +1338,54 @@ final class DB
           $_value = $this->secure($_value);
         }
 
-        $quoteString = $this->quote_string(trim(str_ireplace($_connector, '', $_key)));
-        $pairs[] = ' ' . $quoteString . ' ' . $_connector . ' ' . $_value . " \n";
-      }
+        $quoteString = $this->quote_string(
+            trim(
+                str_ireplace(
+                    array(
+                        $_connector,
+                        $_glueHelper,
+                    ),
+                    '',
+                    $_key
+                )
+            )
+        );
 
-      $sql = implode($glue, $pairs);
+        if (!is_array($_value)) {
+          $_value = array($_value);
+        }
+
+        if (!$_glueHelper) {
+          $_glueHelper = $glue;
+        }
+
+        $tmpCounter = 0;
+        foreach ($_value as $valueInner) {
+
+          $_glueHelperInner = $_glueHelper;
+
+          if ($arrayPairCounter === 0) {
+
+            if ($tmpCounter === 0 && $_glueHelper === 'OR') {
+              $_glueHelperInner = '1 = 1 AND ('; // first "OR"-query glue
+            } elseif ($tmpCounter === 0) {
+              $_glueHelperInner = ''; // first query glue e.g. for "INSERT"-query -> skip the first ","
+            }
+
+          } else if ($tmpCounter === 0 && $_glueHelper === 'OR') {
+            $_glueHelperInner = 'AND ('; // inner-loop "OR"-query glue
+          }
+
+          $sql .= ' ' . $_glueHelperInner . ' ' . $quoteString . ' ' . $_connector . ' ' . $valueInner . " \n";
+          $tmpCounter++;
+        }
+
+        if ($_glueHelper === 'OR') {
+          $sql .= ' ) ';
+        }
+
+        $arrayPairCounter++;
+      }
     }
 
     return $sql;
@@ -1373,14 +1425,15 @@ final class DB
   /**
    * Execute a "replace"-query.
    *
-   * @param string $table
-   * @param array  $data
+   * @param string      $table
+   * @param array       $data
+   * @param null|string $database <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return false|int false on error
    */
-  public function replace($table, array $data = array())
+  public function replace($table, array $data = array(), $database = null)
   {
-
+    // init
     $table = trim($table);
 
     if ($table === '') {
@@ -1411,7 +1464,11 @@ final class DB
     }
     $values = implode(',', $data);
 
-    $sql = 'REPLACE INTO ' . $this->quote_string($table) . " ($columns) VALUES ($values);";
+    if ($database) {
+      $database = $this->quote_string(trim($database)) . '.';
+    }
+
+    $sql = 'REPLACE INTO ' . $database . $this->quote_string($table) . " ($columns) VALUES ($values);";
 
     return $this->query($sql);
   }
@@ -1422,12 +1479,13 @@ final class DB
    * @param string       $table
    * @param array        $data
    * @param array|string $where
-   * @param null|string  $database <p>use <strong>null</strong> if you use the current database</p>
+   * @param null|string  $database <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return false|int false on error
    */
   public function update($table, array $data = array(), $where = '1=1', $database = null)
   {
+    // init
     $table = trim($table);
 
     if ($table === '') {
@@ -1466,13 +1524,13 @@ final class DB
    *
    * @param string       $table
    * @param string|array $where
-   * @param string|null  $database <p>use <strong>null</strong> if you use the current database</p>
+   * @param string|null  $database <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return false|int false on error
    */
   public function delete($table, $where, $database = null)
   {
-
+    // init
     $table = trim($table);
 
     if ($table === '') {
@@ -1503,12 +1561,14 @@ final class DB
    *
    * @param string       $table
    * @param string|array $where
-   * @param string|null  $database <p>use <strong>null</strong> if you use the current database</p>
+   * @param string|null  $database <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return false|Result false on error
    */
   public function select($table, $where = '1=1', $database = null)
   {
+    // init
+    $table = trim($table);
 
     if ($table === '') {
       $this->_debug->displayError('invalid table name');

@@ -120,15 +120,15 @@ class Helper
    */
   public static function getDbFields($table, $useStaticCache = true, DB $dbConnection = null, $databaseName = null)
   {
-    static $dbFieldsCache = array();
+    static $DB_FIELDS_CACHE = array();
 
     // use the static cache
     if (
         $useStaticCache === true
         &&
-        isset($dbFieldsCache[$table])
+        isset($DB_FIELDS_CACHE[$table])
     ) {
-      return $dbFieldsCache[$table];
+      return $DB_FIELDS_CACHE[$table];
     }
 
     // init
@@ -159,7 +159,7 @@ class Helper
     }
 
     // add to static cache
-    $dbFieldsCache[$table] = $dbFields;
+    $DB_FIELDS_CACHE[$table] = $dbFields;
 
     return $dbFields;
   }

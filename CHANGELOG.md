@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.3.1 (2017-04-03)
+
+* [+]: add the "$databaseName"-parameter to "Helper::copyTableRow()" and "Helper::getDbFields()"
+
 4.3.0 (2017-03-31)
 
 * [+]: add "Result->fetchAllColumn()"

@@ -111,13 +111,14 @@ class Helper
   /**
    * Return all db-fields from a table.
    *
-   * @param string  $table
-   * @param bool    $useStaticCache
-   * @param DB|null $db
+   * @param string      $table
+   * @param bool        $useStaticCache
+   * @param DB|null     $dbConnection <p>use <strong>null</strong> if you will use the current database-connection</p>
+   * @param null|string $databaseName <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return array
    */
-  public static function getDbFields($table, $useStaticCache = true, DB $db = null)
+  public static function getDbFields($table, $useStaticCache = true, DB $dbConnection = null, $databaseName = null)
   {
     static $dbFieldsCache = array();
 
@@ -133,19 +134,23 @@ class Helper
     // init
     $dbFields = array();
 
-    if ($db === null) {
-      $db = DB::getInstance();
+    if ($dbConnection === null) {
+      $dbConnection = DB::getInstance();
     }
 
     if ($table === '') {
-      $debug = new Debug($db);
+      $debug = new Debug($dbConnection);
       $debug->displayError('invalid table name');
 
       return array();
     }
 
-    $sql = 'SHOW COLUMNS FROM ' . $db->escape($table);
-    $result = $db->query($sql);
+    if ($databaseName) {
+      $databaseName = $dbConnection->quote_string(trim($databaseName)) . '.';
+    }
+
+    $sql = 'SHOW COLUMNS FROM ' . $databaseName . $dbConnection->escape($table);
+    $result = $dbConnection->query($sql);
 
     if ($result && $result->num_rows > 0) {
       foreach ($result->fetchAllArray() as $tmpResult) {
@@ -166,22 +171,23 @@ class Helper
    * @param array   $whereArray
    * @param array   $updateArray
    * @param array   $ignoreArray
-   * @param DB|null $db <p>Use <strong>null</strong> to get your first singleton instance.</p>
+   * @param DB|null $dbConnection <p>Use <strong>null</strong> to get your first singleton instance.</p>
+   * @param null|string $databaseName <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return bool|int "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
    *                   "false" on error
    */
-  public static function copyTableRow($table, array $whereArray, array $updateArray = array(), array $ignoreArray = array(), DB $db = null)
+  public static function copyTableRow($table, array $whereArray, array $updateArray = array(), array $ignoreArray = array(), DB $dbConnection = null, $databaseName = null)
   {
     // init
     $table = trim($table);
 
-    if ($db === null) {
-      $db = DB::getInstance();
+    if ($dbConnection === null) {
+      $dbConnection = DB::getInstance();
     }
 
     if ($table === '') {
-      $debug = new Debug($db);
+      $debug = new Debug($dbConnection);
       $debug->displayError('invalid table name');
 
       return false;
@@ -189,15 +195,19 @@ class Helper
 
     $whereSQL = '';
     foreach ($whereArray as $key => $value) {
-      $whereSQL .= ' AND ' . $db->escape($key) . ' = ' . $db->escape($value);
+      $whereSQL .= ' AND ' . $dbConnection->escape($key) . ' = ' . $dbConnection->escape($value);
+    }
+
+    if ($databaseName) {
+      $databaseName = $dbConnection->quote_string(trim($databaseName)) . '.';
     }
 
     // get the row
-    $query = 'SELECT * FROM ' . $db->quote_string($table) . '
+    $query = 'SELECT * FROM ' . $databaseName . $dbConnection->quote_string($table) . '
       WHERE 1 = 1
       ' . $whereSQL . '
     ';
-    $result = $db->query($query);
+    $result = $dbConnection->query($query);
 
     // make sure the row exists
     if ($result->num_rows > 0) {
@@ -230,10 +240,12 @@ class Helper
         $insert_values = ltrim($insert_values, ',');
 
         // insert the "copied" row
-        $new_query = 'INSERT INTO ' . $db->quote_string($table) . ' (' . $insert_keys . ')
-          VALUES (' . $insert_values . ')
+        $new_query = 'INSERT INTO ' . $databaseName . $dbConnection->quote_string($table) . ' 
+          (' . $insert_keys . ')
+          VALUES 
+          (' . $insert_values . ')
         ';
-        return $db->query($new_query, $bindings);
+        return $dbConnection->query($new_query, $bindings);
       }
     }
 

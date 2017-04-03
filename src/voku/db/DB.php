@@ -1205,11 +1205,11 @@ final class DB
    *
    * @param string      $table
    * @param array       $data
-   * @param string|null $database <p>use <strong>null</strong> if you will use the current database</p>
+   * @param string|null $databaseName <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return false|int false on error
    */
-  public function insert($table, array $data = array(), $database = null)
+  public function insert($table, array $data = array(), $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -1228,11 +1228,11 @@ final class DB
 
     $SET = $this->_parseArrayPair($data);
 
-    if ($database) {
-      $database = $this->quote_string(trim($database)) . '.';
+    if ($databaseName) {
+      $databaseName = $this->quote_string(trim($databaseName)) . '.';
     }
 
-    $sql = 'INSERT INTO ' . $database . $this->quote_string($table) . " SET $SET;";
+    $sql = 'INSERT INTO ' . $databaseName . $this->quote_string($table) . " SET $SET;";
 
     return $this->query($sql);
   }
@@ -1427,11 +1427,11 @@ final class DB
    *
    * @param string      $table
    * @param array       $data
-   * @param null|string $database <p>use <strong>null</strong> if you will use the current database</p>
+   * @param null|string $databaseName <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return false|int false on error
    */
-  public function replace($table, array $data = array(), $database = null)
+  public function replace($table, array $data = array(), $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -1464,11 +1464,11 @@ final class DB
     }
     $values = implode(',', $data);
 
-    if ($database) {
-      $database = $this->quote_string(trim($database)) . '.';
+    if ($databaseName) {
+      $databaseName = $this->quote_string(trim($databaseName)) . '.';
     }
 
-    $sql = 'REPLACE INTO ' . $database . $this->quote_string($table) . " ($columns) VALUES ($values);";
+    $sql = 'REPLACE INTO ' . $databaseName . $this->quote_string($table) . " ($columns) VALUES ($values);";
 
     return $this->query($sql);
   }
@@ -1479,11 +1479,11 @@ final class DB
    * @param string       $table
    * @param array        $data
    * @param array|string $where
-   * @param null|string  $database <p>use <strong>null</strong> if you will use the current database</p>
+   * @param null|string  $databaseName <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return false|int false on error
    */
-  public function update($table, array $data = array(), $where = '1=1', $database = null)
+  public function update($table, array $data = array(), $where = '1=1', $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -1510,11 +1510,11 @@ final class DB
       $WHERE = '';
     }
 
-    if ($database) {
-      $database = $this->quote_string(trim($database)) . '.';
+    if ($databaseName) {
+      $databaseName = $this->quote_string(trim($databaseName)) . '.';
     }
 
-    $sql = 'UPDATE ' . $database . $this->quote_string($table) . " SET $SET WHERE ($WHERE);";
+    $sql = 'UPDATE ' . $databaseName . $this->quote_string($table) . " SET $SET WHERE ($WHERE);";
 
     return $this->query($sql);
   }
@@ -1524,11 +1524,11 @@ final class DB
    *
    * @param string       $table
    * @param string|array $where
-   * @param string|null  $database <p>use <strong>null</strong> if you will use the current database</p>
+   * @param string|null  $databaseName <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return false|int false on error
    */
-  public function delete($table, $where, $database = null)
+  public function delete($table, $where, $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -1547,11 +1547,11 @@ final class DB
       $WHERE = '';
     }
 
-    if ($database) {
-      $database = $this->quote_string(trim($database)) . '.';
+    if ($databaseName) {
+      $databaseName = $this->quote_string(trim($databaseName)) . '.';
     }
 
-    $sql = 'DELETE FROM ' . $database . $this->quote_string($table) . " WHERE ($WHERE);";
+    $sql = 'DELETE FROM ' . $databaseName . $this->quote_string($table) . " WHERE ($WHERE);";
 
     return $this->query($sql);
   }
@@ -1561,11 +1561,11 @@ final class DB
    *
    * @param string       $table
    * @param string|array $where
-   * @param string|null  $database <p>use <strong>null</strong> if you will use the current database</p>
+   * @param string|null  $databaseName <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return false|Result false on error
    */
-  public function select($table, $where = '1=1', $database = null)
+  public function select($table, $where = '1=1', $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -1584,11 +1584,11 @@ final class DB
       $WHERE = '';
     }
 
-    if ($database) {
-      $database = $this->quote_string(trim($database)) . '.';
+    if ($databaseName) {
+      $databaseName = $this->quote_string(trim($databaseName)) . '.';
     }
 
-    $sql = 'SELECT * FROM ' . $database . $this->quote_string($table) . " WHERE ($WHERE);";
+    $sql = 'SELECT * FROM ' . $databaseName . $this->quote_string($table) . " WHERE ($WHERE);";
 
     return $this->query($sql);
   }

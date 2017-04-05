@@ -121,8 +121,11 @@ class Debug
   /**
    * Display SQL-Errors or throw Exceptions (for dev).
    *
-   * @param string       $error
-   * @param null|boolean $force_exception_after_error
+   * @param string       $error                       <p>The error message.</p>
+   * @param null|boolean $force_exception_after_error <p>
+   *                                                  If you use default "null" here, then the behavior depends
+   *                                                  on "$this->exit_on_error (default: true)".
+   *                                                  </p>
    *
    * @throws \Exception
    */
@@ -160,7 +163,9 @@ class Debug
 
       if ($force_exception_after_error === true) {
         throw new \Exception($error);
-      } elseif ($force_exception_after_error === false) {
+      }
+
+      if ($force_exception_after_error === false) {
         // nothing
       } elseif ($force_exception_after_error === null) {
         // default

@@ -1245,147 +1245,148 @@ final class DB
    *
    * @return string
    */
-  private function _parseArrayPair($arrayPair, $glue = ',')
+  public function _parseArrayPair($arrayPair, $glue = ',')
   {
     // init
     $sql = '';
 
     /** @noinspection IsEmptyFunctionUsageInspection */
-    if (!empty($arrayPair)) {
+    if (empty($arrayPair)) {
+      return '';
+    }
 
-      $arrayPairCounter = 0;
-      foreach ($arrayPair as $_key => $_value) {
-        $_connector = '=';
-        $_glueHelper = '';
-        $_key_upper = strtoupper($_key);
+    $arrayPairCounter = 0;
+    foreach ($arrayPair as $_key => $_value) {
+      $_connector = '=';
+      $_glueHelper = '';
+      $_key_upper = strtoupper($_key);
 
-        if (strpos($_key_upper, ' NOT') !== false) {
-          $_connector = 'NOT';
-        }
-
-        if (strpos($_key_upper, ' IS') !== false) {
-          $_connector = 'IS';
-        }
-
-        if (strpos($_key_upper, ' IS NOT') !== false) {
-          $_connector = 'IS NOT';
-        }
-
-        if (strpos($_key_upper, ' IN') !== false) {
-          $_connector = 'IN';
-        }
-
-        if (strpos($_key_upper, ' NOT IN') !== false) {
-          $_connector = 'NOT IN';
-        }
-
-        if (strpos($_key_upper, ' BETWEEN') !== false) {
-          $_connector = 'BETWEEN';
-        }
-
-        if (strpos($_key_upper, ' NOT BETWEEN') !== false) {
-          $_connector = 'NOT BETWEEN';
-        }
-
-        if (strpos($_key_upper, ' LIKE') !== false) {
-          $_connector = 'LIKE';
-        }
-
-        if (strpos($_key_upper, ' NOT LIKE') !== false) {
-          $_connector = 'NOT LIKE';
-        }
-
-        if (strpos($_key_upper, ' >') !== false && strpos($_key_upper, ' =') === false) {
-          $_connector = '>';
-        }
-
-        if (strpos($_key_upper, ' <') !== false && strpos($_key_upper, ' =') === false) {
-          $_connector = '<';
-        }
-
-        if (strpos($_key_upper, ' >=') !== false) {
-          $_connector = '>=';
-        }
-
-        if (strpos($_key_upper, ' <=') !== false) {
-          $_connector = '<=';
-        }
-
-        if (strpos($_key_upper, ' <>') !== false) {
-          $_connector = '<>';
-        }
-
-        if (strpos($_key_upper, ' OR') !== false) {
-          $_glueHelper = 'OR';
-        }
-
-        if (strpos($_key_upper, ' AND') !== false) {
-          $_glueHelper = 'AND';
-        }
-
-        if (is_array($_value) === true) {
-          foreach ($_value as $oldKey => $oldValue) {
-            $_value[$oldKey] = $this->secure($oldValue);
-          }
-
-          if ($_connector === 'NOT IN' || $_connector === 'IN') {
-            $_value = '(' . implode(',', $_value) . ')';
-          } elseif ($_connector === 'NOT BETWEEN' || $_connector === 'BETWEEN') {
-            $_value = '(' . implode(' AND ', $_value) . ')';
-          }
-
-        } else {
-          $_value = $this->secure($_value);
-        }
-
-        $quoteString = $this->quote_string(
-            trim(
-                str_ireplace(
-                    array(
-                        $_connector,
-                        $_glueHelper,
-                    ),
-                    '',
-                    $_key
-                )
-            )
-        );
-
-        if (!is_array($_value)) {
-          $_value = array($_value);
-        }
-
-        if (!$_glueHelper) {
-          $_glueHelper = $glue;
-        }
-
-        $tmpCounter = 0;
-        foreach ($_value as $valueInner) {
-
-          $_glueHelperInner = $_glueHelper;
-
-          if ($arrayPairCounter === 0) {
-
-            if ($tmpCounter === 0 && $_glueHelper === 'OR') {
-              $_glueHelperInner = '1 = 1 AND ('; // first "OR"-query glue
-            } elseif ($tmpCounter === 0) {
-              $_glueHelperInner = ''; // first query glue e.g. for "INSERT"-query -> skip the first ","
-            }
-
-          } elseif ($tmpCounter === 0 && $_glueHelper === 'OR') {
-            $_glueHelperInner = 'AND ('; // inner-loop "OR"-query glue
-          }
-
-          $sql .= ' ' . $_glueHelperInner . ' ' . $quoteString . ' ' . $_connector . ' ' . $valueInner . " \n";
-          $tmpCounter++;
-        }
-
-        if ($_glueHelper === 'OR') {
-          $sql .= ' ) ';
-        }
-
-        $arrayPairCounter++;
+      if (strpos($_key_upper, ' NOT') !== false) {
+        $_connector = 'NOT';
       }
+
+      if (strpos($_key_upper, ' IS') !== false) {
+        $_connector = 'IS';
+      }
+
+      if (strpos($_key_upper, ' IS NOT') !== false) {
+        $_connector = 'IS NOT';
+      }
+
+      if (strpos($_key_upper, ' IN') !== false) {
+        $_connector = 'IN';
+      }
+
+      if (strpos($_key_upper, ' NOT IN') !== false) {
+        $_connector = 'NOT IN';
+      }
+
+      if (strpos($_key_upper, ' BETWEEN') !== false) {
+        $_connector = 'BETWEEN';
+      }
+
+      if (strpos($_key_upper, ' NOT BETWEEN') !== false) {
+        $_connector = 'NOT BETWEEN';
+      }
+
+      if (strpos($_key_upper, ' LIKE') !== false) {
+        $_connector = 'LIKE';
+      }
+
+      if (strpos($_key_upper, ' NOT LIKE') !== false) {
+        $_connector = 'NOT LIKE';
+      }
+
+      if (strpos($_key_upper, ' >') !== false && strpos($_key_upper, ' =') === false) {
+        $_connector = '>';
+      }
+
+      if (strpos($_key_upper, ' <') !== false && strpos($_key_upper, ' =') === false) {
+        $_connector = '<';
+      }
+
+      if (strpos($_key_upper, ' >=') !== false) {
+        $_connector = '>=';
+      }
+
+      if (strpos($_key_upper, ' <=') !== false) {
+        $_connector = '<=';
+      }
+
+      if (strpos($_key_upper, ' <>') !== false) {
+        $_connector = '<>';
+      }
+
+      if (strpos($_key_upper, ' OR') !== false) {
+        $_glueHelper = 'OR';
+      }
+
+      if (strpos($_key_upper, ' AND') !== false) {
+        $_glueHelper = 'AND';
+      }
+
+      if (is_array($_value) === true) {
+        foreach ($_value as $oldKey => $oldValue) {
+          $_value[$oldKey] = $this->secure($oldValue);
+        }
+
+        if ($_connector === 'NOT IN' || $_connector === 'IN') {
+          $_value = '(' . implode(',', $_value) . ')';
+        } elseif ($_connector === 'NOT BETWEEN' || $_connector === 'BETWEEN') {
+          $_value = '(' . implode(' AND ', $_value) . ')';
+        }
+
+      } else {
+        $_value = $this->secure($_value);
+      }
+
+      $quoteString = $this->quote_string(
+          trim(
+              str_ireplace(
+                  array(
+                      $_connector,
+                      $_glueHelper,
+                  ),
+                  '',
+                  $_key
+              )
+          )
+      );
+
+      if (!is_array($_value)) {
+        $_value = array($_value);
+      }
+
+      if (!$_glueHelper) {
+        $_glueHelper = $glue;
+      }
+
+      $tmpCounter = 0;
+      foreach ($_value as $valueInner) {
+
+        $_glueHelperInner = $_glueHelper;
+
+        if ($arrayPairCounter === 0) {
+
+          if ($tmpCounter === 0 && $_glueHelper === 'OR') {
+            $_glueHelperInner = '1 = 1 AND ('; // first "OR"-query glue
+          } elseif ($tmpCounter === 0) {
+            $_glueHelperInner = ''; // first query glue e.g. for "INSERT"-query -> skip the first ","
+          }
+
+        } elseif ($tmpCounter === 0 && $_glueHelper === 'OR') {
+          $_glueHelperInner = 'AND ('; // inner-loop "OR"-query glue
+        }
+
+        $sql .= ' ' . $_glueHelperInner . ' ' . $quoteString . ' ' . $_connector . ' ' . $valueInner . " \n";
+        $tmpCounter++;
+      }
+
+      if ($_glueHelper === 'OR') {
+        $sql .= ' ) ';
+      }
+
+      $arrayPairCounter++;
     }
 
     return $sql;

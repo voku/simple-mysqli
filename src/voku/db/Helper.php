@@ -2,6 +2,8 @@
 
 namespace voku\db;
 
+use voku\helper\Phonetic;
+
 /**
  * Helper: this handles extra functions that use the "DB"-Class
  *
@@ -28,11 +30,11 @@ class Helper
   /**
    * Check if the current environment supports "utf8mb4".
    *
-   * @param DB $db
+   * @param DB $dbConnection
    *
    * @return bool
    */
-  public static function isUtf8mb4Supported(DB $db)
+  public static function isUtf8mb4Supported(DB $dbConnection = null)
   {
     /**
      *  https://make.wordpress.org/core/2015/04/02/the-utf8mb4-upgrade/
@@ -44,8 +46,12 @@ class Helper
      * INFO: utf8mb4 is 100% backwards compatible with utf8.
      */
 
-    $server_version = self::get_mysql_server_version($db);
-    $client_version = self::get_mysql_client_version($db);
+    if ($dbConnection === null) {
+      $dbConnection = DB::getInstance();
+    }
+
+    $server_version = self::get_mysql_server_version($dbConnection);
+    $client_version = self::get_mysql_client_version($dbConnection);
 
     if (
         $server_version >= 50503
@@ -72,18 +78,90 @@ class Helper
   }
 
   /**
+   * A phonetic search algorithms for different languages.
+   *
+   * @param string      $searchString
+   * @param string      $searchFieldName
+   * @param string      $idFieldName
+   * @param string      $language <p>en, de, fr</p>
+   * @param string      $table
+   * @param array       $whereArray
+   * @param DB|null     $dbConnection <p>use <strong>null</strong> if you will use the current database-connection</p>
+   * @param null|string $databaseName <p>use <strong>null</strong> if you will use the current database</p>
+   *
+   * @return array
+   */
+  public static function phoneticSearch($searchString, $searchFieldName, $idFieldName = null, $language = 'de', $table, array $whereArray = null, DB $dbConnection = null, $databaseName = null)
+  {
+    // init
+    $searchString = (string)$searchString;
+    $searchFieldName = (string)$searchFieldName;
+
+    if ($dbConnection === null) {
+      $dbConnection = DB::getInstance();
+    }
+
+    if ($table === '') {
+      $debug = new Debug($dbConnection);
+      $debug->displayError('invalid table name');
+
+      return array();
+    }
+
+    if ($idFieldName === null) {
+      $idFieldName = 'id';
+    }
+
+    $whereSQL = $dbConnection->_parseArrayPair($whereArray, 'AND');
+    if ($whereSQL) {
+      $whereSQL = 'AND ' . $whereSQL;
+    }
+
+    if ($databaseName) {
+      $databaseName = $dbConnection->quote_string(trim($databaseName)) . '.';
+    }
+
+    // get the row
+    $query = 'SELECT ' . $dbConnection->quote_string($searchFieldName) . ', ' . $dbConnection->quote_string($idFieldName) . ' 
+      FROM ' . $databaseName . $dbConnection->quote_string($table) . '
+      WHERE 1 = 1
+      ' . $whereSQL . '
+    ';
+    $result = $dbConnection->query($query);
+
+    // make sure the row exists
+    if ($result->num_rows <= 0) {
+      return array();
+    }
+
+    $dataToSearchIn = array();
+    /** @noinspection LoopWhichDoesNotLoopInspection */
+    /** @noinspection PhpAssignmentInConditionInspection */
+    while ($tmpArray = $result->fetchArray()) {
+      $dataToSearchIn[$tmpArray[$idFieldName]] = $tmpArray[$searchFieldName];
+    }
+
+    $phonetic = new Phonetic($language);
+    return $phonetic->phonetic_matches($searchString, $dataToSearchIn);
+  }
+
+  /**
    * A string that represents the MySQL client library version.
    *
-   * @param DB $db
+   * @param DB $dbConnection
    *
    * @return string
    */
-  public static function get_mysql_client_version(DB $db)
+  public static function get_mysql_client_version(DB $dbConnection = null)
   {
     static $_mysqli_client_version = null;
 
+    if ($dbConnection === null) {
+      $dbConnection = DB::getInstance();
+    }
+
     if ($_mysqli_client_version === null) {
-      $_mysqli_client_version = \mysqli_get_client_version($db->getLink());
+      $_mysqli_client_version = \mysqli_get_client_version($dbConnection->getLink());
     }
 
     return $_mysqli_client_version;
@@ -93,16 +171,20 @@ class Helper
   /**
    * Returns a string representing the version of the MySQL server that the MySQLi extension is connected to.
    *
-   * @param DB $db
+   * @param DB $dbConnection
    *
    * @return string
    */
-  public static function get_mysql_server_version(DB $db)
+  public static function get_mysql_server_version(DB $dbConnection = null)
   {
     static $_mysqli_server_version = null;
 
+    if ($dbConnection === null) {
+      $dbConnection = DB::getInstance();
+    }
+
     if ($_mysqli_server_version === null) {
-      $_mysqli_server_version = \mysqli_get_server_version($db->getLink());
+      $_mysqli_server_version = \mysqli_get_server_version($dbConnection->getLink());
     }
 
     return $_mysqli_server_version;
@@ -193,9 +275,9 @@ class Helper
       return false;
     }
 
-    $whereSQL = '';
-    foreach ($whereArray as $key => $value) {
-      $whereSQL .= ' AND ' . $dbConnection->escape($key) . ' = ' . $dbConnection->escape($value);
+    $whereSQL = $dbConnection->_parseArrayPair($whereArray, 'AND');
+    if ($whereSQL) {
+      $whereSQL = 'AND ' . $whereSQL;
     }
 
     if ($databaseName) {

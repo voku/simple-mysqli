@@ -155,8 +155,8 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
     $resultValues = array_values($result);
     self::assertSame(
         array(
-            "Moelleken" => "Mölecken",
-            "Wosnitza"  => "Wosnitsa",
+            'Moelleken' => 'Mölecken',
+            'Wosnitza'  => 'Wosnitsa',
         ),
         $resultValues[0]
     );

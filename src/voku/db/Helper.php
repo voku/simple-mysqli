@@ -80,6 +80,8 @@ class Helper
   /**
    * A phonetic search algorithms for different languages.
    *
+   * INFO: if you need better performance, please save the "voku\helper\Phonetic"-output into the DB and search for it
+   *
    * @param string      $searchString
    * @param string      $searchFieldName
    * @param string      $idFieldName

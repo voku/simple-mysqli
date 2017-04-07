@@ -145,7 +145,7 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
 
     // where
     $whereArray = array(
-        'page_id >=' => $resultInsert - 2,
+        'page_id >=' => $resultInsert - 2000,
     );
 
     // ------------------------------

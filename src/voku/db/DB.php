@@ -1244,6 +1244,8 @@ final class DB
    * @param string $glue this is the separator
    *
    * @return string
+   *
+   * @internal
    */
   public function _parseArrayPair($arrayPair, $glue = ',')
   {

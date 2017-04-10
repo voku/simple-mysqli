@@ -1,6 +1,14 @@
 Changelog
 =========
 
+4.4.0 (2017-04-10)
+
+* [+]: use a new version of "Arrayy" (vendor)
+* [+]: use "DB->_parseArrayPair()" in te "Helper"-Class
+* [+]: use the "phonetic-algorithms" in the database-layer
+* [~]: only internal re-naming of static variable
+* [~]: update / fix php-doc
+
 4.3.1 (2017-04-03)
 
 * [+]: add the "$databaseName"-parameter to "Helper::copyTableRow()" and "Helper::getDbFields()"

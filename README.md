@@ -207,7 +207,7 @@ Other methods are:
   $data = $result->fetchArrayPair(string $key, string $value);           // fetch data as a key/value pair array
 ```
 
-###Using the Prepare-Class
+### Using the Prepare-Class
 
 Prepare statements have the advantage that they are built together in the MySQL-Server, so the performance is better.
 

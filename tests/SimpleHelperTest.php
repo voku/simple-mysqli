@@ -200,6 +200,10 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
         $resultValues[0]
     );
 
+    // ------------------------------ remove the db-value, so it's only in the cache
+
+    $this->db->delete($this->tableName, array('page_type' => 'Mölecken Wosnitsa'));
+
     // ------------------------------ get result from cache (second call)
 
     $result = Helper::phoneticSearch('Moelleken Wosnitza', 'page_type', 'page_id', 'de', $this->tableName, $whereArray, null, null, true, 100);

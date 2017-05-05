@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.4.1 (2017-05-05)
+
+* [+]: add caching for "Helper::phoneticSearch()" + tests
+
 4.4.0 (2017-04-10)
 
 * [+]: use a new version of "Arrayy" (vendor)

@@ -161,4 +161,56 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
         $resultValues[0]
     );
   }
+
+  public function testPhoneticSearchWithCache()
+  {
+    $data = array(
+        'page_template' => 'tpl_test_new5',
+        'page_type'     => 'Moelleken',
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert = $this->db->insert($this->tableName, $data);
+    self::assertGreaterThan(1, $resultInsert);
+
+    $data = array(
+        'page_template' => 'tpl_test_new5',
+        'page_type'     => 'Mölecken Wosnitsa',
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert = $this->db->insert($this->tableName, $data);
+    self::assertGreaterThan(1, $resultInsert);
+
+    // where
+    $whereArray = array(
+        'page_id >=' => $resultInsert - 2000,
+    );
+
+    // ------------------------------ save into cache (first call)
+
+    $result = Helper::phoneticSearch('Moelleken Wosnitza', 'page_type', 'page_id', 'de', $this->tableName, $whereArray, null, null, true, 100);
+
+    $resultValues = array_values($result);
+    self::assertSame(
+        array(
+            'Moelleken' => 'Mölecken',
+            'Wosnitza'  => 'Wosnitsa',
+        ),
+        $resultValues[0]
+    );
+
+    // ------------------------------ get result from cache (second call)
+
+    $result = Helper::phoneticSearch('Moelleken Wosnitza', 'page_type', 'page_id', 'de', $this->tableName, $whereArray, null, null, true, 100);
+
+    $resultValues = array_values($result);
+    self::assertSame(
+        array(
+            'Moelleken' => 'Mölecken',
+            'Wosnitza'  => 'Wosnitsa',
+        ),
+        $resultValues[0]
+    );
+  }
 }

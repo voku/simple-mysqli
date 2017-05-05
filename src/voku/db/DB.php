@@ -892,6 +892,7 @@ final class DB
 
       $return = $result->fetchAllArray();
 
+      // save into the cache
       if (
           $cacheKey !== null
           &&

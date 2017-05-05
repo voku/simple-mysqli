@@ -2,6 +2,7 @@
 
 namespace voku\db;
 
+use voku\cache\Cache;
 use voku\helper\Phonetic;
 
 /**
@@ -90,12 +91,15 @@ class Helper
    * @param array       $whereArray
    * @param DB|null     $dbConnection <p>use <strong>null</strong> if you will use the current database-connection</p>
    * @param null|string $databaseName <p>use <strong>null</strong> if you will use the current database</p>
+   * @param bool        $useCache use cache?
+   * @param int         $cacheTTL cache-ttl in seconds
    *
    * @return array
    */
-  public static function phoneticSearch($searchString, $searchFieldName, $idFieldName = null, $language = 'de', $table, array $whereArray = null, DB $dbConnection = null, $databaseName = null)
+  public static function phoneticSearch($searchString, $searchFieldName, $idFieldName = null, $language = 'de', $table, array $whereArray = null, DB $dbConnection = null, $databaseName = null, $useCache = false, $cacheTTL = 3600)
   {
     // init
+    $cacheKey = null;
     $searchString = (string)$searchString;
     $searchFieldName = (string)$searchFieldName;
 
@@ -129,6 +133,23 @@ class Helper
       WHERE 1 = 1
       ' . $whereSQL . '
     ';
+
+    if ($useCache === true) {
+      $cache = new Cache(null, null, false, $useCache);
+      $cacheKey = 'sql-phonetic-search-' . md5($query);
+
+      if (
+          $cache->getCacheIsReady() === true
+          &&
+          $cache->existsItem($cacheKey)
+      ) {
+        return $cache->getItem($cacheKey);
+      }
+
+    } else {
+      $cache = false;
+    }
+
     $result = $dbConnection->query($query);
 
     // make sure the row exists
@@ -144,7 +165,22 @@ class Helper
     }
 
     $phonetic = new Phonetic($language);
-    return $phonetic->phonetic_matches($searchString, $dataToSearchIn);
+    $return = $phonetic->phonetic_matches($searchString, $dataToSearchIn);
+
+    // save into the cache
+    if (
+        $cacheKey !== null
+        &&
+        $useCache === true
+        &&
+        $cache instanceof Cache
+        &&
+        $cache->getCacheIsReady() === true
+    ) {
+      $cache->setItem($cacheKey, $return, $cacheTTL);
+    }
+
+    return $return;
   }
 
   /**

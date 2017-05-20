@@ -187,6 +187,7 @@ final class DB
       $this->port = (int)$port;
     } else {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
+      /** @noinspection UsageOfSilenceOperatorInspection */
       $this->port = (int)@ini_get('mysqli.default_port');
     }
 
@@ -845,7 +846,8 @@ final class DB
         $this->link instanceof \mysqli
     ) {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
-      return @\mysqli_ping($this->link);
+      /** @noinspection UsageOfSilenceOperatorInspection */
+      return (bool)@\mysqli_ping($this->link);
     }
 
     return false;
@@ -988,8 +990,10 @@ final class DB
 
     $return = mysqli_set_charset($this->link, $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
+    /** @noinspection UsageOfSilenceOperatorInspection */
     @\mysqli_query($this->link, 'SET CHARACTER SET ' . $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
+    /** @noinspection UsageOfSilenceOperatorInspection */
     @\mysqli_query($this->link, "SET NAMES '" . $charset . "'");
 
     return $return;

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.4.2 (2017-05-21)
+
+* [+]: fix return of "DB->ping()" -> if there isn't a link to the db
+
 4.4.1 (2017-05-05)
 
 * [+]: add caching for "Helper::phoneticSearch()" + tests

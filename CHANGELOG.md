@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.4.3 (2017-05-22)
+
+* [+]: fix return types of "fetchArray()" / "fetchArrayy()"
+
 4.4.2 (2017-05-21)
 
 * [+]: fix return of "DB->ping()" -> if there isn't a link to the db

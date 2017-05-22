@@ -487,6 +487,12 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $result = $this->db->select($this->tableName, array('page_id' => 2));
     self::assertSame(0, $result->num_rows);
 
+    $resultArray = $result->fetchArray();
+    self::assertSame(array(), $resultArray);
+
+    $resultArray = $result->fetchArrayy();
+    self::assertEquals(new Arrayy(), $resultArray);
+
     // select - true
     $result = $this->db->select($this->tableName);
     self::assertTrue($result->num_rows > 0);

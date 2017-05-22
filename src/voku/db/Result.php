@@ -380,6 +380,10 @@ final class Result
       return $this->cast($row);
     }
 
+    if ($row === null) {
+      return array();
+    }
+
     return false;
   }
 
@@ -399,6 +403,10 @@ final class Result
     $row = \mysqli_fetch_assoc($this->_result);
     if ($row) {
       return Arrayy::create($this->cast($row));
+    }
+
+    if ($row === null) {
+      return Arrayy::create();
     }
 
     return false;

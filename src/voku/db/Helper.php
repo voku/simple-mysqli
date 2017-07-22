@@ -109,7 +109,7 @@ class Helper
 
     if ($table === '') {
       $debug = new Debug($dbConnection);
-      $debug->displayError('invalid table name');
+      $debug->displayError('Invalid table name, table name in empty.', false);
 
       return array();
     }
@@ -260,7 +260,7 @@ class Helper
 
     if ($table === '') {
       $debug = new Debug($dbConnection);
-      $debug->displayError('invalid table name');
+      $debug->displayError('Invalid table name, table name in empty.', false);
 
       return array();
     }
@@ -308,7 +308,7 @@ class Helper
 
     if ($table === '') {
       $debug = new Debug($dbConnection);
-      $debug->displayError('invalid table name');
+      $debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }

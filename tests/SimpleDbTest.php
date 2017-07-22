@@ -74,7 +74,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // insert - false
     $false = $db_1->insert($this->tableName, array());
-    $this->expectOutputRegex('/(.)*empty data for INSERT(.)*/');
+    $this->expectOutputRegex('/(.)*Invalid data for INSERT(.)*/');
     self::assertFalse($false);
   }
 
@@ -110,7 +110,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // sql - false
     $false = $db_1->query();
-    $this->expectOutputRegex('/(.)*Can\'t execute an empty Query(.)*/');
+    $this->expectOutputRegex('/(.)*Can not execute an empty query(.)*/');
     self::assertFalse($false);
 
     // close db-connection
@@ -123,10 +123,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertFalse($false);
   }
 
-  /**
-   * @expectedException        Exception
-   * @expectedExceptionMessage invalid table name
-   */
   public function testExitOnError1()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
@@ -141,10 +137,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertFalse($false);
   }
 
-  /**
-   * @expectedException        Exception
-   * @expectedExceptionMessage empty data for INSERT
-   */
   public function testExitOnError2()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
@@ -1017,10 +1009,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertSame(0, $resultSelect->num_rows);
   }
 
-  /**
-   * @expectedException Exception
-   * @expectedExceptionMessage Error mysql server already in transaction!
-   */
   public function testTransactionException()
   {
     // start - test a transaction - true

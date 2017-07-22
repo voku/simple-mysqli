@@ -2,6 +2,7 @@
 
 namespace voku\db;
 
+use voku\db\exceptions\QueryException;
 use voku\helper\Bootup;
 use voku\helper\UTF8;
 
@@ -23,6 +24,8 @@ class Debug
   private $exit_on_error = true;
 
   /**
+   * echo the error if "checkForDev()" returns true
+   *
    * @var bool
    */
   private $echo_on_error = true;
@@ -36,7 +39,6 @@ class Debug
    * @var string
    */
   private $css_mysql_box_bg = '#FFCCCC';
-
 
   /**
    * @var string
@@ -127,7 +129,7 @@ class Debug
    *                                                  on "$this->exit_on_error (default: true)".
    *                                                  </p>
    *
-   * @throws \Exception
+   * @throws QueryException
    */
   public function displayError($error, $force_exception_after_error = null)
   {
@@ -145,7 +147,6 @@ class Debug
     $this->_errors[] = $error;
 
     if ($this->checkForDev() === true) {
-
       if ($this->echo_on_error) {
         $box_border = $this->css_mysql_box_border;
         $box_bg = $this->css_mysql_box_bg;
@@ -160,19 +161,18 @@ class Debug
         </div>
         ';
       }
+    }
 
-      if ($force_exception_after_error === true) {
-        throw new \Exception($error);
-      }
-
-      if ($force_exception_after_error === false) {
-        // nothing
-      } elseif ($force_exception_after_error === null) {
-        // default
-        if ($this->exit_on_error === true) {
-          throw new \Exception($error);
-        }
-      }
+    if (
+        $force_exception_after_error === true
+        ||
+        (
+            $force_exception_after_error === null
+            &&
+            $this->exit_on_error === true
+        )
+    ) {
+      throw new QueryException($error);
     }
   }
 

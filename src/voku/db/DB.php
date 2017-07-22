@@ -3,12 +3,15 @@
 namespace voku\db;
 
 use voku\cache\Cache;
+use voku\db\exceptions\DBConnectException;
+use voku\db\exceptions\DBGoneAwayException;
+use voku\db\exceptions\QueryException;
 use voku\helper\UTF8;
 
 /**
  * DB: this handles DB queries via MySQLi
  *
- * @package   voku\db
+ * @package voku\db
  */
 final class DB
 {
@@ -164,11 +167,11 @@ final class DB
    * @param string         $database
    * @param int            $port
    * @param string         $charset
-   * @param boolean|string $exit_on_error use a empty string "" or false to disable it
-   * @param boolean|string $echo_on_error use a empty string "" or false to disable it
+   * @param boolean|string $exit_on_error <p>Use a empty string "" or false to disable it.</p>
+   * @param boolean|string $echo_on_error <p>Use a empty string "" or false to disable it.</p>
    * @param string         $logger_class_name
    * @param string         $logger_level
-   * @param boolean|string $session_to_db use a empty string "" or false to disable it
+   * @param boolean|string $session_to_db <p>Use a empty string "" or false to disable it.</p>
    *
    * @return bool
    */
@@ -222,7 +225,7 @@ final class DB
    *
    * @return bool
    *
-   * @throws \Exception
+   * @throws \InvalidArgumentException
    */
   public function showConfigError()
   {
@@ -236,15 +239,15 @@ final class DB
     ) {
 
       if (!$this->hostname) {
-        throw new \Exception('no-sql-hostname');
+        throw new \InvalidArgumentException ('no-sql-hostname');
       }
 
       if (!$this->username) {
-        throw new \Exception('no-sql-username');
+        throw new \InvalidArgumentException ('no-sql-username');
       }
 
       if (!$this->database) {
-        throw new \Exception('no-sql-database');
+        throw new \InvalidArgumentException ('no-sql-database');
       }
 
       return false;
@@ -256,7 +259,9 @@ final class DB
   /**
    * Open a new connection to the MySQL server.
    *
-   * @return boolean
+   * @return bool
+   *
+   * @throws DBConnectException
    */
   public function connect()
   {
@@ -283,15 +288,20 @@ final class DB
           $this->socket
       );
     } catch (\Exception $e) {
-      $this->_debug->displayError('Error connecting to mysql server: ' . $e->getMessage(), true);
+      $error = 'Error connecting to mysql server: ' . $e->getMessage();
+      $this->_debug->displayError($error, false);
+      throw new DBConnectException($error, 100, $e);
     }
     \mysqli_report(MYSQLI_REPORT_OFF);
 
     if (!$this->connected) {
-      $this->_debug->displayError('Error connecting to mysql server: ' . \mysqli_connect_error(), true);
-    } else {
-      $this->set_charset($this->charset);
+      $error = 'Error connecting to mysql server: ' . \mysqli_connect_error();
+      $this->_debug->displayError($error, false);
+      /** @noinspection ThrowRawExceptionInspection */
+      throw new DBConnectException($error, 101);
     }
+
+    $this->set_charset($this->charset);
 
     return $this->isReady();
   }
@@ -420,18 +430,22 @@ final class DB
   /**
    * Execute a sql-query.
    *
-   * @param string        $sql            sql-query
+   * @param string        $sql            <p>The sql query-string.</p>
    *
-   * @param array|boolean $params         "array" of sql-query-parameters
-   *                                      "false" if you don't need any parameter (default)
+   * @param array|boolean $params         <p>
+   *                                      "array" of sql-query-parameters<br/>
+   *                                      "false" if you don't need any parameter (default)<br/>
+   *                                      </p>
    *
-   * @return bool|int|Result              "Result" by "<b>SELECT</b>"-queries<br />
+   * @return bool|int|Result              <p>
+   *                                      "Result" by "<b>SELECT</b>"-queries<br />
    *                                      "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
    *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
    *                                      "true" by e.g. "DROP"-queries<br />
    *                                      "false" on error
+   *                                      </p>
    *
-   * @throws \Exception
+   * @throws QueryException
    */
   public function query($sql = '', $params = false)
   {
@@ -440,7 +454,7 @@ final class DB
     }
 
     if (!$sql || $sql === '') {
-      $this->_debug->displayError('Can\'t execute an empty Query', false);
+      $this->_debug->displayError('Can not execute an empty query.', false);
 
       return false;
     }
@@ -776,7 +790,8 @@ final class DB
    * @param string     $sql
    * @param array|bool $sqlParams false if there wasn't any parameter
    *
-   * @throws \Exception
+   * @throws QueryException
+   * @throws DBGoneAwayException
    *
    * @return bool
    */
@@ -787,11 +802,11 @@ final class DB
 
       // exit if we have more then 3 "DB server has gone away"-errors
       if ($RECONNECT_COUNTER > 3) {
-        $this->_debug->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
-        throw new \Exception($errorMsg);
+        $this->_debug->mailToAdmin('DB-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
+        throw new DBGoneAwayException($errorMsg);
       }
 
-      $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
+      $this->_debug->mailToAdmin('DB-Error', $errorMsg . ":\n<br />" . $sql);
 
       // reconnect
       $RECONNECT_COUNTER++;
@@ -801,7 +816,7 @@ final class DB
       return $this->query($sql, $sqlParams);
     }
 
-    $this->_debug->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
+    $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
 
     // this query returned an error, we must display it (only for dev) !!!
     $this->_debug->displayError($errorMsg . ' | ' . $sql);
@@ -1043,7 +1058,7 @@ final class DB
     }
 
     if (!$sql || $sql === '') {
-      $this->_debug->displayError('Can\'t execute an empty Query', false);
+      $this->_debug->displayError('Can not execute an empty query.', false);
 
       return false;
     }
@@ -1110,20 +1125,20 @@ final class DB
   /**
    * Begins a transaction, by turning off auto commit.
    *
-   * @return boolean this will return true or false indicating success of transaction
+   * @return bool <p>This will return true or false indicating success of transaction</p>
    */
   public function beginTransaction()
   {
     $this->clearErrors();
 
     if ($this->inTransaction() === true) {
-      $this->_debug->displayError('Error mysql server already in transaction!', true);
+      $this->_debug->displayError('Error mysql server already in transaction!', false);
 
       return false;
     }
 
     if (\mysqli_connect_errno()) {
-      $this->_debug->displayError('Error connecting to mysql server: ' . \mysqli_connect_error(), true);
+      $this->_debug->displayError('Error connecting to mysql server: ' . \mysqli_connect_error(), false);
 
       return false;
     }
@@ -1147,7 +1162,7 @@ final class DB
   /**
    * Check if we are in a transaction.
    *
-   * @return boolean
+   * @return bool
    */
   public function inTransaction()
   {
@@ -1157,7 +1172,7 @@ final class DB
   /**
    * Ends a transaction and commits if no errors, then ends autocommit.
    *
-   * @return boolean this will return true or false indicating success of transactions
+   * @return bool <p>This will return true or false indicating success of transactions.</p>
    */
   public function endTransaction()
   {
@@ -1179,7 +1194,7 @@ final class DB
   /**
    * Get all errors from "$this->_errors".
    *
-   * @return array|false false === on errors
+   * @return array|false <p>false === on errors</p>
    */
   public function errors()
   {
@@ -1210,7 +1225,7 @@ final class DB
    *
    * @param string      $table
    * @param array       $data
-   * @param string|null $databaseName <p>use <strong>null</strong> if you will use the current database</p>
+   * @param string|null $databaseName <p>Use <strong>null</strong> if you will use the current database.</p>
    *
    * @return false|int false on error
    */
@@ -1220,13 +1235,13 @@ final class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_debug->displayError('invalid table name');
+      $this->_debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }
 
     if (count($data) === 0) {
-      $this->_debug->displayError('empty data for INSERT');
+      $this->_debug->displayError('Invalid data for INSERT, data is empty.', false);
 
       return false;
     }
@@ -1246,7 +1261,7 @@ final class DB
    * Parses arrays with value pairs and generates SQL to use in queries.
    *
    * @param array  $arrayPair
-   * @param string $glue this is the separator
+   * @param string $glue <p>This is the separator.</p>
    *
    * @return string
    *
@@ -1435,7 +1450,7 @@ final class DB
    *
    * @param string      $table
    * @param array       $data
-   * @param null|string $databaseName <p>use <strong>null</strong> if you will use the current database</p>
+   * @param null|string $databaseName <p>Use <strong>null</strong> if you will use the current database.</p>
    *
    * @return false|int false on error
    */
@@ -1445,13 +1460,13 @@ final class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_debug->displayError('invalid table name');
+      $this->_debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }
 
     if (count($data) === 0) {
-      $this->_debug->displayError('empty data for REPLACE');
+      $this->_debug->displayError('Invalid data for REPLACE, data is empty.', false);
 
       return false;
     }
@@ -1487,7 +1502,7 @@ final class DB
    * @param string       $table
    * @param array        $data
    * @param array|string $where
-   * @param null|string  $databaseName <p>use <strong>null</strong> if you will use the current database</p>
+   * @param null|string  $databaseName <p>Use <strong>null</strong> if you will use the current database.</p>
    *
    * @return false|int false on error
    */
@@ -1497,13 +1512,13 @@ final class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_debug->displayError('invalid table name');
+      $this->_debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }
 
     if (count($data) === 0) {
-      $this->_debug->displayError('empty data for UPDATE');
+      $this->_debug->displayError('Invalid data for UPDATE, data is empty.', false);
 
       return false;
     }
@@ -1532,7 +1547,7 @@ final class DB
    *
    * @param string       $table
    * @param string|array $where
-   * @param string|null  $databaseName <p>use <strong>null</strong> if you will use the current database</p>
+   * @param string|null  $databaseName <p>Use <strong>null</strong> if you will use the current database.</p>
    *
    * @return false|int false on error
    */
@@ -1542,7 +1557,7 @@ final class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_debug->displayError('invalid table name');
+      $this->_debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }
@@ -1569,7 +1584,7 @@ final class DB
    *
    * @param string       $table
    * @param string|array $where
-   * @param string|null  $databaseName <p>use <strong>null</strong> if you will use the current database</p>
+   * @param string|null  $databaseName <p>Use <strong>null</strong> if you will use the current database.</p>
    *
    * @return false|Result false on error
    */
@@ -1579,7 +1594,7 @@ final class DB
     $table = trim($table);
 
     if ($table === '') {
-      $this->_debug->displayError('invalid table name');
+      $this->_debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }
@@ -1604,7 +1619,7 @@ final class DB
   /**
    * Get the last sql-error.
    *
-   * @return string false on error
+   * @return string|false <p>false === there was no error</p>
    */
   public function lastError()
   {

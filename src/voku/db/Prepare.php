@@ -2,6 +2,8 @@
 
 namespace voku\db;
 
+use voku\db\exceptions\DBGoneAwayException;
+use voku\db\exceptions\QueryException;
 use voku\helper\Bootup;
 
 /**
@@ -325,7 +327,7 @@ final class Prepare extends \mysqli_stmt
     }
 
     if (!$query || $query === '') {
-      $this->_debug->displayError('Can\'t prepare an empty Query', false);
+      $this->_debug->displayError('Can not prepare an empty query.', false);
 
       return false;
     }
@@ -333,10 +335,10 @@ final class Prepare extends \mysqli_stmt
     $bool = parent::prepare($query);
 
     if ($bool === false) {
-      $this->_debug->displayError('Can\'t prepare Query: ' . $query . ' | ' . $this->error, false);
+      $this->_debug->displayError('Can not prepare query: ' . $query . ' | ' . $this->error, false);
     }
 
-    return true;
+    return $bool;
   }
 
   /**
@@ -409,32 +411,33 @@ final class Prepare extends \mysqli_stmt
    * @param string $errorMsg
    * @param string $sql
    *
-   * @throws \Exception
+   * @throws QueryException
+   * @throws DBGoneAwayException
    *
    * @return bool
    */
   private function queryErrorHandling($errorMsg, $sql)
   {
     if ($errorMsg === 'DB server has gone away' || $errorMsg === 'MySQL server has gone away') {
-      static $reconnectCounter;
+      static $RECONNECT_COUNTER;
 
       // exit if we have more then 3 "DB server has gone away"-errors
-      if ($reconnectCounter > 3) {
-        $this->_debug->mailToAdmin('SQL-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
-        throw new \Exception($errorMsg);
+      if ($RECONNECT_COUNTER > 3) {
+        $this->_debug->mailToAdmin('DB-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
+        throw new DBGoneAwayException($errorMsg);
       }
 
-      $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
+      $this->_debug->mailToAdmin('DB-Error', $errorMsg . ":\n<br />" . $sql);
 
       // reconnect
-      $reconnectCounter++;
+      $RECONNECT_COUNTER++;
       $this->_db->reconnect(true);
 
       // re-run the current query
       return $this->execute();
     }
 
-    $this->_debug->mailToAdmin('SQL-Warning', $errorMsg . ":\n<br />" . $sql);
+    $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
 
     // this query returned an error, we must display it (only for dev) !!!
     $this->_debug->displayError($errorMsg . ' | ' . $sql);

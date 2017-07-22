@@ -880,6 +880,8 @@ final class DB
    *               "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
    *               "true" by e.g. "DROP"-queries<br />
    *               "false" on error
+   *
+   * @throws QueryException
    */
   public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
   {
@@ -1049,7 +1051,7 @@ final class DB
    *                        "boolean" by only (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
    *                        "boolean" by only by e.g. "DROP"-queries<br />
    *
-   * @throws \Exception
+   * @throws QueryException
    */
   public function multi_query($sql)
   {
@@ -1227,7 +1229,9 @@ final class DB
    * @param array       $data
    * @param string|null $databaseName <p>Use <strong>null</strong> if you will use the current database.</p>
    *
-   * @return false|int false on error
+   * @return false|int <p>false on error</p>
+   *
+   * @throws QueryException
    */
   public function insert($table, array $data = array(), $databaseName = null)
   {
@@ -1452,7 +1456,9 @@ final class DB
    * @param array       $data
    * @param null|string $databaseName <p>Use <strong>null</strong> if you will use the current database.</p>
    *
-   * @return false|int false on error
+   * @return false|int <p>false on error</p>
+   *
+   * @throws QueryException
    */
   public function replace($table, array $data = array(), $databaseName = null)
   {
@@ -1504,7 +1510,9 @@ final class DB
    * @param array|string $where
    * @param null|string  $databaseName <p>Use <strong>null</strong> if you will use the current database.</p>
    *
-   * @return false|int false on error
+   * @return false|int <p>false on error</p>
+   *
+   * @throws QueryException
    */
   public function update($table, array $data = array(), $where = '1=1', $databaseName = null)
   {
@@ -1549,7 +1557,9 @@ final class DB
    * @param string|array $where
    * @param string|null  $databaseName <p>Use <strong>null</strong> if you will use the current database.</p>
    *
-   * @return false|int false on error
+   * @return false|int <p>false on error</p>
+   *
+   *    * @throws QueryException
    */
   public function delete($table, $where, $databaseName = null)
   {
@@ -1586,7 +1596,9 @@ final class DB
    * @param string|array $where
    * @param string|null  $databaseName <p>Use <strong>null</strong> if you will use the current database.</p>
    *
-   * @return false|Result false on error
+   * @return false|Result <p>false on error</p>
+   *
+   * @throws QueryException
    */
   public function select($table, $where = '1=1', $databaseName = null)
   {

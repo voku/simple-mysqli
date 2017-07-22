@@ -1,6 +1,14 @@
 Changelog
 =========
 
+5.0.0 (2017-07-22)
+
+* [!]: throw custom-exceptions and throw them only if needed
+
+- DBConnectException: will be thrown from DB->connect()
+- DBGoneAwayException: will be thrown by "server has gone away"-error
+- QueryException: will be thrown by "query"-error
+
 4.4.3 (2017-05-22)
 
 * [+]: fix return types of "fetchArray()" / "fetchArrayy()"

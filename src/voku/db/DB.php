@@ -239,15 +239,15 @@ final class DB
     ) {
 
       if (!$this->hostname) {
-        throw new \InvalidArgumentException ('no-sql-hostname');
+        throw new \InvalidArgumentException('no-sql-hostname');
       }
 
       if (!$this->username) {
-        throw new \InvalidArgumentException ('no-sql-username');
+        throw new \InvalidArgumentException('no-sql-username');
       }
 
       if (!$this->database) {
-        throw new \InvalidArgumentException ('no-sql-database');
+        throw new \InvalidArgumentException('no-sql-database');
       }
 
       return false;

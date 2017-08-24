@@ -1361,7 +1361,7 @@ final class DB
     if ($query_result === true) {
 
       // "INSERT" || "REPLACE"
-      if (preg_match('/^\s*"?(INSERT|REPLACE)\s+/i', $sql)) {
+      if (preg_match('/^\s*?(?:INSERT|REPLACE)\s+/i', $sql)) {
         $insert_id = (int)$this->insert_id();
         $this->_debug->logQuery($sql, $query_duration, $insert_id);
 
@@ -1369,7 +1369,7 @@ final class DB
       }
 
       // "UPDATE" || "DELETE"
-      if (preg_match('/^\s*"?(UPDATE|DELETE)\s+/i', $sql)) {
+      if (preg_match('/^\s*?(?:UPDATE|DELETE)\s+/i', $sql)) {
         $affected_rows = (int)$this->affected_rows();
         $this->_debug->logQuery($sql, $query_duration, $affected_rows);
 

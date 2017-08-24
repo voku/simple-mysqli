@@ -267,17 +267,15 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
 
     // select - true
-    /*
     foreach ($result as $resultItem) {
       self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $resultItem['page_template']);
     }
 
     $tmpPage = $result->fetchObject('', null, true);
     self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
-    */
 
     // --
-
+    /*
     $sql = 'INSERT INTO ' . $this->tableName . '
       SET
         page_template = ?,
@@ -296,6 +294,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $tmpPage = $result->fetchObject();
     self::assertSame('$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
     self::assertSame('$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$', $tmpPage->page_type);
+    */
   }
 
   public function testInsertUtf84mb()

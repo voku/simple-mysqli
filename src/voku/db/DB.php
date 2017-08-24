@@ -1183,10 +1183,6 @@ final class DB
 
     } else {
 
-      //if ($this->_debug->checkForDev() === true) {
-      //  echo "INFO: maybe you have to increase your 'max_allowed_packet' in the config' \n<br />";
-      //}
-
       // log the error query
       $this->_debug->logQuery($sql, $query_duration, 0, true);
 

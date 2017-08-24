@@ -100,9 +100,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertFalse($false);
   }
 
-  /**
-   *
-   */
   public function testEchoOnError2()
   {
     $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
@@ -269,6 +266,14 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $tmpPage = $result->fetchObject();
     self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
 
+    // select - true
+    foreach ($result as $resultItem) {
+      self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $resultItem['page_template']);
+    }
+
+    $tmpPage = $result->fetchObject('', null, true);
+    self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
+
     // --
 
     $sql = 'INSERT INTO ' . $this->tableName . '
@@ -407,7 +412,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $false = $this->db->update($this->tableName, array(), 'page_id = ' . (int)$tmpId);
     self::assertFalse($false);
 
-    // update - false
+    // update - true
     $false = $this->db->update($this->tableName, $pageArray, '');
     self::assertFalse($false);
 
@@ -1009,6 +1014,48 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertSame(0, $resultSelect->num_rows);
   }
 
+  public function testCommit()
+  {
+    // start - test a transaction
+    $this->db->beginTransaction();
+
+    $data = array(
+        'page_template' => 'tpl_test_new4',
+        'page_type'     => 'öäü',
+    );
+
+    // will return the auto-increment value of the new row
+    $resultInsert = $this->db->insert($this->tableName, $data);
+    self::assertGreaterThan(1, $resultInsert);
+
+    $data = array(
+        'page_type' => 'lall',
+    );
+    $where = array(
+        'page_id' => $resultInsert,
+    );
+    $this->db->update($this->tableName, $data, $where);
+
+    $data = array(
+        'page_type' => 'lall',
+        'page_lall' => 'öäü'
+        // this will produce a mysql-error and a mysqli-rollback
+    );
+    $where = array(
+        'page_id' => $resultInsert,
+    );
+    $this->db->update($this->tableName, $data, $where);
+
+    // end - test a transaction, with a commit!
+    $this->db->commit();
+
+    $where = array(
+        'page_id' => $resultInsert,
+    );
+    $resultSelect = $this->db->select($this->tableName, $where);
+    self::assertSame(1, $resultSelect->num_rows);
+  }
+
   public function testTransactionException()
   {
     // start - test a transaction - true
@@ -1284,6 +1331,46 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     // multi_query - false
     $false = $this->db->multi_query('');
     self::assertFalse($false);
+
+    // multi_query - false
+    $sql = '
+    INSERT INTO ' . $this->tableName . "
+      SET
+        page_template_no = 'lall1',
+        page_type = 'test1';
+    INSERT INTO " . $this->tableName . "
+      SET
+        page_template = 'lall2',
+        page_type = 'test2';
+    INSERT INTO " . $this->tableName . "
+      SET
+        page_template = 'lall3',
+        page_type = 'test3';
+    ";
+    // multi_query - true
+    $result = $this->db->multi_query($sql);
+    self::assertFalse($result);
+  }
+
+  public function testEscapeData()
+  {
+    self::assertSame(null, $this->db->escape(null, true));
+    self::assertSame(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), $this->db->escape("O'Toole"));
+    self::assertSame(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), $this->db->escape("O'Toole", true));
+    self::assertSame(1, $this->db->escape(true));
+    self::assertSame(0, $this->db->escape(false));
+    self::assertSame(1, $this->db->escape(true, false));
+    self::assertSame(0, $this->db->escape(false, false));
+    self::assertSame('NOW()', $this->db->escape('NOW()'));
+    self::assertSame(array(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), 1, null), $this->db->escape(array("O'Toole", true, null)));
+    self::assertSame(array(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), 1, null), $this->db->escape(array("O'Toole", true, null), false));
+  }
+
+  public function testInvoke()
+  {
+    $db = $this->db;
+    $this->assertInstanceOf('\\voku\\db\\DB', $db());
+    $this->assertInstanceOf('\\voku\\db\\Result', $db('SELECT * FROM ' . $this->tableName));
   }
 
   public function testConnector2()
@@ -1594,6 +1681,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         $this->db, 'queryErrorHandling',
         array(
             'DB server has gone away',
+            2006,
             'SELECT * FROM ' . $this->tableName . ' WHERE page_id = 1',
         )
     );

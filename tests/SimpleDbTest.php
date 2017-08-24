@@ -244,8 +244,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // select - true
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
-    $tmpPage = $result->fetchObject();
-    self::assertSame('<li><a href="/">鼦վͼ</a></li>', $tmpPage->page_template);
+    $tmpPage = $result->fetchArray();
+    self::assertSame('<li><a href="/">鼦վͼ</a></li>', $tmpPage['page_template']);
   }
 
   /**

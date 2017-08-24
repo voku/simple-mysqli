@@ -22,8 +22,7 @@ class Helper
     static $_mysqlnd_is_used = null;
 
     if ($_mysqlnd_is_used === null) {
-      // TODO
-      $_mysqlnd_is_used = true; //(extension_loaded('mysqlnd') && function_exists('mysqli_fetch_all'));
+      $_mysqlnd_is_used = (extension_loaded('mysqlnd') && function_exists('mysqli_fetch_all'));
     }
 
     return $_mysqlnd_is_used;

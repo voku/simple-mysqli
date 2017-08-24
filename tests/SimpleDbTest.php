@@ -206,6 +206,37 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertTrue($true);
   }
 
+  public function testInsertOnlyUtf84mb()
+  {
+    $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+
+    // insert - true
+    $pageArray = array(
+      'page_template' => $html,
+      'page_type'     => 'lallll',
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+    self::assertTrue($tmpId > 0);
+  }
+
+  public function testInsertAndSelectOnlyUtf84mb()
+  {
+    $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+
+    // insert - true
+    $pageArray = array(
+      'page_template' => $html,
+      'page_type'     => 'lallll',
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+    self::assertTrue($tmpId > 0);
+
+    // select - true
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchObject();
+    self::assertSame('<li><a href="/">鼦վͼ</a></li>', $tmpPage->page_template);
+  }
+
   /**
    * @expectedException Exception
    * @expectedExceptionMessage no-sql-hostname

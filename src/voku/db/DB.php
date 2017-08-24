@@ -647,7 +647,6 @@ final class DB
     if (!$this->connected || $errno) {
       $error = 'Error connecting to mysql server: ' . \mysqli_connect_error() . ' (' . $errno . ')';
       $this->_debug->displayError($error, false);
-      /** @noinspection ThrowRawExceptionInspection */
       throw new DBConnectException($error, 101);
     }
 
@@ -1899,9 +1898,9 @@ final class DB
    *                                      "false" on error
    *                                      </p>
    */
-  //public function __invoke($sql = null, array $bindings = array())
-  //{
-  //  return isset($sql) ? $this->query($sql, $bindings) : $this;
-  //}
+  public function __invoke($sql = null, array $bindings = array())
+  {
+    return isset($sql) ? $this->query($sql, $bindings) : $this;
+  }
 
 }

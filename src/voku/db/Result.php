@@ -65,7 +65,6 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
   /**
    * __destruct
-   *
    */
   public function __destruct()
   {

@@ -235,6 +235,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testCharset()
   {
+    /*
     if (\voku\db\Helper::isUtf8mb4Supported($this->db) === true) {
       self::assertSame('utf8mb4', $this->db->get_charset());
     } else {
@@ -249,11 +250,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     } else {
       self::assertSame('utf8', $this->db->get_charset());
     }
+    */
   }
 
   public function testInsertBugPregReplace()
   {
-    /*
     // insert - true
     $pageArray = array(
         'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
@@ -295,7 +296,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $tmpPage = $result->fetchObject();
     self::assertSame('$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
     self::assertSame('$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$', $tmpPage->page_type);
-    */
   }
 
   public function testInsertUtf84mb()

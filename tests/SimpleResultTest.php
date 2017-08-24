@@ -333,7 +333,7 @@ SQL;
     $result = $this->db->query('SELECT * FROM `post`');
     self::assertTrue($result() instanceof \MySQLi_Result);
     $ids = array();
-    $result(function($result) use (&$ids) {
+    $result(function ($result) use (&$ids) {
       while ($row = mysqli_fetch_assoc($result)) {
         $ids[] = $row['id'];
       }
@@ -348,7 +348,7 @@ SQL;
     self::assertFalse($row instanceof \stdClass);
     self::assertSame('Title #1', $row['title']);
 
-    $result->map(function($row) {
+    $result->map(function ($row) {
       return (object) $row;
     });
     $row = $result->fetch_callable(0);

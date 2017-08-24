@@ -624,30 +624,17 @@ final class DB
         $flags = MYSQLI_CLIENT_SSL;
       }
 
-      if ($flags) {
-        /** @noinspection PhpUsageOfSilenceOperatorInspection */
-        $this->connected = @\mysqli_real_connect(
-            $this->link,
-            $this->hostname,
-            $this->username,
-            $this->password,
-            $this->database,
-            $this->port,
-            $this->socket,
-            $flags
-        );
-      } else {
-        /** @noinspection PhpUsageOfSilenceOperatorInspection */
-        $this->connected = @\mysqli_real_connect(
-            $this->link,
-            $this->hostname,
-            $this->username,
-            $this->password,
-            $this->database,
-            $this->port,
-            $this->socket
-        );
-      }
+      /** @noinspection PhpUsageOfSilenceOperatorInspection */
+      $this->connected = @\mysqli_real_connect(
+          $this->link,
+          $this->hostname,
+          $this->username,
+          $this->password,
+          $this->database,
+          $this->port,
+          $this->socket,
+          $flags
+      );
 
     } catch (\Exception $e) {
       $error = 'Error connecting to mysql server: ' . $e->getMessage();
@@ -1912,9 +1899,9 @@ final class DB
    *                                      "false" on error
    *                                      </p>
    */
-  public function __invoke($sql = null, array $bindings = array())
-  {
-    return isset($sql) ? $this->query($sql, $bindings) : $this;
-  }
+  //public function __invoke($sql = null, array $bindings = array())
+  //{
+  //  return isset($sql) ? $this->query($sql, $bindings) : $this;
+  //}
 
 }

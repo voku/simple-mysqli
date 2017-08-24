@@ -88,7 +88,7 @@ before_script:
 
 script:
   - mkdir -p build/logs
-  - php vendor/bin/phpunit -c phpunit.xml
+  - php vendor/bin/phpunit --verbose --tap -c phpunit.xml
 
 after_script:
   - php vendor/bin/coveralls -v

@@ -118,12 +118,15 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     }
 
     // init
-    if (Bootup::is_php('5.4')) {
+    if (Bootup::is_php('5.5')) {
       static $FIELDS_CACHE = array();
       static $TYPES_CACHE = array();
     } else {
       $FIELDS_CACHE = array();
       $TYPES_CACHE = array();
+
+      //TODO
+      return $data;
     }
 
     $result_hash = spl_object_hash($this->_result);

@@ -217,6 +217,19 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertTrue($tmpId > 0);
   }
 
+  public function testInsertOnlyUtf84mb()
+  {
+    $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+
+    // insert - true
+    $pageArray = array(
+      'page_template' => $html,
+      'page_type'     => 'lallll',
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+    self::assertTrue($tmpId > 0);
+  }
+
   public function testInsertAndSelectOnlyUtf84mb()
   {
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);

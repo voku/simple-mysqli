@@ -593,15 +593,15 @@ final class DB
       if ($this->_ssl === true) {
 
         if (empty($this->clientcert)) {
-          throw new DBConnectException("Error connecting to mysql server: clientcert not defined");
+          throw new DBConnectException('Error connecting to mysql server: clientcert not defined');
         }
 
         if (empty($this->clientkey)) {
-          throw new DBConnectException("Error connecting to mysql server: clientkey not defined");
+          throw new DBConnectException('Error connecting to mysql server: clientkey not defined');
         }
 
         if (empty($this->cacert)) {
-          throw new DBConnectException("Error connecting to mysql server: cacert not defined");
+          throw new DBConnectException('Error connecting to mysql server: cacert not defined');
         }
 
         \mysqli_options($this->link, MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, true);

@@ -230,7 +230,40 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertTrue($tmpId > 0);
   }
 
-  public function testInsertAndSelectOnlyUtf84mb()
+  public function testInsertAndSelectOnlyUtf84mbV1()
+  {
+    $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+
+    // insert - true
+    $pageArray = array(
+      'page_template' => $html,
+      'page_type'     => 'lallll',
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+    self::assertTrue($tmpId > 0);
+
+    // select - true
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+  }
+
+  public function testInsertAndSelectOnlyUtf84mbV2()
+  {
+    $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+
+    // insert - true
+    $pageArray = array(
+      'page_template' => $html,
+      'page_type'     => 'lallll',
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+    self::assertTrue($tmpId > 0);
+
+    // select - true
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchArray();
+  }
+
+  public function testInsertAndSelectOnlyUtf84mbV3()
   {
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 

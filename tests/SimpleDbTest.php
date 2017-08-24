@@ -206,13 +206,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertTrue($true);
   }
 
-  public function testInsertOnlyUtf84mb()
+  public function testInsertOnlyAndSimple()
   {
-    $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
-
     // insert - true
     $pageArray = array(
-      'page_template' => $html,
+      'page_template' => '<p>foo</p>',
       'page_type'     => 'lallll',
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);

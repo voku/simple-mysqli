@@ -1357,7 +1357,6 @@ final class DB
 
       // return query result object
       return new Result($sql, $result);
-
     }
 
     if ($query_result === true) {

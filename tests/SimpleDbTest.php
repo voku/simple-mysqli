@@ -253,6 +253,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testInsertBugPregReplace()
   {
+    /*
     // insert - true
     $pageArray = array(
         'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
@@ -275,7 +276,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
 
     // --
-    /*
+
     $sql = 'INSERT INTO ' . $this->tableName . '
       SET
         page_template = ?,

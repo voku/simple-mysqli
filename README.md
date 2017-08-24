@@ -80,7 +80,14 @@ Example: SELECT
       'page_type NOT LIKE' => '%öäü123',
       'page_id >='          => 2,
   );
-  $resultSelect = $db->select('page', $where);
+  $articles = $db->select('page', $where);
+  
+  echo 'There are ' . count($articles) . ' article(s):' . PHP_EOL;
+  
+  foreach ($articles as $article) {
+      echo 'Type: ' . $article['page_type'] . PHP_EOL;
+      echo 'ID: ' . $article['page_id'] . PHP_EOL;
+  }
 ```
 
 Here is a list of connectors for the "WHERE"-array:
@@ -206,6 +213,145 @@ Other methods are:
   $data = $result->fetchAllColumn(string $column, bool $skipNullValues); // fetch a single column as an 1-dimension array
   $data = $result->fetchArrayPair(string $key, string $value);           // fetch data as a key/value pair array
 ```
+
+#### fetch_fields
+
+Returns rows of field information in a result set:
+
+```php
+<?php
+$fields = $result->fetch_fields();
+```
+
+Pass `true` as argument if you want each field information returned as an
+associative array instead of an object. The default is to return each as an
+object, exactly like the `mysqli_fetch_fields` function.
+
+#### fetch_callable
+
+Fetches a row or a single column within a row:
+
+```php
+<?php
+$data = $result->fetch($row_number, $column);
+```
+
+This method forms the basis of all fetch_ methods. All forms of fetch_ advances
+the internal row pointer to the next row. `null` will be returned when there are
+no more rows to be fetched.
+
+#### fetch_transpose
+
+Returns all rows at once, transposed as an array of arrays:
+
+```php
+<?php
+$plan_details = $plans->fetch_transpose();
+```
+
+Transposing a result set of X rows each with Y columns will result in an array
+of Y rows each with X columns.
+
+Pass a column name as argument to return each column as an associative array
+with keys taken from values of the provided column. If not provided, the keys
+will be numeric starting from zero.
+
+#### fetch_pairs
+
+Returns all rows at once as key-value pairs using the column in the first
+argument as the key:
+
+```php
+<?php
+$countries = $result->fetch_pairs('id');
+```
+
+Pass a column name as the second argument to only return a single column as the
+value in each pair:
+
+```php
+<?php
+$countries = $result->fetch_pairs('id', 'name');
+```
+
+#### fetch_groups
+
+Returns all rows at once as a grouped array:
+
+```php
+<?php
+$students_grouped_by_gender = $result->fetch_groups('gender');
+```
+
+Pass a column name as the second argument to only return single columns as the
+values in each groups:
+
+```php
+<?php
+$student_names_grouped_by_gender = $result->fetch_groups('gender', 'name');
+```
+
+#### first
+
+Returns the first row element from the result:
+
+```php
+<?php
+$first = $result->first();
+```
+
+Pass a column name as argument to return a single column from the first row:
+
+```php
+<?php
+$name = $result->first('name');
+```
+
+#### last
+
+Returns the last row element from the result:
+
+```php
+<?php
+$last = $result->last();
+```
+
+Pass a column name as argument to return a single column from the last row:
+
+```php
+<?php
+$name = $result->last('name');
+```
+
+#### slice
+
+Returns a slice of rows from the result:
+
+```php
+<?php
+$slice = $result->slice(1, 10);
+```
+
+The above will return 10 rows skipping the first one. The first parameter is the
+zero-based offset; the second parameter is the number of elements; the third
+parameter is a boolean value to indicate whether to preserve the keys or not
+(optional and defaults to false). This methods essentially behaves the same as
+PHP's built-in `array_slice()` function.
+
+#### map
+
+Sets a mapper callback function that's used inside the `Result::fetch_callable` method:
+
+```php
+<?php
+$result->map(function($row) {
+    return (object) $row;
+});
+$objects = $result->fetch_all();
+```
+
+The above example will map all rows returned as arrays from the result set to
+objects. Set the mapper callback function to null to disable it.
 
 ### Using the Prepare-Class
 

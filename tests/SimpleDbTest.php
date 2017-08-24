@@ -235,7 +235,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testCharset()
   {
-    /*
     if (\voku\db\Helper::isUtf8mb4Supported($this->db) === true) {
       self::assertSame('utf8mb4', $this->db->get_charset());
     } else {
@@ -250,7 +249,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     } else {
       self::assertSame('utf8', $this->db->get_charset());
     }
-    */
   }
 
   public function testInsertBugPregReplace()

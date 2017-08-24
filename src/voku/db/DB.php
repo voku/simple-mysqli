@@ -133,6 +133,7 @@ final class DB
    * @param array          $extra_config <p>
    *                                     'session_to_db' => false|true<br>
    *                                     'socket' => 'string (path)'<br>
+   *                                     'ssl' => 'bool'<br>
    *                                     'clientkey' => 'string (path)'<br>
    *                                     'clientcert' => 'string (path)'<br>
    *                                     'cacert' => 'string (path)'<br>
@@ -237,6 +238,7 @@ final class DB
    * @param array          $extra_config <p>
    *                                     'session_to_db' => false|true<br>
    *                                     'socket' => 'string (path)'<br>
+   *                                     'ssl' => 'bool'<br>
    *                                     'clientkey' => 'string (path)'<br>
    *                                     'clientcert' => 'string (path)'<br>
    *                                     'cacert' => 'string (path)'<br>
@@ -292,6 +294,10 @@ final class DB
 
       if (isset($extra_config['socket'])) {
         $this->socket = $extra_config['socket'];
+      }
+
+      if (isset($extra_config['ssl'])) {
+        $this->_ssl = $extra_config['ssl'];
       }
 
       if (isset($extra_config['clientkey'])) {
@@ -618,17 +624,30 @@ final class DB
         $flags = MYSQLI_CLIENT_SSL;
       }
 
-      /** @noinspection PhpUsageOfSilenceOperatorInspection */
-      $this->connected = @\mysqli_real_connect(
-          $this->link,
-          $this->hostname,
-          $this->username,
-          $this->password,
-          $this->database,
-          $this->port,
-          $this->socket,
-          $flags
-      );
+      if ($flags) {
+        /** @noinspection PhpUsageOfSilenceOperatorInspection */
+        $this->connected = @\mysqli_real_connect(
+            $this->link,
+            $this->hostname,
+            $this->username,
+            $this->password,
+            $this->database,
+            $this->port,
+            $this->socket,
+            $flags
+        );
+      } else {
+        /** @noinspection PhpUsageOfSilenceOperatorInspection */
+        $this->connected = @\mysqli_real_connect(
+            $this->link,
+            $this->hostname,
+            $this->username,
+            $this->password,
+            $this->database,
+            $this->port,
+            $this->socket
+        );
+      }
 
     } catch (\Exception $e) {
       $error = 'Error connecting to mysql server: ' . $e->getMessage();
@@ -963,6 +982,7 @@ final class DB
    * @param array       $extra_config    <p>
    *                                     'session_to_db' => false|true<br>
    *                                     'socket' => 'string (path)'<br>
+   *                                     'ssl' => 'bool'<br>
    *                                     'clientkey' => 'string (path)'<br>
    *                                     'clientcert' => 'string (path)'<br>
    *                                     'cacert' => 'string (path)'<br>

@@ -314,7 +314,7 @@ final class DB
 
     } else {
       // only for backward compatibility
-      $this->session_to_db = (boolean)$extra_config;
+      //$this->session_to_db = (boolean)$extra_config;
     }
 
     return $this->showConfigError();
@@ -553,18 +553,23 @@ final class DB
 
   /**
    * Closes a previously opened database connection.
+   *
+   * @return bool
    */
   public function close()
   {
     $this->connected = false;
 
     if (!$this->link) {
-      return;
+      return false;
     }
 
     if (\mysqli_close($this->link)) {
       $this->link = null;
+      return true;
     }
+
+    return false;
   }
 
   /**

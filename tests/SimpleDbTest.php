@@ -2,6 +2,7 @@
 
 use Arrayy\Arrayy;
 use voku\db\DB;
+use voku\db\Helper;
 use voku\db\Result;
 use voku\helper\UTF8;
 
@@ -217,9 +218,9 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertTrue($tmpId > 0);
   }
 
-  public function testInsertOnlyUtf84mb()
+  public function testInsertOnlyViaGetContent()
   {
-    $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+    $html = file_get_contents(__DIR__ . '/fixtures/sample-simple-html.txt');
 
     // insert - true
     $pageArray = array(
@@ -243,7 +244,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertTrue($tmpId > 0);
 
     // select - true
-    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
   }
 
   public function testInsertAndSelectOnlyUtf84mbV2()
@@ -260,7 +261,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // select - true
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
-    $tmpPage = $result->fetchArray();
+    $result->fetchArray();
   }
 
   public function testInsertAndSelectOnlyUtf84mbV3()
@@ -310,7 +311,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testCharset()
   {
-    if (\voku\db\Helper::isUtf8mb4Supported($this->db) === true) {
+    if (Helper::isUtf8mb4Supported($this->db) === true) {
       self::assertSame('utf8mb4', $this->db->get_charset());
     } else {
       self::assertSame('utf8', $this->db->get_charset());
@@ -319,7 +320,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $return = $this->db->set_charset('utf8');
     self::assertTrue($return);
 
-    if (\voku\db\Helper::isUtf8mb4Supported($this->db) === true) {
+    if (Helper::isUtf8mb4Supported($this->db) === true) {
       self::assertSame('utf8mb4', $this->db->get_charset());
     } else {
       self::assertSame('utf8', $this->db->get_charset());

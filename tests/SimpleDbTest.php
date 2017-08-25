@@ -374,11 +374,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testInsertUtf84mb()
   {
-    if (Helper::isUtf8mb4Supported($this->db) !== true) {
-      self::markTestSkipped('no support for utf8mb4');
-      return;
-    }
-
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
     // insert - true

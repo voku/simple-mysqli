@@ -231,14 +231,53 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertTrue($tmpId > 0);
   }
 
-  public function testInsertAndSelectOnlyUtf84mbV1()
+  public function testInsertBugPregReplace()
   {
-    if (Helper::isUtf8mb4Supported($this->db) !== true) {
-      self::markTestSkipped('no support for utf8mb4');
-      return;
+    // insert - true
+    $pageArray = array(
+      'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
+      'page_type'     => 'lall',
+    );
+    $tmpId = $this->db->insert($this->tableName, $pageArray);
+    self::assertTrue($tmpId > 0);
+
+    // select - true
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchObject();
+    self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
+
+    // select - true
+    foreach ($result as $resultItem) {
+      self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $resultItem['page_template']);
     }
 
+    $tmpPage = $result->fetchObject('', null, true);
+    self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
 
+    // --
+
+    $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = ?,
+        page_type = ?
+    ';
+    $tmpId = $this->db->query(
+      $sql,
+      array(
+        '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
+        '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
+      )
+    );
+
+    // select - true
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchObject();
+    self::assertSame('$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
+    self::assertSame('$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$', $tmpPage->page_type);
+  }
+
+  public function testInsertAndSelectOnlyUtf84mbV1()
+  {
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
     // insert - true
@@ -255,11 +294,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testInsertAndSelectOnlyUtf84mbV2()
   {
-    if (Helper::isUtf8mb4Supported($this->db) !== true) {
-      self::markTestSkipped('no support for utf8mb4');
-      return;
-    }
-
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
     // insert - true
@@ -277,11 +311,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testInsertAndSelectOnlyUtf84mbV3()
   {
-    if (Helper::isUtf8mb4Supported($this->db) !== true) {
-      self::markTestSkipped('no support for utf8mb4');
-      return;
-    }
-
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
     // insert - true
@@ -341,51 +370,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     } else {
       self::assertSame('utf8', $this->db->get_charset());
     }
-  }
-
-  public function testInsertBugPregReplace()
-  {
-    // insert - true
-    $pageArray = array(
-        'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
-        'page_type'     => 'lall',
-    );
-    $tmpId = $this->db->insert($this->tableName, $pageArray);
-    self::assertTrue($tmpId > 0);
-
-    // select - true
-    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
-    $tmpPage = $result->fetchObject();
-    self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
-
-    // select - true
-    foreach ($result as $resultItem) {
-      self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $resultItem['page_template']);
-    }
-
-    $tmpPage = $result->fetchObject('', null, true);
-    self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
-
-    // --
-
-    $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = ?,
-        page_type = ?
-    ';
-    $tmpId = $this->db->query(
-        $sql,
-        array(
-            '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
-            '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
-        )
-    );
-
-    // select - true
-    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
-    $tmpPage = $result->fetchObject();
-    self::assertSame('$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
-    self::assertSame('$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$', $tmpPage->page_type);
   }
 
   public function testInsertUtf84mb()

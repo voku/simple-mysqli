@@ -553,23 +553,18 @@ final class DB
 
   /**
    * Closes a previously opened database connection.
-   *
-   * @return bool
    */
   public function close()
   {
     $this->connected = false;
 
     if (!$this->link) {
-      return false;
+      return;
     }
 
     if (\mysqli_close($this->link)) {
-      $this->link = null;
-      return true;
+      //$this->link = null;
     }
-
-    return false;
   }
 
   /**

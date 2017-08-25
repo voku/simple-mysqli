@@ -563,7 +563,7 @@ final class DB
     }
 
     if (\mysqli_close($this->link)) {
-      //$this->link = null;
+      $this->link = null;
     }
   }
 

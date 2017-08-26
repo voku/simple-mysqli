@@ -651,8 +651,7 @@ final class DB
   {
 
     if (!$this->errors()) {
-      \mysqli_commit($this->link);
-      $return = true;
+      $return = \mysqli_commit($this->link);
     } else {
       $this->rollback();
       $return = false;

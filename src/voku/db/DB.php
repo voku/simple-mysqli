@@ -1458,18 +1458,19 @@ final class DB
   }
 
   /**
-   * Rollback in a transaction.
+   * Rollback in a transaction and end the transaction.
+   *
+   * @return bool <p>Boolean true on success, false otherwise.</p>
    */
   public function rollback()
   {
-    // init
-    $return = false;
-
-    if ($this->_in_transaction === true) {
-      $return = \mysqli_rollback($this->link);
-      \mysqli_autocommit($this->link, true);
-      $this->_in_transaction = false;
+    if ($this->_in_transaction === false) {
+      return false;
     }
+
+    $return = \mysqli_rollback($this->link);
+    \mysqli_autocommit($this->link, true);
+    $this->_in_transaction = false;
 
     return $return;
   }

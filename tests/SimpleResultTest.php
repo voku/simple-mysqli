@@ -328,11 +328,25 @@ SQL;
     self::assertTrue($result->free());
   }
 
-  public function testInvoke()
+  public function testInvokeV1()
   {
     $result = $this->db->query('SELECT * FROM `post`');
     self::assertTrue($result() instanceof \MySQLi_Result);
     $ids = array();
+    $result(function ($result) use (&$ids) {
+      while ($row = mysqli_fetch_assoc($result)) {
+        $ids[] = $row['id'];
+      }
+    });
+    self::assertEquals(3, count($ids));
+  }
+
+  public function testInvokeV2()
+  {
+    $db = $this->db;
+    $ids = array();
+
+    $result = $db('SELECT * FROM `post`');
     $result(function ($result) use (&$ids) {
       while ($row = mysqli_fetch_assoc($result)) {
         $ids[] = $row['id'];

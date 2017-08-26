@@ -49,7 +49,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @param string         $sql
    * @param \mysqli_result $result
-   * @param \Closure       $mapper Optional callback mapper for the "fetch_callable()" method
+   * @param \Closure       $mapper Optional callback mapper for the "fetchCallable()" method
    */
   public function __construct($sql = '', \mysqli_result $result, $mapper = null)
   {

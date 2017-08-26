@@ -1,6 +1,24 @@
 Changelog
 =========
 
+5.1.0 (2017-08-26)
+
+- SSL connection for mysqli
+- fix custom-exceptions
+- fix transaction-handling
+- add new parameter via ":column" (_parseQueryParamsByName)
+- foreach for the result-object
+- __invoke for the "DB"-class -> e.g.: $result = $db('SELECT ...');
+- __invoke for the "Result"-class -> e.g.: $result(function ($result) use (&$foo) { }
+- add DB->transact() + doc + tests
+- add DB->select_db()
+- the "Result"-class now implements "\Countable, \SeekableIterator, \ArrayAccess" interfaces
+- add Result->fetchCallable() + doc + tests
+
+5.0.0 (2017-08-10)
+
+* [+]: update vendor
+
 5.0.0 (2017-07-22)
 
 * [!]: throw custom-exceptions and throw them only if needed

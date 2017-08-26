@@ -514,9 +514,7 @@ final class DB
       return;
     }
 
-    if (\mysqli_close($this->link)) {
-      $this->link = null;
-    }
+    \mysqli_close($this->link);
   }
 
   /**

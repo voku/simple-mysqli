@@ -314,7 +314,7 @@ final class DB
 
     } else {
       // only for backward compatibility
-      //$this->session_to_db = (boolean)$extra_config;
+      $this->session_to_db = (boolean)$extra_config;
     }
 
     return $this->showConfigError();
@@ -596,7 +596,33 @@ final class DB
         \mysqli_options($this->link, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
       }
 
+      if ($this->_ssl === true) {
 
+        if (empty($this->clientcert)) {
+          throw new DBConnectException('Error connecting to mysql server: clientcert not defined');
+        }
+
+        if (empty($this->clientkey)) {
+          throw new DBConnectException('Error connecting to mysql server: clientkey not defined');
+        }
+
+        if (empty($this->cacert)) {
+          throw new DBConnectException('Error connecting to mysql server: cacert not defined');
+        }
+
+        \mysqli_options($this->link, MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, true);
+
+        \mysqli_ssl_set(
+            $this->link,
+            $this->_clientkey,
+            $this->_clientcert,
+            $this->_cacert,
+            null,
+            null
+        );
+
+        $flags = MYSQLI_CLIENT_SSL;
+      }
 
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
       $this->connected = @\mysqli_real_connect(
@@ -606,7 +632,8 @@ final class DB
           $this->password,
           $this->database,
           $this->port,
-          $this->socket
+          $this->socket,
+          $flags
       );
 
     } catch (\Exception $e) {
@@ -1855,24 +1882,6 @@ final class DB
     $sql = 'UPDATE ' . $databaseName . $this->quote_string($table) . " SET $SET WHERE ($WHERE);";
 
     return $this->query($sql);
-  }
-
-  /**
-   * @param null|string $sql
-   * @param array $bindings
-   *
-   * @return bool|int|Result|DB           <p>
-   *                                      "DB" by "$sql" === null<br />
-   *                                      "Result" by "<b>SELECT</b>"-queries<br />
-   *                                      "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
-   *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-   *                                      "true" by e.g. "DROP"-queries<br />
-   *                                      "false" on error
-   *                                      </p>
-   */
-  public function __invoke($sql = null, array $bindings = array())
-  {
-    return isset($sql) ? $this->query($sql, $bindings) : $this;
   }
 
 }

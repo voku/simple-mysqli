@@ -87,6 +87,29 @@ final class DB
   private $_convert_null_to_empty_string = false;
 
   /**
+   * @var bool
+   */
+  private $_ssl = false;
+  /**
+   * The path name to the key file
+   *
+   * @var string
+   */
+  private $_clientkey;
+  /**
+   * The path name to the certificate file
+   *
+   * @var string
+   */
+  private $_clientcert;
+  /**
+   * The path name to the certificate authority file
+   *
+   * @var string
+   */
+  private $_cacert;
+
+  /**
    * @var Debug
    */
   private $_debug;
@@ -455,25 +478,21 @@ final class DB
    */
   public function beginTransaction()
   {
-    $this->clearErrors();
-
-    if ($this->inTransaction() === true) {
+    if ($this->_in_transaction === true) {
       $this->_debug->displayError('Error mysql server already in transaction!', false);
-
       return false;
     }
 
-    if (\mysqli_connect_errno()) {
-      $this->_debug->displayError('Error connecting to mysql server: ' . \mysqli_connect_error(), false);
-
-      return false;
-    }
-
+    $this->clearErrors(); // needed for "$this->endTransaction()"
     $this->_in_transaction = true;
-    \mysqli_autocommit($this->link, false);
+    $return = \mysqli_autocommit($this->link, false);
+    if ($return === false) {
+      $this->_in_transaction = false;
+    }
 
-    return true;
+    return $return;
   }
+
 
   /**
    * Clear the errors in "_debug->_errors".

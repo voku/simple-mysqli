@@ -214,25 +214,23 @@ Other methods are:
   $data = $result->fetchArrayPair(string $key, string $value);           // fetch data as a key/value pair array
 ```
 
-#### fetch_fields
+#### fetchFields
 
 Returns rows of field information in a result set:
 
 ```php
-<?php
-$fields = $result->fetch_fields();
+$fields = $result->fetchFields();
 ```
 
 Pass `true` as argument if you want each field information returned as an
 associative array instead of an object. The default is to return each as an
 object, exactly like the `mysqli_fetch_fields` function.
 
-#### fetch_callable
+#### fetchCallable
 
 Fetches a row or a single column within a row:
 
 ```php
-<?php
 $data = $result->fetch($row_number, $column);
 ```
 
@@ -240,13 +238,12 @@ This method forms the basis of all fetch_ methods. All forms of fetch_ advances
 the internal row pointer to the next row. `null` will be returned when there are
 no more rows to be fetched.
 
-#### fetch_transpose
+#### fetchTranspose
 
 Returns all rows at once, transposed as an array of arrays:
 
 ```php
-<?php
-$plan_details = $plans->fetch_transpose();
+$plan_details = $plans->fetchTranspose();
 ```
 
 Transposing a result set of X rows each with Y columns will result in an array
@@ -256,39 +253,35 @@ Pass a column name as argument to return each column as an associative array
 with keys taken from values of the provided column. If not provided, the keys
 will be numeric starting from zero.
 
-#### fetch_pairs
+#### fetchPairs
 
 Returns all rows at once as key-value pairs using the column in the first
 argument as the key:
 
 ```php
-<?php
-$countries = $result->fetch_pairs('id');
+$countries = $result->fetchPairs('id');
 ```
 
 Pass a column name as the second argument to only return a single column as the
 value in each pair:
 
 ```php
-<?php
-$countries = $result->fetch_pairs('id', 'name');
+$countries = $result->fetchPairs('id', 'name');
 ```
 
-#### fetch_groups
+#### fetchGroups
 
 Returns all rows at once as a grouped array:
 
 ```php
-<?php
-$students_grouped_by_gender = $result->fetch_groups('gender');
+$students_grouped_by_gender = $result->fetchGroups('gender');
 ```
 
 Pass a column name as the second argument to only return single columns as the
 values in each groups:
 
 ```php
-<?php
-$student_names_grouped_by_gender = $result->fetch_groups('gender', 'name');
+$student_names_grouped_by_gender = $result->fetchGroups('gender', 'name');
 ```
 
 #### first
@@ -296,14 +289,12 @@ $student_names_grouped_by_gender = $result->fetch_groups('gender', 'name');
 Returns the first row element from the result:
 
 ```php
-<?php
 $first = $result->first();
 ```
 
 Pass a column name as argument to return a single column from the first row:
 
 ```php
-<?php
 $name = $result->first('name');
 ```
 
@@ -312,14 +303,12 @@ $name = $result->first('name');
 Returns the last row element from the result:
 
 ```php
-<?php
 $last = $result->last();
 ```
 
 Pass a column name as argument to return a single column from the last row:
 
 ```php
-<?php
 $name = $result->last('name');
 ```
 
@@ -328,7 +317,6 @@ $name = $result->last('name');
 Returns a slice of rows from the result:
 
 ```php
-<?php
 $slice = $result->slice(1, 10);
 ```
 
@@ -340,18 +328,17 @@ PHP's built-in `array_slice()` function.
 
 #### map
 
-Sets a mapper callback function that's used inside the `Result::fetch_callable` method:
+Sets a mapper callback function that's used inside the `Result->fetchCallable()` method:
 
 ```php
-<?php
 $result->map(function($row) {
     return (object) $row;
 });
-$objects = $result->fetch_all();
+$object = $result->fetchCallable(0);
 ```
 
-The above example will map all rows returned as arrays from the result set to
-objects. Set the mapper callback function to null to disable it.
+The above example will map one row (0) from the result into a
+object. Set the mapper callback function to null to disable it.
 
 ### Using the Prepare-Class
 

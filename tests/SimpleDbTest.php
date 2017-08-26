@@ -839,6 +839,45 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   }
 
+  public function testFormatQuery()
+  {
+    $result = $this->invokeMethod(
+        $this->db, '_parseQueryParamsByName',
+        array(
+            'SELECT * FROM `post` WHERE `id` = :id',
+            array('id' => 1)
+        )
+    );
+    $this->assertEquals(
+        'SELECT * FROM `post` WHERE `id` = 1',
+        $result
+    );
+
+    $result = $this->invokeMethod(
+        $this->db, '_parseQueryParamsByName',
+        array(
+            'SELECT * FROM `post` WHERE id=:id',
+            array('id' => 1)
+        )
+    );
+    $this->assertEquals(
+        'SELECT * FROM `post` WHERE id=1',
+        $result
+    );
+
+    $result = $this->invokeMethod(
+        $this->db, '_parseQueryParamsByName',
+        array(
+            'SELECT * FROM `post` WHERE id = ' . "\n" . '  :id;',
+            array('id' => 1)
+        )
+    );
+    $this->assertEquals(
+        'SELECT * FROM `post` WHERE id = ' . "\n" . '  1;',
+        $result
+    );
+  }
+
   public function testConnector()
   {
     $data = array(
@@ -1604,6 +1643,23 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertTrue($return > 1, print_r($return, true));
 
     //
+    // query - true
+    //
+    $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = :page_template,
+        page_type = :page_type
+    ';
+    $return = $this->db->query(
+        $sql,
+        array(
+            'page_template' => 1.1,
+            'page_type' => 1,
+        )
+    );
+    self::assertTrue($return > 1, print_r($return, true));
+
+    //
     // query - true (with empty array)
     //
     $sql = 'INSERT INTO ' . $this->tableName . "
@@ -1636,6 +1692,42 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertTrue($tmpId > 1);
 
     //
+    // query - true
+    //
+    $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = :page_template,
+        page_type = :page_type
+    ';
+    $tmpDate = new DateTime();
+    $tmpId = $this->db->query(
+        $sql,
+        array(
+            'page_template' => 'dateTest',
+            'page_type' => $tmpDate,
+        )
+    );
+    self::assertTrue($tmpId > 1);
+
+    //
+    // query - true
+    //
+    $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = "?",
+        page_type = :page_type
+    ';
+    $tmpDate = new DateTime();
+    $tmpId = $this->db->query(
+        $sql,
+        array(
+            'page_template' => 'dateTest',
+            'page_type' => $tmpDate,
+        )
+    );
+    self::assertTrue($tmpId > 1);
+
+    //
     // select - true
     //
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
@@ -1652,7 +1744,32 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     ';
     $tmpId = $this->db->query(
         $sql,
-        array('http://foo.com/?foo=1', 'foo\'bar')
+        array(
+            'http://foo.com/?foo=1',
+            'foo\'bar'
+        )
+    );
+    self::assertTrue($tmpId > 1);
+    // select - true
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchObject();
+    self::assertSame('http://foo.com/?foo=1', $tmpPage->page_template);
+    self::assertSame('foo\'bar', $tmpPage->page_type);
+
+    //
+    // query - true (with '?' in the string)
+    //
+    $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = :page_template,
+        page_type = :page_type
+    ';
+    $tmpId = $this->db->query(
+        $sql,
+        array(
+            'page_template' => 'http://foo.com/?foo=1',
+            'page_type' => 'foo\'bar',
+        )
     );
     self::assertTrue($tmpId > 1);
     // select - true

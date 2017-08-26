@@ -186,7 +186,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function current()
   {
-    return $this->fetch_callable($this->current_row);
+    return $this->fetchCallable($this->current_row);
   }
 
   /**
@@ -590,7 +590,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return mixed An associative array or a scalar value
    */
-  public function fetch_callable($row = null, $column = null)
+  public function fetchCallable($row = null, $column = null)
   {
     if (!$this->num_rows) {
       return null;
@@ -617,7 +617,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array Array of field information each as an associative array
    */
-  public function fetch_fields($as_array = false)
+  public function fetchFields($as_array = false)
   {
     if ($as_array) {
       return array_map(
@@ -639,7 +639,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array A grouped array of scalar values or arrays
    */
-  public function fetch_groups($group, $column = null)
+  public function fetchGroups($group, $column = null)
   {
     // init
     $groups = array();
@@ -676,7 +676,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array An array of key-value pairs
    */
-  public function fetch_pairs($key, $column = null)
+  public function fetchPairs($key, $column = null)
   {
     // init
     $pairs = array();
@@ -713,7 +713,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return mixed A transposed array of arrays
    */
-  public function fetch_transpose($column = null)
+  public function fetchTranspose($column = null)
   {
     // init
     $keys = isset($column) ? $this->fetchAllColumn($column) : array();
@@ -749,7 +749,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function first($column = null)
   {
     $pos = $this->current_row;
-    $first = $this->fetch_callable(0, $column);
+    $first = $this->fetchCallable(0, $column);
     $this->rewind($pos);
 
     return $first;
@@ -908,7 +908,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function last($column = null)
   {
     $pos = $this->current_row;
-    $last = $this->fetch_callable($this->num_rows - 1, $column);
+    $last = $this->fetchCallable($this->num_rows - 1, $column);
     $this->rewind($pos);
 
     return $last;
@@ -960,7 +960,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function offsetGet($offset)
   {
     if ($this->offsetExists($offset)) {
-      return $this->fetch_callable($offset);
+      return $this->fetchCallable($offset);
     }
 
     throw new \OutOfBoundsException("undefined offset ($offset)");
@@ -1048,9 +1048,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $n = 0;
     for ($i = $offset; $i < $this->num_rows && $n < $length; $i++) {
       if ($preserve_keys) {
-        $slice[$i] = $this->fetch_callable($i);
+        $slice[$i] = $this->fetchCallable($i);
       } else {
-        $slice[] = $this->fetch_callable($i);
+        $slice[] = $this->fetchCallable($i);
       }
       ++$n;
     }

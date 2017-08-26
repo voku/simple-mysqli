@@ -48,9 +48,9 @@ SQL;
   public function testSeek($result)
   {
     $result->seek(1);
-    self::assertEquals(2, $result->fetch_callable(null, 'id'));
+    self::assertEquals(2, $result->fetchCallable(null, 'id'));
     $result->seek();
-    self::assertEquals(1, $result->fetch_callable(null, 'id'));
+    self::assertEquals(1, $result->fetchCallable(null, 'id'));
   }
   /**
    * @depends testResult
@@ -75,7 +75,7 @@ SQL;
    */
   public function testFetchFields($result)
   {
-    $fields = $result->fetch_fields(true);
+    $fields = $result->fetchFields(true);
     self::assertTrue(is_array($fields));
     self::assertEquals(5, count($fields));
   }
@@ -88,9 +88,9 @@ SQL;
   public function testFetchCallable($result)
   {
     $result->seek();
-    self::assertTrue(is_array($result->fetch_callable()));
-    self::assertEquals(2, $result->fetch_callable(null, 'id'));
-    self::assertEquals(3, $result->fetch_callable(2, 'id'));
+    self::assertTrue(is_array($result->fetchCallable()));
+    self::assertEquals(2, $result->fetchCallable(null, 'id'));
+    self::assertEquals(3, $result->fetchCallable(2, 'id'));
   }
 
   /**
@@ -128,13 +128,13 @@ SQL;
    */
   public function testFetchTranspose($result)
   {
-    $transposed = $result->fetch_transpose();
+    $transposed = $result->fetchTranspose();
     self::assertEquals(5, count($transposed));
     foreach ($transposed as $column => $rows) {
       self::assertEquals(3, count($rows));
     }
 
-    $transposed = $result->fetch_transpose('id');
+    $transposed = $result->fetchTranspose('id');
     foreach ($transposed as $column => $rows) {
       self::assertEquals(3, count($rows));
       self::assertEquals(array(1,2,3), array_keys($rows));
@@ -148,12 +148,12 @@ SQL;
    */
   public function testFetchPairs($result)
   {
-    $pairs = $result->fetch_pairs('id');
+    $pairs = $result->fetchPairs('id');
     foreach ($pairs as $id => $row) {
       self::assertEquals($id, $row['id']);
     }
 
-    $pairs = $result->fetch_pairs('id', 'title');
+    $pairs = $result->fetchPairs('id', 'title');
     foreach ($pairs as $id => $title) {
       self::assertEquals("Title #{$id}", $title);
     }
@@ -166,13 +166,13 @@ SQL;
    */
   public function testFetchGroups($result)
   {
-    $groups = $result->fetch_groups('id');
+    $groups = $result->fetchGroups('id');
     foreach ($groups as $id => $group) {
       self::assertEquals(1, count($group));
       self::assertEquals($id, $group[0]['id']);
     }
 
-    $groups = $result->fetch_groups('id', 'title');
+    $groups = $result->fetchGroups('id', 'title');
     self::assertEquals(array(1 => array('Title #1'), 2 => array('Title #2'), 3 => array('Title #3')), $groups);
   }
 
@@ -305,7 +305,7 @@ SQL;
       self::assertEquals($i + 1, $row['id']);
       self::assertEquals(3, count($result->fetchAllArray()));
       self::assertEquals(1, $result->first('id'));
-      self::assertEquals(2, $result->fetch_callable(1, 'id'));
+      self::assertEquals(2, $result->fetchCallable(1, 'id'));
       self::assertEquals(3, $result->last('id'));
     }
   }
@@ -344,14 +344,14 @@ SQL;
   public function testMap()
   {
     $result = $this->db->query('SELECT * FROM `post`');
-    $row = $result->fetch_callable(0);
+    $row = $result->fetchCallable(0);
     self::assertFalse($row instanceof \stdClass);
     self::assertSame('Title #1', $row['title']);
 
     $result->map(function ($row) {
       return (object) $row;
     });
-    $row = $result->fetch_callable(0);
+    $row = $result->fetchCallable(0);
     self::assertTrue($row instanceof \stdClass);
     self::assertSame('Title #1', $row->title);
   }

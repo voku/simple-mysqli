@@ -515,7 +515,11 @@ final class DB
       $sql = str_replace('?', $parseKey, $sql);
 
       $k = 0;
-      while (strpos($sql, $parseKey) !== false) {
+      while (
+          strpos($sql, $parseKey) !== false
+          &&
+          isset($params[$k]) === true
+      ) {
         $value = $this->secure($params[$k]);
         $sql = UTF8::str_replace_first($parseKey, $value, $sql);
         $k++;
@@ -639,6 +643,7 @@ final class DB
 
         \mysqli_options($this->link, MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, true);
 
+        /** @noinspection PhpParamsInspection */
         \mysqli_ssl_set(
             $this->link,
             $this->_clientkey,
@@ -757,6 +762,37 @@ final class DB
     $errors = $this->_debug->getErrors();
 
     return count($errors) > 0 ? $errors : false;
+  }
+
+  /**
+   * Returns the SQL by replacing :placeholders with SQL-escaped values.
+   *
+   * @param mixed $sql      <p>The SQL string.</p>
+   * @param array $bindings <p>An array of key-value bindings.</p>
+   *
+   * @return string
+   */
+  public function _parseQueryParamsByName($sql, array $bindings = array())
+  {
+    // is there anything to parse?
+    if (strpos($sql, ':') === false) {
+      return $sql;
+    }
+
+    // init
+    $search = array();
+    $replace = array();
+
+    foreach ($bindings as $name => $value) {
+      $search[] = '/:' . preg_quote($name, '/') . '\b/';
+      $replace[] = $this->secure($value);
+    }
+
+    $sql = preg_replace($search, $replace, $sql);
+
+    var_dump($sql);
+
+    return $sql;
   }
 
   /**
@@ -1358,6 +1394,7 @@ final class DB
         count($params) > 0
     ) {
       $sql = $this->_parseQueryParams($sql, $params);
+      $sql = $this->_parseQueryParamsByName($sql, $params);
     }
 
     $query_start_time = microtime(true);

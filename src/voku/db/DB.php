@@ -537,12 +537,40 @@ final class DB
       return true;
     }
 
+    $flags = null;
+
     \mysqli_report(MYSQLI_REPORT_STRICT);
     try {
       $this->link = \mysqli_init();
 
       if (Helper::isMysqlndIsUsed() === true) {
         \mysqli_options($this->link, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
+      }
+
+      if ($this->_ssl === true) {
+
+        if (empty($this->clientcert)) {
+          throw new DBConnectException('Error connecting to mysql server: clientcert not defined');
+        }
+
+        if (empty($this->clientkey)) {
+          throw new DBConnectException('Error connecting to mysql server: clientkey not defined');
+        }
+
+        if (empty($this->cacert)) {
+          throw new DBConnectException('Error connecting to mysql server: cacert not defined');
+        }
+
+        \mysqli_options($this->link, MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, true);
+        \mysqli_ssl_set(
+            $this->link,
+            $this->_clientkey,
+            $this->_clientcert,
+            $this->_cacert,
+            null,
+            null
+        );
+        $flags = MYSQLI_CLIENT_SSL;
       }
 
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
@@ -553,7 +581,8 @@ final class DB
           $this->password,
           $this->database,
           $this->port,
-          $this->socket
+          $this->socket,
+          $flags
       );
     } catch (\Exception $e) {
       $error = 'Error connecting to mysql server: ' . $e->getMessage();
@@ -562,10 +591,10 @@ final class DB
     }
     \mysqli_report(MYSQLI_REPORT_OFF);
 
-    if (!$this->connected) {
-      $error = 'Error connecting to mysql server: ' . \mysqli_connect_error();
+    $errno = mysqli_connect_errno();
+    if (!$this->connected || $errno) {
+      $error = 'Error connecting to mysql server: ' . \mysqli_connect_error() . ' (' . $errno . ')';
       $this->_debug->displayError($error, false);
-      /** @noinspection ThrowRawExceptionInspection */
       throw new DBConnectException($error, 101);
     }
 

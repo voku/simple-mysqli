@@ -556,11 +556,10 @@ final class DB
   public function close()
   {
     $this->connected = false;
-    if (!$this->link) {
-      return;
-    }
 
-    \mysqli_close($this->link);
+    if ($this->link) {
+      \mysqli_close($this->link);
+    }
   }
 
   /**

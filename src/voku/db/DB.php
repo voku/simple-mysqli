@@ -876,10 +876,10 @@ final class DB
   /**
    * Execute select/insert/update/delete sql-queries.
    *
-   * @param string $query    sql-query
-   * @param bool   $useCache use cache?
-   * @param int    $cacheTTL cache-ttl in seconds
-   * @param DB     $db
+   * @param string $query    <p>sql-query</p>
+   * @param bool   $useCache <p>use cache?</p>
+   * @param int    $cacheTTL <p>cache-ttl in seconds</p>
+   * @param DB     $db       optional <p>the database connection</p>
    *
    * @return mixed "array" by "<b>SELECT</b>"-queries<br />
    *               "int" (insert_id) by "<b>INSERT</b>"-queries<br />
@@ -1269,17 +1269,14 @@ final class DB
    * Execute a sql-query and return the result-array for select-statements.
    *
    * @param string $query
-   * @param DB     $db
    *
    * @return mixed
    * @deprecated
    * @throws \Exception
    */
-  public static function qry($query, DB $db = null)
+  public static function qry($query)
   {
-    if (!$db) {
-      $db = self::getInstance();
-    }
+    $db = self::getInstance();
 
     $args = func_get_args();
     /** @noinspection SuspiciousAssignmentsInspection */

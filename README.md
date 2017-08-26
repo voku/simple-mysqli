@@ -173,11 +173,11 @@ Binding parameters is a good way of preventing mysql injections as the parameter
 
 ```php
   $sql = "SELECT * FROM users 
-    WHERE id_user = ? 
-    AND active = ? 
+    WHERE id_user = :id_user
+    AND active = :active
     LIMIT 1
   ";
-  $result = $db->query($sql, array(11,1));
+  $result = $db->query($sql, array('id_user' => 11, 'active' => 1));
   if ($result) {
     $user = $result->fetchArray();
     print_r($user);

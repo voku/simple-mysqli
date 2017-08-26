@@ -501,32 +501,38 @@ final class DB
    * @param string $sql
    * @param array  $params
    *
-   * @return string
+   * @return array <p>with the keys -> 'sql', 'params'</p>
    */
   private function _parseQueryParams($sql, array $params)
   {
     // is there anything to parse?
-    if (strpos($sql, '?') === false) {
-      return $sql;
+    if (
+        strpos($sql, '?') === false
+        ||
+        count($params) === 0
+    ) {
+      return array('sql' => $sql, 'params' => $params);
     }
 
-    if (count($params) > 0) {
-      $parseKey = md5(uniqid((string)mt_rand(), true));
-      $sql = str_replace('?', $parseKey, $sql);
+    $parseKey = md5(uniqid((string)mt_rand(), true));
+    $sql = str_replace('?', $parseKey, $sql);
 
-      $k = 0;
-      while (
-          strpos($sql, $parseKey) !== false
-          &&
-          isset($params[$k]) === true
-      ) {
-        $value = $this->secure($params[$k]);
-        $sql = UTF8::str_replace_first($parseKey, $value, $sql);
-        $k++;
+    $k = 0;
+    while (strpos($sql, $parseKey) !== false) {
+      $sql = UTF8::str_replace_first(
+          $parseKey,
+          isset($params[$k]) ? $this->secure($params[$k]) : '',
+          $sql
+      );
+
+      if (isset($params[$k])) {
+        unset($params[$k]);
       }
+
+      $k++;
     }
 
-    return $sql;
+    return array('sql' => $sql, 'params' => $params);
   }
 
   /**
@@ -768,31 +774,46 @@ final class DB
    * Returns the SQL by replacing :placeholders with SQL-escaped values.
    *
    * @param mixed $sql      <p>The SQL string.</p>
-   * @param array $bindings <p>An array of key-value bindings.</p>
+   * @param array $params   <p>An array of key-value bindings.</p>
    *
-   * @return string
+   * @return array <p>with the keys -> 'sql', 'params'</p>
    */
-  public function _parseQueryParamsByName($sql, array $bindings = array())
+  public function _parseQueryParamsByName($sql, array $params = array())
   {
     // is there anything to parse?
-    if (strpos($sql, ':') === false) {
-      return $sql;
+    if (
+        strpos($sql, ':') === false
+        ||
+        count($params) === 0
+    ) {
+      return array('sql' => $sql, 'params' => $params);
     }
 
-    // init
-    $search = array();
-    $replace = array();
+    $parseKey = md5(uniqid((string)mt_rand(), true));
 
-    foreach ($bindings as $name => $value) {
-      $search[] = '/:' . preg_quote($name, '/') . '\b/';
-      $replace[] = $this->secure($value);
+    foreach ($params as $name => $value) {
+      $parseKeyInner = $name . '-' . $parseKey;
+      $sql = str_replace(':' . $name, $parseKeyInner, $sql);
     }
 
-    $sql = preg_replace($search, $replace, $sql);
+    foreach ($params as $name => $value) {
+      $parseKeyInner = $name . '-' . $parseKey;
+      $sqlBefore = $sql;
 
-    var_dump($sql);
+      while (strpos($sql, $parseKeyInner) !== false) {
+        $sql = UTF8::str_replace_first(
+            $parseKeyInner,
+            $this->secure($params[$name]),
+            $sql
+        );
+      }
 
-    return $sql;
+      if ($sqlBefore !== $sql) {
+        unset($params[$name]);
+      }
+    }
+
+    return array('sql' => $sql, 'params' => $params);
   }
 
   /**
@@ -1393,8 +1414,9 @@ final class DB
         &&
         count($params) > 0
     ) {
-      $sql = $this->_parseQueryParams($sql, $params);
-      $sql = $this->_parseQueryParamsByName($sql, $params);
+      $parseQueryParams = $this->_parseQueryParams($sql, $params);
+      $parseQueryParamsByName = $this->_parseQueryParamsByName($parseQueryParams['sql'], $parseQueryParams['params']);
+      $sql = $parseQueryParamsByName['sql'];
     }
 
     $query_start_time = microtime(true);
@@ -1879,18 +1901,32 @@ final class DB
   /**
    * Execute a callback inside a transaction.
    *
-   * @param callback $callback The callback to run inside the transaction
+   * @param callback $callback <p>The callback to run inside the transaction.</p>
    *
-   * @return bool Boolean true on success, false otherwise
+   * @return bool <p>Boolean true on success, false otherwise.</p>
    */
   public function transact($callback)
   {
     try {
-      $this->beginTransaction();
-      call_user_func($callback, $this);
+
+      $beginTransaction = $this->beginTransaction();
+      if ($beginTransaction === false) {
+        $this->_debug->displayError('Error: transact -> can not start transaction!', false);
+
+        return false;
+      }
+
+      $result = call_user_func($callback, $this);
+
+      if ($result === false) {
+        /** @noinspection ThrowRawExceptionInspection */
+        throw new \Exception('call_user_func [' . $callback . '] === false');
+      }
 
       return $this->commit();
+
     } catch (\Exception $e) {
+
       $this->rollback();
 
       return false;

@@ -211,8 +211,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   {
     // insert - true
     $pageArray = array(
-      'page_template' => '<p>foo</p>',
-      'page_type'     => 'lallll',
+        'page_template' => '<p>foo</p>',
+        'page_type'     => 'lallll',
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
@@ -224,8 +224,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // insert - true
     $pageArray = array(
-      'page_template' => $html,
-      'page_type'     => 'lallll',
+        'page_template' => $html,
+        'page_type'     => 'lallll',
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
@@ -235,8 +235,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   {
     // insert - true
     $pageArray = array(
-      'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
-      'page_type'     => 'lall',
+        'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
+        'page_type'     => 'lall',
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
@@ -262,11 +262,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         page_type = ?
     ';
     $tmpId = $this->db->query(
-      $sql,
-      array(
-        '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
-        '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
-      )
+        $sql,
+        array(
+            '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
+            '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
+        )
     );
 
     // select - true
@@ -282,8 +282,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // insert - true
     $pageArray = array(
-      'page_template' => $html,
-      'page_type'     => 'lallll',
+        'page_template' => $html,
+        'page_type'     => 'lallll',
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
@@ -298,8 +298,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // insert - true
     $pageArray = array(
-      'page_template' => $html,
-      'page_type'     => 'lallll',
+        'page_template' => $html,
+        'page_type'     => 'lallll',
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
@@ -315,8 +315,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // insert - true
     $pageArray = array(
-      'page_template' => $html,
-      'page_type'     => 'lallll',
+        'page_template' => $html,
+        'page_type'     => 'lallll',
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
@@ -845,36 +845,64 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         $this->db, '_parseQueryParamsByName',
         array(
             'SELECT * FROM `post` WHERE `id` = :id',
-            array('id' => 1)
+            array('id' => 1),
         )
     );
     $this->assertEquals(
         'SELECT * FROM `post` WHERE `id` = 1',
-        $result
+        $result['sql']
+    );
+    $this->assertEquals(
+        array(),
+        $result['params']
     );
 
     $result = $this->invokeMethod(
         $this->db, '_parseQueryParamsByName',
         array(
             'SELECT * FROM `post` WHERE id=:id',
-            array('id' => 1)
+            array('id' => 1),
         )
     );
     $this->assertEquals(
         'SELECT * FROM `post` WHERE id=1',
-        $result
+        $result['sql']
+    );
+    $this->assertEquals(
+        array(),
+        $result['params']
     );
 
     $result = $this->invokeMethod(
         $this->db, '_parseQueryParamsByName',
         array(
             'SELECT * FROM `post` WHERE id = ' . "\n" . '  :id;',
-            array('id' => 1)
+            array('id' => 1),
         )
     );
     $this->assertEquals(
         'SELECT * FROM `post` WHERE id = ' . "\n" . '  1;',
-        $result
+        $result['sql']
+    );
+    $this->assertEquals(
+        array(),
+        $result['params']
+    );
+
+    $result = $this->invokeMethod(
+        $this->db, '_parseQueryParamsByName',
+        array(
+            'SELECT * FROM `post` WHERE id = ' . "\n" . '  :id;',
+            array('id' => 1, 'foo' => 'bar'),
+        )
+    );
+    $this->assertEquals(
+        'SELECT * FROM `post` WHERE id = ' . "\n" . '  1;',
+        $result['sql']
+    );
+    $this->assertEquals(
+        array('foo' => 'bar'),
+        $result['params']
     );
   }
 
@@ -1180,6 +1208,9 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     // start - test a transaction - false
     $beginTransaction = $this->db->beginTransaction();
     self::assertFalse($beginTransaction);
+
+    // reset
+    $this->db->endTransaction();
   }
 
   public function testFetchColumn()
@@ -1477,8 +1508,20 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertSame(1, $this->db->escape(true, false));
     self::assertSame(0, $this->db->escape(false, false));
     self::assertSame('NOW()', $this->db->escape('NOW()'));
-    self::assertSame(array(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), 1, null), $this->db->escape(array("O'Toole", true, null)));
-    self::assertSame(array(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), 1, null), $this->db->escape(array("O'Toole", true, null), false));
+    self::assertSame(
+        array(
+            \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
+            1,
+            null,
+        ), $this->db->escape(array("O'Toole", true, null))
+    );
+    self::assertSame(
+        array(
+            \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
+            1,
+            null,
+        ), $this->db->escape(array("O'Toole", true, null), false)
+    );
   }
 
   public function testInvoke()
@@ -1654,7 +1697,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         $sql,
         array(
             'page_template' => 1.1,
-            'page_type' => 1,
+            'page_type'     => 1,
         )
     );
     self::assertTrue($return > 1, print_r($return, true));
@@ -1690,6 +1733,13 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         )
     );
     self::assertTrue($tmpId > 1);
+    //
+    // select - true
+    //
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchObject();
+    self::assertSame($tmpDate->format('Y-m-d H:i:s'), $tmpPage->page_type);
+    self::assertSame('dateTest', $tmpPage->page_template);
 
     //
     // query - true
@@ -1704,35 +1754,67 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         $sql,
         array(
             'page_template' => 'dateTest',
-            'page_type' => $tmpDate,
+            'page_type'     => $tmpDate,
         )
     );
     self::assertTrue($tmpId > 1);
-
-    //
-    // query - true
-    //
-    $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = "?",
-        page_type = :page_type
-    ';
-    $tmpDate = new DateTime();
-    $tmpId = $this->db->query(
-        $sql,
-        array(
-            'page_template' => 'dateTest',
-            'page_type' => $tmpDate,
-        )
-    );
-    self::assertTrue($tmpId > 1);
-
     //
     // select - true
     //
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchObject();
     self::assertSame($tmpDate->format('Y-m-d H:i:s'), $tmpPage->page_type);
+    self::assertSame('dateTest', $tmpPage->page_template);
+
+    //
+    // query - true
+    //
+    $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = ?,
+        page_type = :page_type
+    ';
+    $tmpDate = new DateTime();
+    $tmpId = $this->db->query(
+        $sql,
+        array(
+            0           => 'dateTest',
+            'page_type' => $tmpDate,
+        )
+    );
+    self::assertTrue($tmpId > 1);
+    //
+    // select - true
+    //
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchObject();
+    self::assertSame($tmpDate->format('Y-m-d H:i:s'), $tmpPage->page_type);
+    self::assertSame('dateTest', $tmpPage->page_template);
+
+    //
+    // query - true
+    //
+    $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = :page_template,
+        page_type = :page_type
+    ';
+    $tmpDate = new DateTime();
+    $tmpId = $this->db->query(
+        $sql,
+        array(
+            'page_template' => ':page_type',
+            'page_type'     => $tmpDate,
+        )
+    );
+    self::assertTrue($tmpId > 1);
+    //
+    // select - true
+    //
+    $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+    $tmpPage = $result->fetchObject();
+    self::assertSame($tmpDate->format('Y-m-d H:i:s'), $tmpPage->page_type);
+    self::assertSame(':page_type', $tmpPage->page_template);
 
     //
     // query - true (with '?' in the string)
@@ -1746,7 +1828,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         $sql,
         array(
             'http://foo.com/?foo=1',
-            'foo\'bar'
+            'foo\'bar',
         )
     );
     self::assertTrue($tmpId > 1);
@@ -1768,7 +1850,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         $sql,
         array(
             'page_template' => 'http://foo.com/?foo=1',
-            'page_type' => 'foo\'bar',
+            'page_type'     => 'foo\'bar',
         )
     );
     self::assertTrue($tmpId > 1);
@@ -1939,5 +2021,67 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   public function testInstanceOf()
   {
     self::assertInstanceOf('voku\db\DB', DB::getInstance());
+  }
+
+  public function testTransaction()
+  {
+    $tableName = $this->tableName;
+
+    // --------------------
+
+    $this->assertTrue(
+        $this->db->transact(
+            function (DB $db) use ($tableName) {
+              return $db->insert(
+                  $tableName,
+                  array(
+                      'page_template' => 'page' . mt_rand(),
+                      'page_type'  => 'foo!',
+                  )
+              );
+            }
+        )
+    );
+
+    // --------------------
+
+    $this->assertFalse(
+        $this->db->transact(
+            function (DB $db) {
+              /** @noinspection ThrowRawExceptionInspection */
+              throw new \Exception;
+            }
+        )
+    );
+
+    // --------------------
+
+    $this->db->beginTransaction(); // (1)
+    $this->assertFalse(
+        $this->db->transact(
+            function (DB $db) {
+              return $db->beginTransaction(); // (2)
+            }
+        )
+    );
+    $this->db->endTransaction();
+
+    // --------------------
+
+    $this->assertFalse(
+        $this->db->transact(
+            function (DB $db) use ($tableName) {
+              return $db->insert(
+                  $tableName,
+                  array(
+                      'page_template_noop' => 'page' . mt_rand(),
+                      'page_type'  => 'foo!',
+                  )
+              );
+            }
+        )
+    );
+
+    // --------------------
   }
 }

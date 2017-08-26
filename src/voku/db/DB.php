@@ -1475,6 +1475,25 @@ final class DB
     return $return;
   }
 
+
+  /**
+   * Commits the current transaction and end the transaction.
+   *
+   * @return bool <p>Boolean true on success, false otherwise.</p>
+   */
+  public function commit()
+  {
+    if ($this->_in_transaction === false) {
+      return false;
+    }
+
+    $return = mysqli_commit($this->link);
+    \mysqli_autocommit($this->link, true);
+    $this->_in_transaction = false;
+
+    return $return;
+  }
+
   /**
    * Try to secure a variable, so can you use it in sql-queries.
    *

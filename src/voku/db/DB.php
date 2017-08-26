@@ -1090,47 +1090,38 @@ final class DB
 
     if (!$sql || $sql === '') {
       $this->_debug->displayError('Can not execute an empty query.', false);
-
       return false;
     }
 
     $query_start_time = microtime(true);
     $resultTmp = \mysqli_multi_query($this->link, $sql);
     $query_duration = microtime(true) - $query_start_time;
-
     $this->_debug->logQuery($sql, $query_duration, 0);
 
     $returnTheResult = false;
     $result = array();
+
     if ($resultTmp) {
       do {
-        $resultTmpInner = \mysqli_store_result($this->link);
 
+        $resultTmpInner = \mysqli_store_result($this->link);
         if ($resultTmpInner instanceof \mysqli_result) {
           $returnTheResult = true;
           $result[] = new Result($sql, $resultTmpInner);
         } else {
-          $errorMsg = \mysqli_error($this->link);
-
           // is the query successful
-          if ($resultTmpInner === true || !$errorMsg) {
+          if ($resultTmpInner === true || !\mysqli_errno($this->link)) {
             $result[] = true;
           } else {
-            $result[] = $this->queryErrorHandling($errorMsg, $sql);
+            $result[] = false;
           }
         }
+
       } while (\mysqli_more_results($this->link) === true ? \mysqli_next_result($this->link) : false);
-
     } else {
-
-      $errorMsg = \mysqli_error($this->link);
-
-      if ($this->_debug->checkForDev() === true) {
-        echo "Info: maybe you have to increase your 'max_allowed_packet = 30M' in the config: 'my.conf' \n<br />";
-        echo 'Error:' . $errorMsg;
-      }
-
-      $this->_debug->mailToAdmin('SQL-Error in mysqli_multi_query', $errorMsg . ":\n<br />" . $sql);
+      // log the error query
+      $this->_debug->logQuery($sql, $query_duration, 0, true);
+      return $this->queryErrorHandling(\mysqli_error($this->link), \mysqli_errno($this->link), $sql, false, true);
     }
 
     // return the result only if there was a "SELECT"-query
@@ -1138,7 +1129,11 @@ final class DB
       return $result;
     }
 
-    if (in_array(false, $result, true) === false) {
+    if (
+        count($result) > 0
+        &&
+        in_array(false, $result, true) === false
+    ) {
       return true;
     }
 
@@ -1257,7 +1252,6 @@ final class DB
 
     if (!$sql || $sql === '') {
       $this->_debug->displayError('Can not execute an empty query.', false);
-
       return false;
     }
 
@@ -1285,82 +1279,89 @@ final class DB
     }
 
     if ($result instanceof \mysqli_result) {
-
       // log the select query
       $this->_debug->logQuery($sql, $query_duration, $mysqli_field_count);
-
       // return query result object
       return new Result($sql, $result);
-
     }
 
     if ($query_result === true) {
 
       // "INSERT" || "REPLACE"
-      if (preg_match('/^\s*"?(INSERT|REPLACE)\s+/i', $sql)) {
+      if (preg_match('/^\s*?(?:INSERT|REPLACE)\s+/i', $sql)) {
         $insert_id = (int)$this->insert_id();
         $this->_debug->logQuery($sql, $query_duration, $insert_id);
-
         return $insert_id;
       }
 
       // "UPDATE" || "DELETE"
-      if (preg_match('/^\s*"?(UPDATE|DELETE)\s+/i', $sql)) {
+      if (preg_match('/^\s*?(?:UPDATE|DELETE)\s+/i', $sql)) {
         $affected_rows = (int)$this->affected_rows();
         $this->_debug->logQuery($sql, $query_duration, $affected_rows);
-
         return $affected_rows;
       }
 
       // log the ? query
       $this->_debug->logQuery($sql, $query_duration, 0);
-
       return true;
     }
 
     // log the error query
     $this->_debug->logQuery($sql, $query_duration, 0, true);
 
-    return $this->queryErrorHandling(\mysqli_error($this->link), $sql, $params);
+    return $this->queryErrorHandling(\mysqli_error($this->link), \mysqli_errno($this->link), $sql, $params);
   }
 
   /**
    * Error-handling for the sql-query.
    *
-   * @param string     $errorMsg
+   * @param string     $errorMessage
+   * @param int        $errorNumber
    * @param string     $sql
-   * @param array|bool $sqlParams false if there wasn't any parameter
+   * @param array|bool $sqlParams <p>false if there wasn't any parameter</p>
+   * @param bool       $sqlMultiQuery
    *
    * @throws QueryException
    * @throws DBGoneAwayException
    *
    * @return bool
    */
-  protected function queryErrorHandling($errorMsg, $sql, $sqlParams = false)
+  private function queryErrorHandling($errorMessage, $errorNumber, $sql, $sqlParams = false, $sqlMultiQuery = false)
   {
-    if ($errorMsg === 'DB server has gone away' || $errorMsg === 'MySQL server has gone away') {
+    $errorNumber = (int)$errorNumber;
+    if (
+        $errorMessage === 'DB server has gone away'
+        ||
+        $errorMessage === 'MySQL server has gone away'
+        ||
+        $errorNumber === 2006
+    ) {
       static $RECONNECT_COUNTER;
 
       // exit if we have more then 3 "DB server has gone away"-errors
       if ($RECONNECT_COUNTER > 3) {
-        $this->_debug->mailToAdmin('DB-Fatal-Error', $errorMsg . ":\n<br />" . $sql, 5);
-        throw new DBGoneAwayException($errorMsg);
+        $this->_debug->mailToAdmin('DB-Fatal-Error', $errorMessage . '(' . $errorNumber. ') ' . ":\n<br />" . $sql, 5);
+        throw new DBGoneAwayException($errorMessage);
       }
 
-      $this->_debug->mailToAdmin('DB-Error', $errorMsg . ":\n<br />" . $sql);
+      $this->_debug->mailToAdmin('DB-Error', $errorMessage . '(' . $errorNumber. ') ' . ":\n<br />" . $sql);
 
       // reconnect
       $RECONNECT_COUNTER++;
       $this->reconnect(true);
 
-      // re-run the current query
-      return $this->query($sql, $sqlParams);
+      // re-run the current (non multi) query
+      if ($sqlMultiQuery === false) {
+        return $this->query($sql, $sqlParams);
+      }
+
+      return false;
     }
 
-    $this->_debug->mailToAdmin('SQL-Error', $errorMsg . ":\n<br />" . $sql);
+    $this->_debug->mailToAdmin('SQL-Error', $errorMessage . '(' . $errorNumber. ') ' . ":\n<br />" . $sql);
 
     // this query returned an error, we must display it (only for dev) !!!
-    $this->_debug->displayError($errorMsg . ' | ' . $sql);
+    $this->_debug->displayError($errorMessage . '(' . $errorNumber. ') ' . ' | ' . $sql);
 
     return false;
   }

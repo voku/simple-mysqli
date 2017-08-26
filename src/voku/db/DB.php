@@ -90,18 +90,21 @@ final class DB
    * @var bool
    */
   private $_ssl = false;
+
   /**
    * The path name to the key file
    *
    * @var string
    */
   private $_clientkey;
+
   /**
    * The path name to the certificate file
    *
    * @var string
    */
   private $_clientcert;
+
   /**
    * The path name to the certificate authority file
    *
@@ -127,14 +130,14 @@ final class DB
    * @param boolean|string $echo_on_error <p>Use a empty string "" or false to disable it.</p>
    * @param string         $logger_class_name
    * @param string         $logger_level  <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
-   * @param array          $extra_config <p>
-   *                                     'session_to_db' => false|true<br>
-   *                                     'socket' => 'string (path)'<br>
-   *                                     'ssl' => 'bool'<br>
-   *                                     'clientkey' => 'string (path)'<br>
-   *                                     'clientcert' => 'string (path)'<br>
-   *                                     'cacert' => 'string (path)'<br>
-   *                                     </p>
+   * @param array          $extra_config  <p>
+   *                                      'session_to_db' => false|true<br>
+   *                                      'socket' => 'string (path)'<br>
+   *                                      'ssl' => 'bool'<br>
+   *                                      'clientkey' => 'string (path)'<br>
+   *                                      'clientcert' => 'string (path)'<br>
+   *                                      'cacert' => 'string (path)'<br>
+   *                                      </p>
    */
   protected function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $extra_config = array())
   {
@@ -232,14 +235,14 @@ final class DB
    * @param boolean|string $echo_on_error <p>Use a empty string "" or false to disable it.</p>
    * @param string         $logger_class_name
    * @param string         $logger_level
-   * @param array          $extra_config <p>
-   *                                     'session_to_db' => false|true<br>
-   *                                     'socket' => 'string (path)'<br>
-   *                                     'ssl' => 'bool'<br>
-   *                                     'clientkey' => 'string (path)'<br>
-   *                                     'clientcert' => 'string (path)'<br>
-   *                                     'cacert' => 'string (path)'<br>
-   *                                     </p>
+   * @param array          $extra_config  <p>
+   *                                      'session_to_db' => false|true<br>
+   *                                      'socket' => 'string (path)'<br>
+   *                                      'ssl' => 'bool'<br>
+   *                                      'clientkey' => 'string (path)'<br>
+   *                                      'clientcert' => 'string (path)'<br>
+   *                                      'cacert' => 'string (path)'<br>
+   *                                      </p>
    *
    * @return bool
    */
@@ -523,6 +526,7 @@ final class DB
   {
     if ($this->_in_transaction === true) {
       $this->_debug->displayError('Error: mysql server already in transaction!', false);
+
       return false;
     }
 
@@ -535,7 +539,6 @@ final class DB
 
     return $return;
   }
-
 
   /**
    * Clear the errors in "_debug->_errors".
@@ -558,6 +561,26 @@ final class DB
     }
 
     \mysqli_close($this->link);
+  }
+
+  /**
+   * Commits the current transaction and end the transaction.
+   *
+   * @return bool <p>Boolean true on success, false otherwise.</p>
+   */
+  public function commit()
+  {
+    if ($this->_in_transaction === false) {
+      $this->_debug->displayError('Error: mysql server is not in transaction!', false);
+
+      return false;
+    }
+
+    $return = mysqli_commit($this->link);
+    \mysqli_autocommit($this->link, true);
+    $this->_in_transaction = false;
+
+    return $return;
   }
 
   /**
@@ -598,6 +621,7 @@ final class DB
         }
 
         \mysqli_options($this->link, MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, true);
+
         \mysqli_ssl_set(
             $this->link,
             $this->_clientkey,
@@ -606,6 +630,7 @@ final class DB
             null,
             null
         );
+
         $flags = MYSQLI_CLIENT_SSL;
       }
 
@@ -620,6 +645,7 @@ final class DB
           $this->socket,
           $flags
       );
+
     } catch (\Exception $e) {
       $error = 'Error connecting to mysql server: ' . $e->getMessage();
       $this->_debug->displayError($error, false);
@@ -687,6 +713,7 @@ final class DB
   {
     if ($this->_in_transaction === false) {
       $this->_debug->displayError('Error: mysql server is not in transaction!', false);
+
       return false;
     }
 
@@ -951,10 +978,10 @@ final class DB
    * @param string      $username
    * @param string      $password
    * @param string      $database
-   * @param int|string  $port          <p>default is (int)3306</p>
-   * @param string      $charset       <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
-   * @param bool|string $exit_on_error <p>Use a empty string "" or false to disable it.</p>
-   * @param bool|string $echo_on_error <p>Use a empty string "" or false to disable it.</p>
+   * @param int|string  $port            <p>default is (int)3306</p>
+   * @param string      $charset         <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
+   * @param bool|string $exit_on_error   <p>Use a empty string "" or false to disable it.</p>
+   * @param bool|string $echo_on_error   <p>Use a empty string "" or false to disable it.</p>
    * @param string      $logger_class_name
    * @param string      $logger_level
    * @param array       $extra_config    <p>
@@ -1146,12 +1173,14 @@ final class DB
 
     if (!$sql || $sql === '') {
       $this->_debug->displayError('Can not execute an empty query.', false);
+
       return false;
     }
 
     $query_start_time = microtime(true);
     $resultTmp = \mysqli_multi_query($this->link, $sql);
     $query_duration = microtime(true) - $query_start_time;
+
     $this->_debug->logQuery($sql, $query_duration, 0);
 
     $returnTheResult = false;
@@ -1161,22 +1190,30 @@ final class DB
       do {
 
         $resultTmpInner = \mysqli_store_result($this->link);
+
         if ($resultTmpInner instanceof \mysqli_result) {
+
           $returnTheResult = true;
           $result[] = new Result($sql, $resultTmpInner);
+
         } else {
+
           // is the query successful
           if ($resultTmpInner === true || !\mysqli_errno($this->link)) {
             $result[] = true;
           } else {
             $result[] = false;
           }
+
         }
 
       } while (\mysqli_more_results($this->link) === true ? \mysqli_next_result($this->link) : false);
+
     } else {
+
       // log the error query
       $this->_debug->logQuery($sql, $query_duration, 0, true);
+
       return $this->queryErrorHandling(\mysqli_error($this->link), \mysqli_errno($this->link), $sql, false, true);
     }
 
@@ -1215,22 +1252,6 @@ final class DB
     }
 
     return false;
-  }
-
-  /**
-   * Selects a different database than the one specified on construction.
-   *
-   * @param string $database <p>Database name to switch to.</p>
-   *
-   * @return bool <p>Boolean true on success, false otherwise.</p>
-   */
-  public function select_db($database)
-  {
-    if (!$this->isReady()) {
-      return false;
-    }
-
-    return mysqli_select_db($this->link, $database);
   }
 
   /**
@@ -1311,6 +1332,7 @@ final class DB
 
     if (!$sql || $sql === '') {
       $this->_debug->displayError('Can not execute an empty query.', false);
+
       return false;
     }
 
@@ -1338,8 +1360,10 @@ final class DB
     }
 
     if ($result instanceof \mysqli_result) {
+
       // log the select query
       $this->_debug->logQuery($sql, $query_duration, $mysqli_field_count);
+
       // return query result object
       return new Result($sql, $result);
     }
@@ -1350,6 +1374,7 @@ final class DB
       if (preg_match('/^\s*?(?:INSERT|REPLACE)\s+/i', $sql)) {
         $insert_id = (int)$this->insert_id();
         $this->_debug->logQuery($sql, $query_duration, $insert_id);
+
         return $insert_id;
       }
 
@@ -1357,11 +1382,13 @@ final class DB
       if (preg_match('/^\s*?(?:UPDATE|DELETE)\s+/i', $sql)) {
         $affected_rows = (int)$this->affected_rows();
         $this->_debug->logQuery($sql, $query_duration, $affected_rows);
+
         return $affected_rows;
       }
 
       // log the ? query
       $this->_debug->logQuery($sql, $query_duration, 0);
+
       return true;
     }
 
@@ -1388,6 +1415,7 @@ final class DB
   private function queryErrorHandling($errorMessage, $errorNumber, $sql, $sqlParams = false, $sqlMultiQuery = false)
   {
     $errorNumber = (int)$errorNumber;
+
     if (
         $errorMessage === 'DB server has gone away'
         ||
@@ -1399,11 +1427,11 @@ final class DB
 
       // exit if we have more then 3 "DB server has gone away"-errors
       if ($RECONNECT_COUNTER > 3) {
-        $this->_debug->mailToAdmin('DB-Fatal-Error', $errorMessage . '(' . $errorNumber. ') ' . ":\n<br />" . $sql, 5);
+        $this->_debug->mailToAdmin('DB-Fatal-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql, 5);
         throw new DBGoneAwayException($errorMessage);
       }
 
-      $this->_debug->mailToAdmin('DB-Error', $errorMessage . '(' . $errorNumber. ') ' . ":\n<br />" . $sql);
+      $this->_debug->mailToAdmin('DB-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql);
 
       // reconnect
       $RECONNECT_COUNTER++;
@@ -1417,10 +1445,10 @@ final class DB
       return false;
     }
 
-    $this->_debug->mailToAdmin('SQL-Error', $errorMessage . '(' . $errorNumber. ') ' . ":\n<br />" . $sql);
+    $this->_debug->mailToAdmin('SQL-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql);
 
     // this query returned an error, we must display it (only for dev) !!!
-    $this->_debug->displayError($errorMessage . '(' . $errorNumber. ') ' . ' | ' . $sql);
+    $this->_debug->displayError($errorMessage . '(' . $errorNumber . ') ' . ' | ' . $sql);
 
     return false;
   }
@@ -1531,6 +1559,7 @@ final class DB
   {
     if ($this->_in_transaction === false) {
       $this->_debug->displayError('Error: mysql server is not in transaction!', false);
+
       return false;
     }
 
@@ -1539,45 +1568,6 @@ final class DB
     $this->_in_transaction = false;
 
     return $return;
-  }
-
-
-  /**
-   * Commits the current transaction and end the transaction.
-   *
-   * @return bool <p>Boolean true on success, false otherwise.</p>
-   */
-  public function commit()
-  {
-    if ($this->_in_transaction === false) {
-      $this->_debug->displayError('Error: mysql server is not in transaction!', false);
-      return false;
-    }
-
-    $return = mysqli_commit($this->link);
-    \mysqli_autocommit($this->link, true);
-    $this->_in_transaction = false;
-
-    return $return;
-  }
-
-  /**
-   * Execute a callback inside a transaction.
-   *
-   * @param callback $callback The callback to run inside the transaction
-   *
-   * @return bool Boolean true on success, false otherwise
-   */
-  public function transact($callback)
-  {
-    try {
-      $this->beginTransaction();
-      call_user_func($callback, $this);
-      return $this->commit();
-    } catch (\Exception $e) {
-      $this->rollback();
-      return false;
-    }
   }
 
   /**
@@ -1686,6 +1676,22 @@ final class DB
     $sql = 'SELECT * FROM ' . $databaseName . $this->quote_string($table) . " WHERE ($WHERE);";
 
     return $this->query($sql);
+  }
+
+  /**
+   * Selects a different database than the one specified on construction.
+   *
+   * @param string $database <p>Database name to switch to.</p>
+   *
+   * @return bool <p>Boolean true on success, false otherwise.</p>
+   */
+  public function select_db($database)
+  {
+    if (!$this->isReady()) {
+      return false;
+    }
+
+    return mysqli_select_db($this->link, $database);
   }
 
   /**
@@ -1817,6 +1823,27 @@ final class DB
   public function startTransaction()
   {
     $this->beginTransaction();
+  }
+
+  /**
+   * Execute a callback inside a transaction.
+   *
+   * @param callback $callback The callback to run inside the transaction
+   *
+   * @return bool Boolean true on success, false otherwise
+   */
+  public function transact($callback)
+  {
+    try {
+      $this->beginTransaction();
+      call_user_func($callback, $this);
+
+      return $this->commit();
+    } catch (\Exception $e) {
+      $this->rollback();
+
+      return false;
+    }
   }
 
   /**

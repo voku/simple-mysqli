@@ -1437,13 +1437,6 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertSame(array(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), 1, null), $this->db->escape(array("O'Toole", true, null), false));
   }
 
-  public function testInvoke()
-  {
-    $db = $this->db;
-    $this->assertInstanceOf('\\voku\\db\\DB', $db());
-    $this->assertInstanceOf('\\voku\\db\\Result', $db('SELECT * FROM ' . $this->tableName));
-  }
-
   public function testConnector2()
   {
     // select - true

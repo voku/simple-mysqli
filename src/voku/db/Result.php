@@ -11,7 +11,7 @@ use voku\helper\UTF8;
  *
  * @package   voku\db
  */
-final class Result
+final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 {
 
   /**
@@ -30,6 +30,16 @@ final class Result
   private $_result;
 
   /**
+   * @var int
+   */
+  private $current_row;
+
+  /**
+   * @var \Closure|null
+   */
+  private $_mapper;
+
+  /**
    * @var string
    */
   private $_default_result_type = 'object';
@@ -39,22 +49,44 @@ final class Result
    *
    * @param string         $sql
    * @param \mysqli_result $result
+   * @param \Closure       $mapper Optional callback mapper for the "fetch_callable()" method
    */
-  public function __construct($sql = '', \mysqli_result $result)
+  public function __construct($sql = '', \mysqli_result $result, $mapper = null)
   {
     $this->sql = $sql;
 
     $this->_result = $result;
+
+    $this->current_row = 0;
     $this->num_rows = (int)$this->_result->num_rows;
+
+    $this->_mapper = $mapper;
   }
 
   /**
    * __destruct
-   *
    */
   public function __destruct()
   {
     $this->free();
+  }
+
+  /**
+   * Runs a user-provided callback with the MySQLi_Result object given as
+   * argument and returns the result, or returns the MySQLi_Result object if
+   * called without an argument.
+   *
+   * @param callable $callback User-provided callback (optional)
+   *
+   * @return mixed|\mysqli_result
+   */
+  public function __invoke($callback = null)
+  {
+    if (isset($callback)) {
+      return call_user_func($callback, $this->_result);
+    }
+
+    return $this->_result;
   }
 
   /**
@@ -135,6 +167,86 @@ final class Result
     }
 
     return $data;
+  }
+
+  /**
+   * Countable interface implementation.
+   *
+   * @return int The number of rows in the result
+   */
+  public function count()
+  {
+    return $this->num_rows;
+  }
+
+  /**
+   * Iterator interface implementation.
+   *
+   * @return mixed The current element
+   */
+  public function current()
+  {
+    return $this->fetch_callable($this->current_row);
+  }
+
+  /**
+   * Iterator interface implementation.
+   *
+   * @return int The current element key (row index; zero-based)
+   */
+  public function key()
+  {
+    return $this->current_row;
+  }
+
+  /**
+   * Iterator interface implementation.
+   *
+   * @return void
+   */
+  public function next()
+  {
+    $this->current_row++;
+  }
+
+  /**
+   * Iterator interface implementation.
+   *
+   * @param int $row Row position to rewind to; defaults to 0
+   *
+   * @return void
+   */
+  public function rewind($row = 0)
+  {
+    if ($this->seek($row)) {
+      $this->current_row = $row;
+    }
+  }
+
+  /**
+   * Moves the internal pointer to the specified row position.
+   *
+   * @param int $row Row position; zero-based and set to 0 by default
+   *
+   * @return bool Boolean true on success, false otherwise
+   */
+  public function seek($row = 0)
+  {
+    if (is_int($row) && $row >= 0 && $row < $this->num_rows) {
+      return mysqli_data_seek($this->_result, $row);
+    }
+
+    return false;
+  }
+
+  /**
+   * Iterator interface implementation.
+   *
+   * @return bool Boolean true if the current index is valid, false otherwise
+   */
+  public function valid()
+  {
+    return $this->current_row < $this->num_rows;
   }
 
   /**
@@ -470,11 +582,194 @@ final class Result
   }
 
   /**
+   * Fetches a row or a single column within a row. Returns null if there are
+   * no more rows in the result.
+   *
+   * @param int    $row    The row number (optional)
+   * @param string $column The column name (optional)
+   *
+   * @return mixed An associative array or a scalar value
+   */
+  public function fetch_callable($row = null, $column = null)
+  {
+    if (!$this->num_rows) {
+      return null;
+    }
+
+    if (isset($row)) {
+      $this->seek($row);
+    }
+
+    $rows = \mysqli_fetch_assoc($this->_result);
+
+    if ($column) {
+      return is_array($rows) && isset($rows[$column]) ? $rows[$column] : null;
+    }
+
+    return is_callable($this->_mapper) ? call_user_func($this->_mapper, $rows) : $rows;
+  }
+
+  /**
+   * Return rows of field information in a result set. This function is a
+   * basically a wrapper on the native mysqli_fetch_fields function.
+   *
+   * @param bool $as_array Return each field info as array; defaults to false
+   *
+   * @return array Array of field information each as an associative array
+   */
+  public function fetch_fields($as_array = false)
+  {
+    if ($as_array) {
+      return array_map(
+          function ($object) {
+            return (array)$object;
+          },
+          \mysqli_fetch_fields($this->_result)
+      );
+    }
+
+    return \mysqli_fetch_fields($this->_result);
+  }
+
+  /**
+   * Returns all rows at once as a grouped array of scalar values or arrays.
+   *
+   * @param string $group  The column name to use for grouping
+   * @param string $column The column name to use as values (optional)
+   *
+   * @return array A grouped array of scalar values or arrays
+   */
+  public function fetch_groups($group, $column = null)
+  {
+    // init
+    $groups = array();
+    $pos = $this->current_row;
+
+    foreach ($this as $row) {
+
+      if (!array_key_exists($group, $row)) {
+        continue;
+      }
+
+      if (isset($column)) {
+
+        if (!array_key_exists($column, $row)) {
+          continue;
+        }
+
+        $groups[$row[$group]][] = $row[$column];
+      } else {
+        $groups[$row[$group]][] = $row;
+      }
+    }
+
+    $this->rewind($pos);
+
+    return $groups;
+  }
+
+  /**
+   * Returns all rows at once as key-value pairs.
+   *
+   * @param string $key    The column name to use as keys
+   * @param string $column The column name to use as values (optional)
+   *
+   * @return array An array of key-value pairs
+   */
+  public function fetch_pairs($key, $column = null)
+  {
+    // init
+    $pairs = array();
+    $pos = $this->current_row;
+
+    foreach ($this as $row) {
+
+      if (!array_key_exists($key, $row)) {
+        continue;
+      }
+
+      if (isset($column)) {
+
+        if (!array_key_exists($column, $row)) {
+          continue;
+        }
+
+        $pairs[$row[$key]] = $row[$column];
+      } else {
+        $pairs[$row[$key]] = $row;
+      }
+    }
+
+    $this->rewind($pos);
+
+    return $pairs;
+  }
+
+  /**
+   * Returns all rows at once, transposed as an array of arrays. Instead of
+   * returning rows of columns, this method returns columns of rows.
+   *
+   * @param string $column The column name to use as keys (optional)
+   *
+   * @return mixed A transposed array of arrays
+   */
+  public function fetch_transpose($column = null)
+  {
+    // init
+    $keys = isset($column) ? $this->fetchAllColumn($column) : array();
+    $rows = array();
+    $pos = $this->current_row;
+
+    foreach ($this as $row) {
+      foreach ($row as $key => $value) {
+        $rows[$key][] = $value;
+      }
+    }
+
+    $this->rewind($pos);
+
+    if (empty($keys)) {
+      return $rows;
+    }
+
+    return array_map(
+        function ($values) use ($keys) {
+          return array_combine($keys, $values);
+        }, $rows
+    );
+  }
+
+  /**
+   * Returns the first row element from the result.
+   *
+   * @param string $column The column name to use as value (optional)
+   *
+   * @return mixed A row array or a single scalar value
+   */
+  public function first($column = null)
+  {
+    $pos = $this->current_row;
+    $first = $this->fetch_callable(0, $column);
+    $this->rewind($pos);
+
+    return $first;
+  }
+
+  /**
    * free the memory
    */
   public function free()
   {
-    \mysqli_free_result($this->_result);
+    if (isset($this->_result) && $this->_result) {
+      /** @noinspection PhpUsageOfSilenceOperatorInspection */
+      /** @noinspection UsageOfSilenceOperatorInspection */
+      @\mysqli_free_result($this->_result);
+      $this->_result = null;
+
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -604,6 +899,97 @@ final class Result
   }
 
   /**
+   * Returns the last row element from the result.
+   *
+   * @param string $column The column name to use as value (optional)
+   *
+   * @return mixed A row array or a single scalar value
+   */
+  public function last($column = null)
+  {
+    $pos = $this->current_row;
+    $last = $this->fetch_callable($this->num_rows - 1, $column);
+    $this->rewind($pos);
+
+    return $last;
+  }
+
+  /**
+   * Set the mapper...
+   *
+   * @param \Closure $callable
+   *
+   * @return $this
+   */
+  public function map(\Closure $callable)
+  {
+    $this->_mapper = $callable;
+
+    return $this;
+  }
+
+  /**
+   * Alias of count(). Deprecated.
+   *
+   * @return int The number of rows in the result
+   */
+  public function num_rows()
+  {
+    return $this->count();
+  }
+
+  /**
+   * ArrayAccess interface implementation.
+   *
+   * @param int $offset Offset number
+   *
+   * @return bool Boolean true if offset exists, false otherwise
+   */
+  public function offsetExists($offset)
+  {
+    return is_int($offset) && $offset >= 0 && $offset < $this->num_rows;
+  }
+
+  /**
+   * ArrayAccess interface implementation.
+   *
+   * @param int $offset Offset number
+   *
+   * @return mixed
+   */
+  public function offsetGet($offset)
+  {
+    if ($this->offsetExists($offset)) {
+      return $this->fetch_callable($offset);
+    }
+
+    throw new \OutOfBoundsException("undefined offset ($offset)");
+  }
+
+  /**
+   * ArrayAccess interface implementation. Not implemented by design.
+   *
+   * @param mixed $offset
+   * @param mixed $value
+   */
+  public function offsetSet($offset, $value)
+  {
+    /** @noinspection UselessReturnInspection */
+    return;
+  }
+
+  /**
+   * ArrayAccess interface implementation. Not implemented by design.
+   *
+   * @param mixed $offset
+   */
+  public function offsetUnset($offset)
+  {
+    /** @noinspection UselessReturnInspection */
+    return;
+  }
+
+  /**
    * Reset the offset (data_seek) for the results.
    *
    * @return Result
@@ -635,5 +1021,40 @@ final class Result
     ) {
       $this->_default_result_type = $default_result_type;
     }
+  }
+
+  /**
+   * @param int      $offset
+   * @param null|int $length
+   * @param bool     $preserve_keys
+   *
+   * @return array
+   */
+  public function slice($offset = 0, $length = null, $preserve_keys = false)
+  {
+    // init
+    $slice = array();
+    $offset = (int)$offset;
+
+    if ($offset < 0) {
+      if (abs($offset) > $this->num_rows) {
+        $offset = 0;
+      } else {
+        $offset = $this->num_rows - abs($offset);
+      }
+    }
+
+    $length = isset($length) ? (int)$length : $this->num_rows;
+    $n = 0;
+    for ($i = $offset; $i < $this->num_rows && $n < $length; $i++) {
+      if ($preserve_keys) {
+        $slice[$i] = $this->fetch_callable($i);
+      } else {
+        $slice[] = $this->fetch_callable($i);
+      }
+      ++$n;
+    }
+
+    return $slice;
   }
 }

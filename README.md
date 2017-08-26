@@ -186,6 +186,43 @@ Binding parameters is a good way of preventing mysql injections as the parameter
   }
 ```
 
+## Transactions
+
+Use `begin()`, `commit()`, and `rollback()` to manage transactions:
+
+```php
+$db->beginTransaction();
+
+$db->query(
+    'UPDATE `users` SET `foo` = :foo WHERE id = :id',
+    array('foo' => 100, 'id' => 1)
+);
+$db->query(
+    'UPDATE `users_noop` SET `foo` = :foo WHERE id = :id',
+    array('foo' => 100, 'id' => 2)
+);
+
+$db->endTransaction();
+```
+
+Any SQL errors between `begin()` and `commit()` will yield a `RuntimeException`.
+
+You can also use the `DB->transact()` method. The following is equivalent
+to the above:
+
+```php
+$db->transact(function($db) {
+    $db->query(
+        'UPDATE `users` SET `foo` = :foo WHERE id = :id',
+        array('foo' => 100, 'id' => 1)
+    );
+    $db->query(
+        'UPDATE `users_noop` SET `foo` = :foo WHERE id = :id',
+        array('foo' => 100, 'id' => 2)
+    );
+});
+```
+
 ### Using the Result-Class
 
 After executing a `SELECT` query you receive a `Result` object that will help you manipulate the resultant data.

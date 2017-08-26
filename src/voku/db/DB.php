@@ -126,8 +126,10 @@ final class DB
    * @param string         $database
    * @param int            $port
    * @param string         $charset
-   * @param boolean|string $exit_on_error <p>Use a empty string "" or false to disable it.</p>
-   * @param boolean|string $echo_on_error <p>Use a empty string "" or false to disable it.</p>
+   * @param bool|string $exit_on_error   <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
+   *                                     Use a empty string "" or false to disable it.</p>
+   * @param bool|string $echo_on_error   <p>Echo the error if "checkForDev()" returns true.
+   *                                     Use a empty string "" or false to disable it.</p>
    * @param string         $logger_class_name
    * @param string         $logger_level  <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
    * @param array          $extra_config  <p>
@@ -249,8 +251,10 @@ final class DB
    * @param string         $database
    * @param int|string     $port          <p>default is (int)3306</p>
    * @param string         $charset       <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
-   * @param boolean|string $exit_on_error <p>Use a empty string "" or false to disable it.</p>
-   * @param boolean|string $echo_on_error <p>Use a empty string "" or false to disable it.</p>
+   * @param bool|string $exit_on_error   <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
+   *                                     Use a empty string "" or false to disable it.</p>
+   * @param bool|string $echo_on_error   <p>Echo the error if "checkForDev()" returns true.
+   *                                     Use a empty string "" or false to disable it.</p>
    * @param string         $logger_class_name
    * @param string         $logger_level
    * @param array          $extra_config  <p>
@@ -676,7 +680,7 @@ final class DB
 
     } catch (\Exception $e) {
       $error = 'Error connecting to mysql server: ' . $e->getMessage();
-      $this->_debug->displayError($error, false);
+      $this->_debug->displayError($error, true);
       throw new DBConnectException($error, 100, $e);
     }
     \mysqli_report(MYSQLI_REPORT_OFF);
@@ -684,7 +688,7 @@ final class DB
     $errno = mysqli_connect_errno();
     if (!$this->connected || $errno) {
       $error = 'Error connecting to mysql server: ' . \mysqli_connect_error() . ' (' . $errno . ')';
-      $this->_debug->displayError($error, false);
+      $this->_debug->displayError($error, true);
       throw new DBConnectException($error, 101);
     }
 
@@ -773,8 +777,8 @@ final class DB
   /**
    * Returns the SQL by replacing :placeholders with SQL-escaped values.
    *
-   * @param mixed $sql      <p>The SQL string.</p>
-   * @param array $params   <p>An array of key-value bindings.</p>
+   * @param mixed $sql    <p>The SQL string.</p>
+   * @param array $params <p>An array of key-value bindings.</p>
    *
    * @return array <p>with the keys -> 'sql', 'params'</p>
    */
@@ -1054,10 +1058,12 @@ final class DB
    * @param string      $database
    * @param int|string  $port            <p>default is (int)3306</p>
    * @param string      $charset         <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
-   * @param bool|string $exit_on_error   <p>Use a empty string "" or false to disable it.</p>
-   * @param bool|string $echo_on_error   <p>Use a empty string "" or false to disable it.</p>
+   * @param bool|string $exit_on_error   <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
+   *                                     Use a empty string "" or false to disable it.</p>
+   * @param bool|string $echo_on_error   <p>Echo the error if "checkForDev()" returns true.
+   *                                     Use a empty string "" or false to disable it.</p>
    * @param string      $logger_class_name
-   * @param string      $logger_level
+   * @param string      $logger_level    <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
    * @param array       $extra_config    <p>
    *                                     'session_to_db' => false|true<br>
    *                                     'socket' => 'string (path)'<br>
@@ -1069,7 +1075,7 @@ final class DB
    *
    * @return \voku\db\DB
    */
-  public static function getInstance($hostname = '', $username = '', $password = '', $database = '', $port = '', $charset = '', $exit_on_error = '', $echo_on_error = '', $logger_class_name = '', $logger_level = '', $extra_config = array())
+  public static function getInstance($hostname = '', $username = '', $password = '', $database = '', $port = '', $charset = '', $exit_on_error = true, $echo_on_error = true, $logger_class_name = '', $logger_level = '', $extra_config = array())
   {
     /**
      * @var $instance DB[]
@@ -1520,8 +1526,13 @@ final class DB
 
     $this->_debug->mailToAdmin('SQL-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql);
 
+    $force_exception_after_error = null; // auto
+    if ($this->_in_transaction === true) {
+      $force_exception_after_error = false;
+    }
     // this query returned an error, we must display it (only for dev) !!!
-    $this->_debug->displayError($errorMessage . '(' . $errorNumber . ') ' . ' | ' . $sql);
+
+    $this->_debug->displayError($errorMessage . '(' . $errorNumber . ') ' . ' | ' . $sql, $force_exception_after_error);
 
     return false;
   }
@@ -1901,7 +1912,8 @@ final class DB
   /**
    * Execute a callback inside a transaction.
    *
-   * @param callback $callback <p>The callback to run inside the transaction.</p>
+   * @param callback $callback <p>The callback to run inside the transaction, if it's throws an "Exception" or if it's
+   *                           returns "false", all SQL-statements in the callback will be rollbacked.</p>
    *
    * @return bool <p>Boolean true on success, false otherwise.</p>
    */
@@ -1917,7 +1929,6 @@ final class DB
       }
 
       $result = call_user_func($callback, $this);
-
       if ($result === false) {
         /** @noinspection ThrowRawExceptionInspection */
         throw new \Exception('call_user_func [' . $callback . '] === false');

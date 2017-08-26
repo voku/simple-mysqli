@@ -1035,7 +1035,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $data = array(
         'page_type' => 'lall',
         'page_lall' => 'öäü'
-        // this will produce a mysql-error and a mysqli-rollback
+        // this will produce a mysql-error and a mysqli-rollback via "db->endTransaction()"
     );
     $where = array(
         'page_id' => $resultInsert,

@@ -506,14 +506,22 @@ final class DB
 
   /**
    * Closes a previously opened database connection.
+   *
+   * @return bool
    */
   public function close()
   {
     $this->connected = false;
-
-    if ($this->link) {
-      \mysqli_close($this->link);
+    if (!$this->link) {
+      return false;
     }
+
+    if (\mysqli_close($this->link)) {
+      $this->link = null;
+      return true;
+    }
+
+    return false;
   }
 
   /**

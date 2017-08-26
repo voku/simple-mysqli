@@ -123,13 +123,20 @@ final class DB
    * @param string         $database
    * @param int            $port
    * @param string         $charset
-   * @param boolean|string $exit_on_error use a empty string "" or false to disable it
-   * @param boolean|string $echo_on_error use a empty string "" or false to disable it
+   * @param boolean|string $exit_on_error <p>Use a empty string "" or false to disable it.</p>
+   * @param boolean|string $echo_on_error <p>Use a empty string "" or false to disable it.</p>
    * @param string         $logger_class_name
-   * @param string         $logger_level  'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'
-   * @param boolean|string $session_to_db use a empty string "" or false to disable it
+   * @param string         $logger_level  <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
+   * @param array          $extra_config <p>
+   *                                     'session_to_db' => false|true<br>
+   *                                     'socket' => 'string (path)'<br>
+   *                                     'ssl' => 'bool'<br>
+   *                                     'clientkey' => 'string (path)'<br>
+   *                                     'clientcert' => 'string (path)'<br>
+   *                                     'cacert' => 'string (path)'<br>
+   *                                     </p>
    */
-  protected function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db)
+  protected function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $extra_config = array())
   {
     $this->connected = false;
 
@@ -146,7 +153,7 @@ final class DB
         $echo_on_error,
         $logger_class_name,
         $logger_level,
-        $session_to_db
+        $extra_config
     );
 
     $this->connect();
@@ -219,17 +226,24 @@ final class DB
    * @param string         $username
    * @param string         $password
    * @param string         $database
-   * @param int            $port
-   * @param string         $charset
+   * @param int|string     $port          <p>default is (int)3306</p>
+   * @param string         $charset       <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
    * @param boolean|string $exit_on_error <p>Use a empty string "" or false to disable it.</p>
    * @param boolean|string $echo_on_error <p>Use a empty string "" or false to disable it.</p>
    * @param string         $logger_class_name
    * @param string         $logger_level
-   * @param boolean|string $session_to_db <p>Use a empty string "" or false to disable it.</p>
+   * @param array          $extra_config <p>
+   *                                     'session_to_db' => false|true<br>
+   *                                     'socket' => 'string (path)'<br>
+   *                                     'ssl' => 'bool'<br>
+   *                                     'clientkey' => 'string (path)'<br>
+   *                                     'clientcert' => 'string (path)'<br>
+   *                                     'cacert' => 'string (path)'<br>
+   *                                     </p>
    *
    * @return bool
    */
-  private function _loadConfig($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $session_to_db)
+  private function _loadConfig($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $extra_config)
   {
     $this->hostname = (string)$hostname;
     $this->username = (string)$username;
@@ -269,7 +283,36 @@ final class DB
     $this->_debug->setLoggerClassName($logger_class_name);
     $this->_debug->setLoggerLevel($logger_level);
 
-    $this->session_to_db = (boolean)$session_to_db;
+    if (is_array($extra_config) === true) {
+
+      if (isset($extra_config['session_to_db'])) {
+        $this->session_to_db = (boolean)$extra_config['session_to_db'];
+      }
+
+      if (isset($extra_config['socket'])) {
+        $this->socket = $extra_config['socket'];
+      }
+
+      if (isset($extra_config['ssl'])) {
+        $this->_ssl = $extra_config['ssl'];
+      }
+
+      if (isset($extra_config['clientkey'])) {
+        $this->_clientkey = $extra_config['clientkey'];
+      }
+
+      if (isset($extra_config['clientcert'])) {
+        $this->_clientcert = $extra_config['clientcert'];
+      }
+
+      if (isset($extra_config['cacert'])) {
+        $this->_cacert = $extra_config['cacert'];
+      }
+
+    } else {
+      // only for backward compatibility
+      $this->session_to_db = (boolean)$extra_config;
+    }
 
     return $this->showConfigError();
   }
@@ -810,6 +853,7 @@ final class DB
    * @param string $query    sql-query
    * @param bool   $useCache use cache?
    * @param int    $cacheTTL cache-ttl in seconds
+   * @param DB     $db
    *
    * @return mixed "array" by "<b>SELECT</b>"-queries<br />
    *               "int" (insert_id) by "<b>INSERT</b>"-queries<br />
@@ -819,11 +863,13 @@ final class DB
    *
    * @throws QueryException
    */
-  public static function execSQL($query, $useCache = false, $cacheTTL = 3600)
+  public static function execSQL($query, $useCache = false, $cacheTTL = 3600, DB $db = null)
   {
     // init
     $cacheKey = null;
-    $db = self::getInstance();
+    if (!$db) {
+      $db = self::getInstance();
+    }
 
     if ($useCache === true) {
       $cache = new Cache(null, null, false, $useCache);
@@ -905,17 +951,24 @@ final class DB
    * @param string      $username
    * @param string      $password
    * @param string      $database
-   * @param string      $port          default is (int)3306
-   * @param string      $charset       default is 'utf8' or 'utf8mb4' (if supported)
-   * @param bool|string $exit_on_error use a empty string "" or false to disable it
-   * @param bool|string $echo_on_error use a empty string "" or false to disable it
+   * @param int|string  $port          <p>default is (int)3306</p>
+   * @param string      $charset       <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
+   * @param bool|string $exit_on_error <p>Use a empty string "" or false to disable it.</p>
+   * @param bool|string $echo_on_error <p>Use a empty string "" or false to disable it.</p>
    * @param string      $logger_class_name
    * @param string      $logger_level
-   * @param bool|string $session_to_db use a empty string "" or false to disable it
+   * @param array       $extra_config    <p>
+   *                                     'session_to_db' => false|true<br>
+   *                                     'socket' => 'string (path)'<br>
+   *                                     'ssl' => 'bool'<br>
+   *                                     'clientkey' => 'string (path)'<br>
+   *                                     'clientcert' => 'string (path)'<br>
+   *                                     'cacert' => 'string (path)'<br>
+   *                                     </p>
    *
    * @return \voku\db\DB
    */
-  public static function getInstance($hostname = '', $username = '', $password = '', $database = '', $port = '', $charset = '', $exit_on_error = '', $echo_on_error = '', $logger_class_name = '', $logger_level = '', $session_to_db = '')
+  public static function getInstance($hostname = '', $username = '', $password = '', $database = '', $port = '', $charset = '', $exit_on_error = '', $echo_on_error = '', $logger_class_name = '', $logger_level = '', $extra_config = array())
   {
     /**
      * @var $instance DB[]
@@ -935,8 +988,18 @@ final class DB
       return $firstInstance;
     }
 
+    $extra_config_string = '';
+    if (is_array($extra_config) === true) {
+      foreach ($extra_config as $extra_config_key => $extra_config_value) {
+        $extra_config_string .= $extra_config_key . (string)$extra_config_value;
+      }
+    } else {
+      // only for backward compatibility
+      $extra_config_string = (int)$extra_config;
+    }
+
     $connection = md5(
-        $hostname . $username . $password . $database . $port . $charset . (int)$exit_on_error . (int)$echo_on_error . $logger_class_name . $logger_level . (int)$session_to_db
+        $hostname . $username . $password . $database . $port . $charset . (int)$exit_on_error . (int)$echo_on_error . $logger_class_name . $logger_level . $extra_config_string
     );
 
     if (!isset($instance[$connection])) {
@@ -951,7 +1014,7 @@ final class DB
           $echo_on_error,
           $logger_class_name,
           $logger_level,
-          $session_to_db
+          $extra_config
       );
 
       if (null === $firstInstance) {
@@ -1185,15 +1248,18 @@ final class DB
   /**
    * Execute a sql-query and return the result-array for select-statements.
    *
-   * @param $query
+   * @param string $query
+   * @param DB     $db
    *
    * @return mixed
    * @deprecated
    * @throws \Exception
    */
-  public static function qry($query)
+  public static function qry($query, DB $db = null)
   {
-    $db = self::getInstance();
+    if (!$db) {
+      $db = self::getInstance();
+    }
 
     $args = func_get_args();
     /** @noinspection SuspiciousAssignmentsInspection */

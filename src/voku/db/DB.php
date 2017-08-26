@@ -649,7 +649,6 @@ final class DB
    */
   public function endTransaction()
   {
-
     if (!$this->errors()) {
       $return = \mysqli_commit($this->link);
     } else {
@@ -1160,6 +1159,22 @@ final class DB
     }
 
     return false;
+  }
+
+  /**
+   * Selects a different database than the one specified on construction.
+   *
+   * @param string $database <p>Database name to switch to.</p>
+   *
+   * @return bool <p>Boolean true on success, false otherwise.</p>
+   */
+  public function select_db($database)
+  {
+    if (!$this->isReady()) {
+      return false;
+    }
+
+    return mysqli_select_db($this->link, $database);
   }
 
   /**

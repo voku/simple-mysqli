@@ -246,6 +246,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $tmpPage = $result->fetchObject();
     self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
 
+    // select - true
+    foreach ($result as $resultItem) {
+      self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $resultItem['page_template']);
+    }
+
     $tmpPage = $result->fetchObject('', null, true);
     self::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
 
@@ -1435,6 +1440,13 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertSame('NOW()', $this->db->escape('NOW()'));
     self::assertSame(array(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), 1, null), $this->db->escape(array("O'Toole", true, null)));
     self::assertSame(array(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), 1, null), $this->db->escape(array("O'Toole", true, null), false));
+  }
+
+  public function testInvoke()
+  {
+    $db = $this->db;
+    $this->assertInstanceOf('\\voku\\db\\DB', $db());
+    $this->assertInstanceOf('\\voku\\db\\Result', $db('SELECT * FROM ' . $this->tableName));
   }
 
   public function testConnector2()

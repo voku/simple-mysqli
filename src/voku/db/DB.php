@@ -213,6 +213,24 @@ final class DB
   }
 
   /**
+   * @param null|string $sql
+   * @param array       $bindings
+   *
+   * @return bool|int|Result|DB           <p>
+   *                                      "DB" by "$sql" === null<br />
+   *                                      "Result" by "<b>SELECT</b>"-queries<br />
+   *                                      "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+   *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                                      "true" by e.g. "DROP"-queries<br />
+   *                                      "false" on error
+   *                                      </p>
+   */
+  public function __invoke($sql = null, array $bindings = array())
+  {
+    return isset($sql) ? $this->query($sql, $bindings) : $this;
+  }
+
+  /**
    * __wakeup
    *
    * @return void

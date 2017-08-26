@@ -479,7 +479,7 @@ final class DB
   public function beginTransaction()
   {
     if ($this->_in_transaction === true) {
-      $this->_debug->displayError('Error mysql server already in transaction!', false);
+      $this->_debug->displayError('Error: mysql server already in transaction!', false);
       return false;
     }
 
@@ -649,6 +649,11 @@ final class DB
    */
   public function endTransaction()
   {
+    if ($this->_in_transaction === false) {
+      $this->_debug->displayError('Error: mysql server is not in transaction!', false);
+      return false;
+    }
+
     if (!$this->errors()) {
       $return = \mysqli_commit($this->link);
     } else {
@@ -1465,6 +1470,7 @@ final class DB
   public function rollback()
   {
     if ($this->_in_transaction === false) {
+      $this->_debug->displayError('Error: mysql server is not in transaction!', false);
       return false;
     }
 
@@ -1484,6 +1490,7 @@ final class DB
   public function commit()
   {
     if ($this->_in_transaction === false) {
+      $this->_debug->displayError('Error: mysql server is not in transaction!', false);
       return false;
     }
 
@@ -1492,6 +1499,25 @@ final class DB
     $this->_in_transaction = false;
 
     return $return;
+  }
+
+  /**
+   * Execute a callback inside a transaction.
+   *
+   * @param callback $callback The callback to run inside the transaction
+   *
+   * @return bool Boolean true on success, false otherwise
+   */
+  public function transact($callback)
+  {
+    try {
+      $this->beginTransaction();
+      call_user_func($callback, $this);
+      return $this->commit();
+    } catch (\Exception $e) {
+      $this->rollback();
+      return false;
+    }
   }
 
   /**

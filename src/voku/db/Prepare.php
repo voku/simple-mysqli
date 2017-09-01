@@ -7,7 +7,7 @@ use voku\db\exceptions\QueryException;
 use voku\helper\Bootup;
 
 /**
- * Prepare: this handles the prepare-statement from "DB"-Class
+ * Prepare: This class can handle the prepare-statement from the "DB"-class.
  *
  * @package   voku\db
  */

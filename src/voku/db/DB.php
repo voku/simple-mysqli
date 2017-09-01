@@ -9,7 +9,7 @@ use voku\db\exceptions\QueryException;
 use voku\helper\UTF8;
 
 /**
- * DB: this handles DB queries via MySQLi
+ * DB: This class can handle DB queries via MySQLi.
  *
  * @package voku\db
  */
@@ -24,7 +24,7 @@ final class DB
   /**
    * @var \mysqli
    */
-  private $link = false;
+  private $link;
 
   /**
    * @var bool
@@ -796,12 +796,22 @@ final class DB
     $parseKey = md5(uniqid((string)mt_rand(), true));
 
     foreach ($params as $name => $value) {
-      $parseKeyInner = $name . '-' . $parseKey;
-      $sql = str_replace(':' . $name, $parseKeyInner, $sql);
+      $nameTmp = $name;
+      if (strpos($name, ':') === 0) {
+        $nameTmp = substr($name, 1);
+      }
+
+      $parseKeyInner = $nameTmp . '-' . $parseKey;
+      $sql = str_replace(':' . $nameTmp, $parseKeyInner, $sql);
     }
 
     foreach ($params as $name => $value) {
-      $parseKeyInner = $name . '-' . $parseKey;
+      $nameTmp = $name;
+      if (strpos($name, ':') === 0) {
+        $nameTmp = substr($name, 1);
+      }
+
+      $parseKeyInner = $nameTmp . '-' . $parseKey;
       $sqlBefore = $sql;
 
       while (strpos($sql, $parseKeyInner) !== false) {
@@ -1425,6 +1435,10 @@ final class DB
       $sql = $parseQueryParamsByName['sql'];
     }
 
+    // DEBUG
+    var_dump($params);
+    echo $sql . "\n";
+
     $query_start_time = microtime(true);
     $query_result = \mysqli_real_query($this->link, $sql);
     $query_duration = microtime(true) - $query_start_time;
@@ -1992,4 +2006,61 @@ final class DB
     return $this->query($sql);
   }
 
+  /**
+   * Determine if database table exists
+   *
+   * @param string $table
+   *
+   * @return bool
+   */
+  public function table_exists($table)
+  {
+    $check = $this->query("SELECT 1 FROM " . $this->quote_string($table));
+    if (
+        $check !== false
+        &&
+        $check->num_rows > 0
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Optimize tables
+   *
+   * @param array $tables database table names
+   *
+   * @return int
+   */
+  public function optimize(array $tables = array())
+  {
+    if (!empty($tables)) {
+      $optimized = 0;
+      foreach ($tables as $table) {
+        $optimize = "OPTIMIZE TABLE `" . trim($table) . "`";
+        $this->link->query($optimize);
+        if (!$this->link->error) {
+          $optimized++;
+        }
+      }
+
+      return $optimized;
+    }
+  }
+
+  /**
+   * Count number of rows found matching a specific query.
+   *
+   * @param string
+   *
+   * @return int
+   */
+  public function num_rows($query)
+  {
+    $check = $this->query($query);
+
+    return $check->num_rows;
+  }
 }

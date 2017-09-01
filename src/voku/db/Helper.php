@@ -6,7 +6,7 @@ use voku\cache\Cache;
 use voku\helper\Phonetic;
 
 /**
- * Helper: this handles extra functions that use the "DB"-Class
+ * Helper: This class can handle extra functions that use the "Simple-MySQLi"-classes.
  *
  * @package   voku\db
  */

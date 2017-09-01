@@ -7,7 +7,7 @@ use voku\helper\Bootup;
 use voku\helper\UTF8;
 
 /**
- * Result: this handles the result from "DB"-Class
+ * Result: This class can handle the results from the "DB"-class.
  *
  * @package   voku\db
  */
@@ -571,11 +571,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     }
 
     if ($class && $params) {
-      return ($row = \mysqli_fetch_object($this->_result, $class, $params)) ? $row : false;
+      return ($row = \mysqli_fetch_object($this->_result, $class, $params)) ? $this->cast($row) : false;
     }
 
     if ($class) {
-      return ($row = \mysqli_fetch_object($this->_result, $class)) ? $row : false;
+      return ($row = \mysqli_fetch_object($this->_result, $class)) ? $this->cast($row) : false;
     }
 
     return ($row = \mysqli_fetch_object($this->_result)) ? $this->cast($row) : false;

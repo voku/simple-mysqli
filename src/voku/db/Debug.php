@@ -7,7 +7,7 @@ use voku\helper\Bootup;
 use voku\helper\UTF8;
 
 /**
- * Debug: this handles debug and error-logging.
+ * Debug: This class can handle debug and error-logging for SQL-queries for the "Simple-MySQLi"-classes.
  *
  * @package   voku\db
  */

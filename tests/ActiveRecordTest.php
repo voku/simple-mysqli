@@ -22,22 +22,22 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, true);
 
     ActiveRecord::execute(
-        "CREATE TABLE IF NOT EXISTS user (
+        'CREATE TABLE IF NOT EXISTS user (
             id INTEGER NOT NULL AUTO_INCREMENT, 
             name TEXT, 
             password TEXT,
             PRIMARY KEY (id)
-        );"
+        );'
     );
 
     ActiveRecord::execute(
-        "CREATE TABLE IF NOT EXISTS contact (
+        'CREATE TABLE IF NOT EXISTS contact (
             id INTEGER NOT NULL AUTO_INCREMENT, 
             user_id INTEGER, 
             email TEXT,
             address TEXT,
             PRIMARY KEY (id)
-        );"
+        );'
     );
   }
 
@@ -57,7 +57,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
 
   /**
    * @depends testInsertUser
-   * 
+   *
    * @param FoobarUser $user
    *
    * @return mixed
@@ -93,7 +93,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
 
   /**
    * @depends testInsertContact
-   * 
+   *
    * @param $contact FoobarContact
    *
    * @return mixed
@@ -110,7 +110,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
 
   /**
    * @depends testInsertContact
-   * 
+   *
    * @param FoobarContact $contact
    *
    * @return mixed
@@ -127,7 +127,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
 
   /**
    * @depends testRelations
-   * 
+   *
    * @param FoobarContact $contact
    *
    * @return mixed
@@ -145,7 +145,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
 
   /**
    * @depends testInsertContact
-   * 
+   *
    * @param FoobarContact $contact
    */
   public function testJoin($contact)
@@ -184,7 +184,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
 
   /**
    * @depends testRelations
-   * 
+   *
    * @param FoobarContact $contact
    */
   public function testDelete($contact)

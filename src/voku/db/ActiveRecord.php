@@ -512,7 +512,7 @@ abstract class ActiveRecord extends Arrayy
     array_walk($sqls, array($this, '_buildSqlCallback'), $this);
 
     // DEBUG
-    echo 'SQL: ', implode(' ', $sqls), "\n", "PARAMS: ", implode(', ', $this->params), "\n";
+    echo 'SQL: ', implode(' ', $sqls), "\n", 'PARAMS: ', implode(', ', $this->params), "\n";
 
     return implode(' ', $sqls);
   }
@@ -538,11 +538,11 @@ abstract class ActiveRecord extends Arrayy
 
       $this->addCondition($args[0], self::$operators[$name], isset($args[1]) ? $args[1] : null, (is_string(end($args)) && 'or' === strtolower(end($args))) ? 'OR' : 'AND');
 
-    } else if (array_key_exists($name = str_replace('by', '', $name), self::$sqlParts)) {
+    } elseif (array_key_exists($name = str_replace('by', '', $name), self::$sqlParts)) {
 
       $this->$name = new Expressions(array('operator' => self::$sqlParts[$name], 'target' => implode(', ', $args)));
 
-    } else if (is_callable($callback = array(self::$db, $name))) {
+    } elseif (is_callable($callback = array(self::$db, $name))) {
 
       return call_user_func_array($callback, $args);
 
@@ -598,7 +598,7 @@ abstract class ActiveRecord extends Arrayy
       foreach ($value as $key => $val) {
         $this->params[$value[$key] = self::PREFIX . ++self::$count] = $val;
       }
-    } else if (is_string($value)) {
+    } elseif (is_string($value)) {
       $this->params[$ph = self::PREFIX . ++self::$count] = $value;
       $value = $ph;
     }
@@ -718,7 +718,7 @@ abstract class ActiveRecord extends Arrayy
 
       $this->sqlExpressions[$var] = $val;
 
-    } else if (
+    } elseif (
         array_key_exists($var, $this->relations)
         &&
         $val instanceof self

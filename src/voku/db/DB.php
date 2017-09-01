@@ -2015,7 +2015,7 @@ final class DB
    */
   public function table_exists($table)
   {
-    $check = $this->query("SELECT 1 FROM " . $this->quote_string($table));
+    $check = $this->query('SELECT 1 FROM ' . $this->quote_string($table));
     if (
         $check !== false
         &&
@@ -2039,7 +2039,7 @@ final class DB
     if (!empty($tables)) {
       $optimized = 0;
       foreach ($tables as $table) {
-        $optimize = "OPTIMIZE TABLE `" . trim($table) . "`";
+        $optimize = 'OPTIMIZE TABLE `' . trim($table) . '`';
         $this->link->query($optimize);
         if (!$this->link->error) {
           $optimized++;

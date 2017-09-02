@@ -1,6 +1,10 @@
 Changelog
 =========
 
+5.2.0 (2017-09-02)
+
+- add "ActiveRecord"-class + doc + tests
+
 5.1.0 (2017-08-26)
 
 - SSL connection for mysqli

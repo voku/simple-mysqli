@@ -9,11 +9,11 @@ use voku\db\exceptions\ActiveRecordException;
  * A simple implement of active record via mysqli + php.
  *
  * @method $this select(string $dbProperty)
- * @method $this eq(string $dbProperty, string|null $value = null)
+ * @method $this eq(string $dbProperty, string | null $value = null)
  * @method $this from(string $table)
  * @method $this where(string $where)
  * @method $this having(string $having)
- * @method $this limit(int $start, int|null $end = null)
+ * @method $this limit(int $start, int | null $end = null)
  *
  * @method $this equal(string $dbProperty, string $value)
  * @method $this notEqual(string $dbProperty, string $value)
@@ -147,7 +147,7 @@ abstract class ActiveRecord extends Arrayy
   protected static $new_data_are_dirty = true;
 
   /**
-   * @var array Stored the params will bind to SQL when call PDOStatement::execute(),
+   * @var array Stored the params will bind to SQL when call DB->query(),
    */
   protected $params = array();
 
@@ -237,7 +237,7 @@ abstract class ActiveRecord extends Arrayy
    * @param int $id If call this function using this param, will find record by using this id. If not set, just find
    *                the first record in database.
    *
-   * @return bool|ActiveRecord if find record, assign in to current object and return it, other wise return "false".
+   * @return bool|ActiveRecord if find record, assign in to current object and return it, otherwise return "false".
    */
   public function fetch($id = null)
   {
@@ -245,7 +245,7 @@ abstract class ActiveRecord extends Arrayy
       $this->reset()->eq($this->primaryKeyName, $id);
     }
 
-    return self::_query(
+    return self::query(
         $this->limit(1)->_buildSql(
             array(
                 'select',
@@ -271,7 +271,7 @@ abstract class ActiveRecord extends Arrayy
    */
   public function fetchAll()
   {
-    return self::_query(
+    return self::query(
         $this->_buildSql(
             array(
                 'select',
@@ -331,7 +331,10 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Function to build update SQL, and update current record in database, just write the dirty data into database.
    *
-   * @return bool|ActiveRecord if update success return current object, other wise return false.
+   * @return bool|int <p>
+   *                  If update was successful, it will return the affected rows as int,
+   *                  otherwise it will return false or true (if there are no dirty data).
+   *                  </p>
    */
   public function update()
   {
@@ -354,7 +357,10 @@ abstract class ActiveRecord extends Arrayy
         $this->params
     );
     if ($result) {
-      return $this->resetDirty()->reset();
+      $this->resetDirty();
+      $this->reset();
+
+      return $result;
     }
 
     return false;
@@ -363,7 +369,10 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Function to build insert SQL, and insert current record into database.
    *
-   * @return bool|ActiveRecord if insert success return current object, other wise return false.
+   * @return bool|int <p>
+   *                  If insert was successful, it will return the new id,
+   *                  otherwise it will return false or true (if there are no dirty data).
+   *                  </p>
    */
   public function insert()
   {
@@ -393,7 +402,10 @@ abstract class ActiveRecord extends Arrayy
     if ($result) {
       $this->{$this->primaryKeyName} = $result;
 
-      return $this->resetDirty()->reset();
+      $this->resetDirty();
+      $this->reset();
+
+      return $result;
     }
 
     return false;
@@ -425,15 +437,24 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to query one record by sql and params.
    *
-   * @param string       $sql    The SQL to find record.
-   * @param array        $param  The param will be bind to PDOStatement.
-   * @param ActiveRecord $obj    The object, if find record in database, will assign the attributes in to this object.
-   * @param bool         $single If set to true, will find record and fetch in current object, otherwise will find all
-   *                             records.
+   * @param string            $sql    <p>
+   *                                  The SQL query to find the record.
+   *                                  </p>
+   * @param array             $param  <p>
+   *                                  The param will be bind to the $sql query.
+   *                                  </p>
+   * @param ActiveRecord|null $obj    <p>
+   *                                  The object, if find record in database, we will assign the attributes into
+   *                                  this object.
+   *                                  </p>
+   * @param bool              $single <p>
+   *                                  If set to true, we will find record and fetch in current object, otherwise
+   *                                  will find all records.
+   *                                  </p>
    *
    * @return bool|ActiveRecord|array
    */
-  public static function _query($sql, array $param = array(), $obj = null, $single = false)
+  public static function query($sql, array $param = array(), $obj = null, $single = false)
   {
     $result = self::execute($sql, $param);
 
@@ -600,7 +621,7 @@ abstract class ActiveRecord extends Arrayy
 
   /**
    * Magic function to make calls witch in function mapping stored in $operators and $sqlPart.
-   * also can call function of PDO object.
+   * also can call function of DB object.
    *
    * @param string $name function name
    * @param array  $args The arguments of the function.

@@ -51,8 +51,10 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     $user = new FoobarUser();
     $user->name = 'demo';
     $user->password = md5('demo');
-    $user->insert();
+    $id = $user->insert();
     self::assertGreaterThan(0, $user->id);
+    self::assertGreaterThan(0, $id);
+    self::assertEquals($id, $user->getPrimaryKey());
 
     return $user;
   }

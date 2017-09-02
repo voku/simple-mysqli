@@ -526,9 +526,9 @@ set the DB connection.
   ActiveRecord::setDb($db);
 ```
 
-#### insert() : boolean|ActiveRecord
+#### insert() : boolean|int
 This function can build insert SQL queries and can insert the current record into database.
-If the insert was successful it, will return the current object, otherwise it will return false.
+If insert was successful, it will return the new id, otherwise it will return false or true (if there are no dirty data).
 
 ```php
   $user = new User();
@@ -538,8 +538,8 @@ If the insert was successful it, will return the current object, otherwise it wi
 ```
 
 #### fetch(integer  $id = null) : boolean|\ActiveRecord
-This function can find one record and assign in to current object, otherwise it will return "false".
-If you call this function with the $id parameter, it will find records by using the current primary-key-name.
+This function can fetch one record and assign in to current object, otherwise it will return "false".
+If you call this function with the $id parameter, it will fetch records by using the current primary-key-name.
 
 ```php
   $user = new User();
@@ -550,21 +550,21 @@ If you call this function with the $id parameter, it will find records by using 
 ```
 
 #### fetchAll() : array
-This function can find all records in database, it will return an array of ActiveRecord objects.
+This function can fetch all records in database, it will return an array of ActiveRecord objects.
 
 ```php
   $user = new User();
   /* @var $users User[] */
-  $users = $user->findAll();
+  $users = $user->fetchAll();
 ```
 
-#### update() : boolean|\ActiveRecord
+#### update() : boolean|int
 This function can build update SQL queries and can update the current record in database, just write the dirty data into database.
-if the update was successful it will return the current object, otherwise it will return false.
+If update was successful, it will return the affected rows as int, otherwise it will return false or true (if there are no dirty data).
 
 ```php
   $user = new User();
-  $user->notnull('id')->orderby('id desc')->find();
+  $user->notnull('id')->orderby('id desc')->fetch();
   $user->email = 'test@example.com';
   $user->update();
 ```
@@ -579,23 +579,23 @@ This function can set the select columns.
 
 ```php
   $user = new User();
-  $user->select('id', 'name')->find();
+  $user->select('id', 'name')->fetch();
 ```
 
 #### from()
-This function can set the table to find record from.
+This function can set the table to fetch record from.
 
 ```php
   $user = new User();
-  $user->select('id', 'name')->from('user')->find();
+  $user->select('id', 'name')->from('user')->fetch();
 ```
 
 #### join()
-This function can set the table to find record from.
+This function can set the table to fetch record from.
 
 ```php
   $user = new User();
-  $user->join('contact', 'contact.user_id = user.id')->find();
+  $user->join('contact', 'contact.user_id = user.id')->fetch();
 ```
 
 #### where()
@@ -603,7 +603,7 @@ This function can set where conditions.
 
 ```php
   $user = new User();
-  $user->where('id=1 AND name="demo"')->find();
+  $user->where('id=1 AND name="demo"')->fetch();
 ```
 
 #### group()
@@ -611,7 +611,7 @@ This function can set the "group by" conditions.
 
 ```php
   $user = new User();
-  $user->select('count(1) as count')->group('name')->findAll();
+  $user->select('count(1) as count')->group('name')->fetchAll();
 ```
 
 #### order()
@@ -619,7 +619,7 @@ This function can set the "order by" conditions.
 
 ```php
   $user = new User();
-  $user->order('name DESC')->find();
+  $user->order('name DESC')->fetch();
 ```
 
 #### limit()
@@ -627,7 +627,7 @@ This function can set the "limit" conditions.
 
 ```php
   $user = new User();
-  $user->order('name DESC')->limit(0, 1)->find();
+  $user->order('name DESC')->limit(0, 1)->fetch();
 ```
 
 ### Active Record | WHERE conditions
@@ -636,77 +636,210 @@ This function can set the "limit" conditions.
 
 ```php
   $user = new User();
-  $user->eq('id', 1)->find();
+  $user->eq('id', 1)->fetch();
 ```
 
 #### notEqual()/ne()
 
 ```php
   $user = new User();
-  $user->ne('id', 1)->find();
+  $user->ne('id', 1)->fetch();
 ```
 
 #### greaterThan()/gt()
 
 ```php
   $user = new User();
-  $user->gt('id', 1)->find();
+  $user->gt('id', 1)->fetch();
 ```
 
 #### lessThan()/lt()
 
 ```php
   $user = new User();
-  $user->lt('id', 1)->find();
+  $user->lt('id', 1)->fetch();
 ```
 
 #### greaterThanOrEqual()/ge()/gte()
 
 ```php
   $user = new User();
-  $user->ge('id', 1)->find();
+  $user->ge('id', 1)->fetch();
 ```
 
 #### lessThanOrEqual()/le()/lte()
 
 ```php
   $user = new User();
-  $user->le('id', 1)->find();
+  $user->le('id', 1)->fetch();
 ```
 
 #### like()
 
 ```php
   $user = new User();
-  $user->like('name', 'de')->find();
+  $user->like('name', 'de')->fetch();
 ```
 
 #### in()
 
 ```php
   $user = new User();
-  $user->in('id', array(1, 2))->find();
+  $user->in('id', array(1, 2))->fetch();
 ```
 
 #### notIn()
 
 ```php
   $user = new User();
-  $user->notin('id', array(1,3))->find();
+  $user->notin('id', array(1,3))->fetch();
 ```
 
 #### isNull()
 
 ```php
   $user = new User();
-  $user->isnull('id')->find();
+  $user->isnull('id')->fetch();
 ```
 
-#### isNotNull()/notnull()
+#### isNotNull()/notNull()
 
 ```php
   $user = new User();
-  $user->isNotNull('id')->find();
+  $user->isNotNull('id')->fetch();
+```
+
+
+### Active Record |  Demo
+
+#### Include && Init
+
+```php
+use voku\db\DB;
+use voku\db\ActiveRecord;
+
+require_once 'composer/autoload.php';
+
+$db = DB::getInstance('YOUR_MYSQL_SERVER', 'YOUR_MYSQL_USER', 'YOUR_MYSQL_PW', 'YOUR_DATABASE');
+ActiveRecord::setDb($db);
+```
+
+#### Define Class
+```php
+namespace demo;
+
+use voku\db\ActiveRecord;
+
+class User extends ActiveRecord {
+  public $table = 'user';
+  public $primaryKey = 'id';
+  
+  public $relations = array(
+    // format is array($relation_type, $child_namespaced_classname, $foreign_key_of_child)
+    'contacts' => array(
+      self::HAS_MANY, 
+      'Contact', 
+      'user_id'
+    ),
+    // format may be array($relation_type, $child_namespaced_classname, $foreign_key_of_child, $array_of_sql_part_functions)
+    'contact' => array(
+      self::HAS_ONE, 
+      'Contact', 
+      'user_id', 
+      array(
+        'where' => '1', 
+        'order' => 
+        'id desc')
+      ),
+  );
+}
+
+class Contact extends ActiveRecord{
+  public $table = 'contact';
+  public $primaryKey = 'id';
+  
+  public $relations = array(
+    // format is array($relation_type, $parent_namespaced_classname, $foreign_key_in_current_table)
+    'user' => array(
+      self::BELONGS_TO, 
+      'User', 
+      'user_id'
+    ),
+  );
+}
+```
+
+#### Init data (for testing - use migrations for this step, please)
+```php
+ActiveRecord::execute("
+  CREATE TABLE IF NOT EXISTS user (
+    id INTEGER PRIMARY KEY, 
+    name TEXT, 
+    password TEXT 
+  );"
+);
+
+ActiveRecord::execute("
+  CREATE TABLE IF NOT EXISTS contact (
+    id INTEGER PRIMARY KEY, 
+    user_id INTEGER, 
+    email TEXT,
+    address TEXT
+  );"
+);
+```
+
+#### Insert one User into database.
+```php
+use demo\User;
+
+$user = new User();
+$user->name = 'demo';
+$user->password = password_hash('demo', PASSWORD_BCRYPT, array("cost"=>15));
+$user_id = $user->insert();
+
+var_dump($user_id); // the new id 
+var_dump($user->id); // also the new id 
+var_dump($user->getPrimaryKey()); // also the new id 
+```
+
+#### Insert one Contact belongs the current user.
+```php
+use demo\Contact;
+
+$contact = new Contact();
+$contact->address = 'test';
+$contact->email = 'test1234456@domain.com';
+$contact->user_id = $user->id;
+
+var_dump($contact->insert()); // the new id 
+var_dump($contact->id); // also the new id 
+var_dump($contact->getPrimaryKey()); // also the new id 
+```
+
+#### Example to using relations 
+```php
+use demo\User;
+use demo\Contact;
+
+$user = new User();
+
+// fetch one user
+var_dump($user->notnull('id')->orderby('id desc')->fetch());
+
+echo "\nContact of User # {$user->id}\n";
+// get contacts by using relation:
+//   'contacts' => array(self::HAS_MANY, 'Contact', 'user_id'),
+var_dump($user->contacts);
+
+$contact = new Contact();
+
+// fetch one contact
+var_dump($contact->fetch());
+
+// get user by using relation:
+//    'user' => array(self::BELONGS_TO, 'User', 'user_id'),
+var_dump($contact->user);
 ```
 
 ## Logging and Errors

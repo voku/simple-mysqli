@@ -24,6 +24,20 @@ class SimpleHelperTest extends PHPUnit_Framework_TestCase
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
   }
 
+  public function testOptimizeTables()
+  {
+    $result = Helper::optimizeTables(array($this->tableName));
+
+    self::assertEquals(1, $result);
+  }
+
+  public function testRepairTables()
+  {
+    $result = Helper::repairTables(array($this->tableName));
+
+    self::assertEquals(1, $result);
+  }
+
   public function testGetDbFields()
   {
     // don't use static cache

@@ -639,35 +639,35 @@ This function can set the "limit" conditions.
   $user->eq('id', 1)->find();
 ```
 
-#### notequal()/ne()
+#### notEqual()/ne()
 
 ```php
   $user = new User();
   $user->ne('id', 1)->find();
 ```
 
-#### greaterthan()/gt()
+#### greaterThan()/gt()
 
 ```php
   $user = new User();
   $user->gt('id', 1)->find();
 ```
 
-#### lessthan()/lt()
+#### lessThan()/lt()
 
 ```php
   $user = new User();
   $user->lt('id', 1)->find();
 ```
 
-#### greaterthanorequal()/ge()/gte()
+#### greaterThanOrEqual()/ge()/gte()
 
 ```php
   $user = new User();
   $user->ge('id', 1)->find();
 ```
 
-#### lessthanorequal()/le()/lte()
+#### lessThanOrEqual()/le()/lte()
 
 ```php
   $user = new User();
@@ -688,25 +688,25 @@ This function can set the "limit" conditions.
   $user->in('id', array(1, 2))->find();
 ```
 
-#### notin()
+#### notIn()
 
 ```php
   $user = new User();
   $user->notin('id', array(1,3))->find();
 ```
 
-#### isnull()
+#### isNull()
 
 ```php
   $user = new User();
   $user->isnull('id')->find();
 ```
 
-#### isnotnull()/notnull()
+#### isNotNull()/notnull()
 
 ```php
   $user = new User();
-  $user->isnotnull('id')->find();
+  $user->isNotNull('id')->find();
 ```
 
 ## Logging and Errors

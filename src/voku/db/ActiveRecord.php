@@ -8,33 +8,33 @@ use voku\db\exceptions\ActiveRecordException;
 /**
  * A simple implement of active record via mysqli + php.
  *
- * @method $this select(string $stuff1, string|null $stuff2 = null)
- * @method $this eq(string $stuff1, string|null $stuff2 = null)
+ * @method $this select(string $dbProperty)
+ * @method $this eq(string $dbProperty, string|null $value = null)
  * @method $this from(string $table)
- * @method $this where(string $stuff)
- * @method $this having(string $stuff)
+ * @method $this where(string $where)
+ * @method $this having(string $having)
  * @method $this limit(int $start, int|null $end = null)
  *
- * @method $this equal(string $stuff1, string $stuff2)
- * @method $this notequal(string $stuff1, string $stuff2)
- * @method $this ne(string $stuff1, string $stuff2)
- * @method $this greaterthan(string $stuff1, int $stuff2)
- * @method $this gt(string $stuff1, int $stuff2)
- * @method $this lessthan(string $stuff1, int $stuff2)
- * @method $this lt(string $stuff1, int $stuff2)
- * @method $this greaterthanorequal(string $stuff1, int $stuff2)
- * @method $this ge(string $stuff1, int $stuff2)
- * @method $this gte(string $stuff1, int $stuff2)
- * @method $this lessthanorequal(string $stuff1, int $stuff2)
- * @method $this le(string $stuff1, int $stuff2)
- * @method $this lte(string $stuff1, int $stuff2)
- * @method $this between(string $stuff1, array $stuff2)
- * @method $this like(string $stuff1, string $stuff2)
- * @method $this in(string $stuff1, array $stuff2)
- * @method $this notin(string $stuff1, array $stuff2)
- * @method $this isnull(string $stuff1)
- * @method $this isnotnull(string $stuff1)
- * @method $this notnull(string $stuff1)
+ * @method $this equal(string $dbProperty, string $value)
+ * @method $this notEqual(string $dbProperty, string $value)
+ * @method $this ne(string $dbProperty, string $value)
+ * @method $this greaterThan(string $dbProperty, int $value)
+ * @method $this gt(string $dbProperty, int $value)
+ * @method $this lessThan(string $dbProperty, int $value)
+ * @method $this lt(string $dbProperty, int $value)
+ * @method $this greaterThanOrEqual(string $dbProperty, int $value)
+ * @method $this ge(string $dbProperty, int $value)
+ * @method $this gte(string $dbProperty, int $value)
+ * @method $this lessThanOrEqual(string $dbProperty, int $value)
+ * @method $this le(string $dbProperty, int $value)
+ * @method $this lte(string $dbProperty, int $value)
+ * @method $this between(string $dbProperty, array $value)
+ * @method $this like(string $dbProperty, string $value)
+ * @method $this in(string $dbProperty, array $value)
+ * @method $this notIn(string $dbProperty, array $value)
+ * @method $this isnull(string $dbProperty)
+ * @method $this isNotNull(string $dbProperty)
+ * @method $this notNull(string $dbProperty)
  */
 abstract class ActiveRecord extends Arrayy
 {
@@ -451,9 +451,9 @@ abstract class ActiveRecord extends Arrayy
     self::setNewDataAreDirty(false);
 
     if ($single) {
-      $return = $result->fetchObject($called_class);
+      $return = $result->fetchObject($called_class, null, true);
     } else {
-      $return = $result->fetchAllObject($called_class);
+      $return = $result->fetchAllObject($called_class, null);
     }
 
     self::setNewDataAreDirty(true);

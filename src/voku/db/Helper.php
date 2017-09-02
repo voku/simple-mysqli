@@ -13,6 +13,62 @@ use voku\helper\Phonetic;
 class Helper
 {
   /**
+   * Optimize tables
+   *
+   * @param array   $tables database table names
+   * @param DB|null $dbConnection <p>Use <strong>null</strong> to get your first singleton instance.</p>
+   *
+   * @return int
+   */
+  public static function optimizeTables(array $tables = array(), DB $dbConnection = null)
+  {
+    if ($dbConnection === null) {
+      $dbConnection = DB::getInstance();
+    }
+
+    $optimized = 0;
+    if (!empty($tables)) {
+      foreach ($tables as $table) {
+        $optimize = 'OPTIMIZE TABLE ' . $dbConnection->quote_string($table);
+        $result = $dbConnection->query($optimize);
+        if ($result) {
+          $optimized++;
+        }
+      }
+    }
+
+    return $optimized;
+  }
+
+  /**
+   * Repair tables
+   *
+   * @param array $tables database table names
+   * @param DB|null $dbConnection <p>Use <strong>null</strong> to get your first singleton instance.</p>
+   *
+   * @return int
+   */
+  public static function repairTables(array $tables = array(), DB $dbConnection = null)
+  {
+    if ($dbConnection === null) {
+      $dbConnection = DB::getInstance();
+    }
+
+    $optimized = 0;
+    if (!empty($tables)) {
+      foreach ($tables as $table) {
+        $optimize = 'REPAIR TABLE ' . $dbConnection->quote_string($table);
+        $result = $dbConnection->query($optimize);
+        if ($result) {
+          $optimized++;
+        }
+      }
+    }
+
+    return $optimized;
+  }
+
+  /**
    * Check if "mysqlnd"-driver is used.
    *
    * @return bool

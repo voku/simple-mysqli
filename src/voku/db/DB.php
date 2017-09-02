@@ -2028,29 +2028,6 @@ final class DB
   }
 
   /**
-   * Optimize tables
-   *
-   * @param array $tables database table names
-   *
-   * @return int
-   */
-  public function optimize(array $tables = array())
-  {
-    if (!empty($tables)) {
-      $optimized = 0;
-      foreach ($tables as $table) {
-        $optimize = 'OPTIMIZE TABLE `' . trim($table) . '`';
-        $this->link->query($optimize);
-        if (!$this->link->error) {
-          $optimized++;
-        }
-      }
-
-      return $optimized;
-    }
-  }
-
-  /**
    * Count number of rows found matching a specific query.
    *
    * @param string

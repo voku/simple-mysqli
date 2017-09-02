@@ -226,7 +226,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
   public function testQuery()
   {
     $user = new FoobarUser();
-    $user->isnotnull('id')->eq('id', 1)->lt('id', 2)->gt('id', 0)->fetch();
+    $user->isNotNull('id')->eq('id', 1)->lt('id', 2)->gt('id', 0)->fetch();
     self::assertGreaterThan(0, $user->id);
     self::assertSame(array(), $user->getDirty());
     $user->name = 'testname';
@@ -235,9 +235,9 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     self::assertEquals('testname', $name);
     unset($user->name);
     self::assertSame(array(), $user->getDirty());
-    $user->reset()->isnotnull('id')->eq('id', 'aaa"')->wrap()->lt('id', 2)->gt('id', 0)->wrap('OR')->fetch();
+    $user->reset()->isNotNull('id')->eq('id', 'aaa"')->wrap()->lt('id', 2)->gt('id', 0)->wrap('OR')->fetch();
     self::assertGreaterThan(0, $user->id);
-    $user->reset()->isnotnull('id')->between('id', array(0, 2))->fetch();
+    $user->reset()->isNotNull('id')->between('id', array(0, 2))->fetch();
     self::assertGreaterThan(0, $user->id);
   }
 
@@ -260,5 +260,8 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     $new_user = new FoobarUser();
     self::assertFalse($new_contact->eq('id', $cid)->fetch());
     self::assertFalse($new_user->fetch($uid));
+
+    ActiveRecord::execute('DROP TABLE IF EXISTS user;');
+    ActiveRecord::execute('DROP TABLE IF EXISTS contact;');
   }
 }

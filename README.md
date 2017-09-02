@@ -554,6 +554,7 @@ This function can find all records in database, it will return an array of Activ
 
 ```php
   $user = new User();
+  /* @var $users User[] */
   $users = $user->findAll();
 ```
 

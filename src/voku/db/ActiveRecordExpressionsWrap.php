@@ -3,17 +3,13 @@
 namespace voku\db;
 
 /**
- * Class WrapExpressions
+ * Class ActiveRecordExpressionsWrap
  */
-class WrapExpressions extends Expressions
+class ActiveRecordExpressionsWrap extends ActiveRecordExpressions
 {
   public function __toString()
   {
     $delimiter = $this->delimiter ?: ',';
-
-    if ($delimiter != ',') {
-      var_dump($this->delimiter); exit();
-    }
 
     if ($this->start) {
       return $this->start . implode($delimiter, $this->target->getArray()) . ($this->end ?: ')');

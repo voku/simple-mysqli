@@ -1436,8 +1436,8 @@ final class DB
     }
 
     // DEBUG
-    var_dump($params);
-    echo $sql . "\n";
+    // var_dump($params);
+    // echo $sql . "\n";
 
     $query_start_time = microtime(true);
     $query_result = \mysqli_real_query($this->link, $sql);

@@ -3,6 +3,8 @@
 require_once __DIR__ . '/FoobarUser.php';
 require_once __DIR__ . '/FoobarContact.php';
 
+use tests\FoobarContact;
+use tests\FoobarUser;
 use voku\db\ActiveRecord;
 use voku\db\DB;
 
@@ -50,7 +52,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     $user->name = 'demo';
     $user->password = md5('demo');
     $user->insert();
-    $this->assertGreaterThan(0, $user->id);
+    self::assertGreaterThan(0, $user->id);
 
     return $user;
   }
@@ -67,7 +69,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     $user->name = 'demo1';
     $user->password = md5('demo1');
     $user->update();
-    $this->assertGreaterThan(0, $user->id);
+    self::assertGreaterThan(0, $user->id);
 
     return $user;
   }
@@ -86,7 +88,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     $contact->email = 'test@demo.com';
     $contact->user_id = $user->id;
     $contact->insert();
-    $this->assertGreaterThan(0, $contact->id);
+    self::assertGreaterThan(0, $contact->id);
 
     return $contact;
   }
@@ -103,7 +105,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     $contact->address = 'test1';
     $contact->email = 'test1@demo.com';
     $contact->update();
-    $this->assertGreaterThan(0, $contact->id);
+    self::assertGreaterThan(0, $contact->id);
 
     return $contact;
   }
@@ -117,10 +119,10 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
    */
   public function testRelations($contact)
   {
-    $this->assertEquals($contact->user->id, $contact->user_id);
-    $this->assertEquals($contact->user->contact->id, $contact->id);
-    $this->assertEquals($contact->user->contacts[0]->id, $contact->id);
-    $this->assertGreaterThan(0, count($contact->user->contacts));
+    self::assertEquals($contact->user->id, $contact->user_id);
+    self::assertEquals($contact->user->contact->id, $contact->id);
+    self::assertEquals($contact->user->contacts[0]->id, $contact->id);
+    self::assertGreaterThan(0, count($contact->user->contacts));
 
     return $contact;
   }
@@ -134,11 +136,11 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
    */
   public function testRelationsBackRef($contact)
   {
-    $this->assertEquals(false, $contact->user->contact === $contact);
-    $this->assertEquals(false, $contact->user_with_backref->contact === $contact);
+    self::assertEquals(false, $contact->user->contact === $contact);
+    self::assertEquals(true, $contact->user_with_backref->contact === $contact);
     $user = $contact->user;
-    $this->assertEquals(false, $user->contacts[0]->user === $user);
-    $this->assertEquals(true, $user->contacts_with_backref[0]->user === $user);
+    self::assertEquals(false, $user->contacts[0]->user === $user);
+    self::assertEquals(true, $user->contacts_with_backref[0]->user === $user);
 
     return $contact;
   }
@@ -153,12 +155,69 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     $user = new FoobarUser();
     $user->select('*, c.email, c.address')->join('contact as c', 'c.user_id = ' . $contact->user_id)->fetch();
 
-    var_dump($user);exit();
+    // email and address will stored in user data array.
+    self::assertEquals($contact->user_id, $user->id);
+    self::assertEquals($contact->email, $user->email);
+    self::assertEquals($contact->address, $user->address);
+  }
+
+  /**
+   * @depends testInsertContact
+   *
+   * @param FoobarContact $contact
+   */
+  public function testFetch($contact)
+  {
+    $user = new FoobarUser();
+    $user->fetch($contact->user_id);
 
     // email and address will stored in user data array.
-    $this->assertEquals($contact->user_id, $user->id);
-    $this->assertEquals($contact->email, $user->email);
-    $this->assertEquals($contact->address, $user->address);
+    self::assertEquals($contact->user_id, $user->id);
+    self::assertEquals($contact->user_id, $user->getPrimaryKey());
+    self::assertEquals('demo1', $user->name);
+  }
+
+  /**
+   * @depends testInsertContact
+   *
+   * @param FoobarContact $contact
+   */
+  public function testFetchAll($contact)
+  {
+    $user = new FoobarUser();
+    /* @var $users FoobarUser[] */
+    $users = $user->fetchAll();
+
+    $found = false;
+    $userForTesting = null;
+    foreach ($users as $userTmp) {
+      if ($userTmp->getPrimaryKey() === $contact->user_id) {
+        $found = true;
+        $userForTesting = clone $userTmp;
+      }
+    }
+
+    // email and address will stored in user data array.
+    self::assertTrue($found);
+    self::assertEquals($contact->user_id, $userForTesting->id);
+    self::assertEquals($contact->user_id, $userForTesting->getPrimaryKey());
+    self::assertEquals('demo1', $userForTesting->name);
+  }
+
+  /**
+   * @depends testInsertContact
+   *
+   * @param FoobarContact $contact
+   */
+  public function testOrder($contact)
+  {
+    $user = new FoobarUser();
+    $user->where('id = ' . $contact->user_id)->order('id DESC', 'name ASC')->limit(2, 1)->fetch();
+
+    // email and address will stored in user data array.
+    self::assertEquals($contact->user_id, $user->id);
+    self::assertEquals($contact->user_id, $user->getPrimaryKey());
+    self::assertEquals('demo1', $user->name);
   }
 
   /**
@@ -168,18 +227,18 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
   {
     $user = new FoobarUser();
     $user->isnotnull('id')->eq('id', 1)->lt('id', 2)->gt('id', 0)->fetch();
-    $this->assertGreaterThan(0, $user->id);
-    $this->assertSame(array(), $user->dirty);
+    self::assertGreaterThan(0, $user->id);
+    self::assertSame(array(), $user->getDirty());
     $user->name = 'testname';
-    $this->assertSame(array('name' => 'testname'), $user->dirty);
+    self::assertSame(array('name' => 'testname'), $user->getDirty());
     $name = $user->name;
-    $this->assertEquals('testname', $name);
+    self::assertEquals('testname', $name);
     unset($user->name);
-    $this->assertSame(array(), $user->dirty);
+    self::assertSame(array(), $user->getDirty());
     $user->reset()->isnotnull('id')->eq('id', 'aaa"')->wrap()->lt('id', 2)->gt('id', 0)->wrap('OR')->fetch();
-    $this->assertGreaterThan(0, $user->id);
+    self::assertGreaterThan(0, $user->id);
     $user->reset()->isnotnull('id')->between('id', array(0, 2))->fetch();
-    $this->assertGreaterThan(0, $user->id);
+    self::assertGreaterThan(0, $user->id);
   }
 
   /**
@@ -193,13 +252,13 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     $uid = $contact->user_id;
     $new_contact = new FoobarContact();
     $new_user = new FoobarUser();
-    $this->assertEquals($cid, $new_contact->fetch($cid)->id);
-    $this->assertEquals($uid, $new_user->eq('id', $uid)->fetch()->id);
-    $this->assertTrue($contact->user->delete());
-    $this->assertTrue($contact->delete());
+    self::assertEquals($cid, $new_contact->fetch($cid)->id);
+    self::assertEquals($uid, $new_user->eq('id', $uid)->fetch()->id);
+    self::assertEquals(1, $contact->user->delete());
+    self::assertEquals(1, $contact->delete());
     $new_contact = new FoobarContact();
     $new_user = new FoobarUser();
-    $this->assertFalse($new_contact->eq('id', $cid)->fetch());
-    $this->assertFalse($new_user->fetch($uid));
+    self::assertFalse($new_contact->eq('id', $cid)->fetch());
+    self::assertFalse($new_user->fetch($uid));
   }
 }

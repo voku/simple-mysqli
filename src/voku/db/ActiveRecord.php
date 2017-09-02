@@ -3,20 +3,17 @@
 namespace voku\db;
 
 use Arrayy\Arrayy;
+use voku\db\exceptions\ActiveRecordException;
 
 /**
- * Simple implement of active record in PHP.<br />
- * Using magic function to implement more smarty functions.<br />
- * Can using chain method calls, to build concise and compactness program.<br />
+ * A simple implement of active record via mysqli + php.
  *
- * @method $this select(string $stuff1, string | null $stuff2 = null)
- * @method $this eq(string $stuff1, string | null $stuff2 = null)
+ * @method $this select(string $stuff1, string|null $stuff2 = null)
+ * @method $this eq(string $stuff1, string|null $stuff2 = null)
  * @method $this from(string $table)
- * @method $this where()
- * @method $this group()
- * @method $this having()
- * @method $this order()
- * @method $this limit(int $start, int | null $end = null)
+ * @method $this where(string $stuff)
+ * @method $this having(string $stuff)
+ * @method $this limit(int $start, int|null $end = null)
  *
  * @method $this equal(string $stuff1, string $stuff2)
  * @method $this notequal(string $stuff1, string $stuff2)
@@ -44,16 +41,22 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @var DB static property to connect database.
    */
-  public static $db;
+  protected static $db;
 
   /**
    * @var array maping the function name and the operator, to build Expressions in WHERE condition.
-   * <pre>user can call it like this:
-   *      $user->isnotnull()->eq('id', 1);
+   *
+   * user can call it like this:
+   * <pre>
+   *   $user->isnotnull()->eq('id', 1);
+   * </pre>
+   *
    * will create Expressions can explain to SQL:
-   *      WHERE user.id IS NOT NULL AND user.id = :ph1</pre>
+   * <pre>
+   *   WHERE user.id IS NOT NULL AND user.id = :ph1
+   * </pre>
    */
-  public static $operators = array(
+  protected static $operators = array(
       'equal'              => '=',
       'eq'                 => '=',
       'notequal'           => '<>',
@@ -80,28 +83,26 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @var array Part of SQL, maping the function name and the operator to build SQL Part.
    * <pre>call function like this:
-   *      $user->order('id desc', 'name asc')->limit(2,1);
+   *      $user->order('id DESC', 'name ASC')->limit(2, 1);
    *  can explain to SQL:
-   *      ORDER BY id desc, name asc limit 2,1</pre>
+   *      ORDER BY id DESC, name ASC LIMIT 2,1</pre>
    */
-  public static $sqlParts = array(
-      'select'  => 'SELECT',
-      'from'    => 'FROM',
-      'set'     => 'SET',
-      'where'   => 'WHERE',
-      'group'   => 'GROUP BY',
-      'groupby' => 'GROUP BY',
-      'having'  => 'HAVING',
-      'order'   => 'ORDER BY',
-      'orderby' => 'ORDER BY',
-      'limit'   => 'limit',
-      'top'     => 'TOP',
+  protected $sqlParts = array(
+      'select' => 'SELECT',
+      'from'   => 'FROM',
+      'set'    => 'SET',
+      'where'  => 'WHERE',
+      'group'  => 'GROUP BY',
+      'having' => 'HAVING',
+      'order'  => 'ORDER BY',
+      'limit'  => 'LIMIT',
+      'top'    => 'TOP',
   );
 
   /**
    * @var array Static property to stored the default Sql Expressions values.
    */
-  public static $defaultSqlExpressions = array(
+  protected $defaultSqlExpressions = array(
       'expressions' => array(),
       'wrap'        => false,
       'select'      => null,
@@ -127,39 +128,73 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @var string  The table name in database.
    */
-  public $table;
+  protected $table;
 
   /**
    * @var string  The primary key of this ActiveRecord, just suport single primary key.
    */
-  public $primaryKey = 'id';
+  protected $primaryKeyName = 'id';
 
   /**
    * @var array Stored the drity data of this object, when call "insert" or "update" function, will write this data
    *      into database.
    */
-  public $dirty = array();
+  protected $dirty = array();
+
+  /**
+   * @var bool
+   */
+  protected static $new_data_are_dirty = true;
 
   /**
    * @var array Stored the params will bind to SQL when call PDOStatement::execute(),
    */
-  public $params = array();
+  protected $params = array();
 
   /**
-   * @var Arrayy[] Stored the configure of the relation, or target of the relation.
+   * @var ActiveRecordExpressions[] Stored the configure of the relation, or target of the relation.
    */
-  public $relations = array();
+  protected $relations = array();
 
   /**
    * @var int The count of bind params, using this count and const "PREFIX" (:ph) to generate place holder in SQL.
    */
-  public static $count = 0;
+  private static $count = 0;
 
   const BELONGS_TO = 'belongs_to';
   const HAS_MANY   = 'has_many';
   const HAS_ONE    = 'has_one';
 
-  const PREFIX = ':ph';
+  const PREFIX = ':active_record';
+
+  /**
+   * @return string
+   */
+  public function getPrimaryKeyName()
+  {
+    return $this->primaryKeyName;
+  }
+
+  /**
+   * @return mixed|null
+   */
+  public function getPrimaryKey()
+  {
+    $id = $this->{$this->primaryKeyName};
+    if ($id) {
+      return $id;
+    }
+
+    return null;
+  }
+
+  /**
+   * @return string
+   */
+  public function getTable()
+  {
+    return $this->table;
+  }
 
   /**
    * Function to reset the $params and $sqlExpressions.
@@ -175,15 +210,13 @@ abstract class ActiveRecord extends Arrayy
   }
 
   /**
-   * function to SET or RESET the dirty data.
-   *
-   * @param array $dirty The dirty data will be set, or empty array to reset the dirty data.
+   * Reset the dirty data.
    *
    * @return $this
    */
-  public function dirty(array $dirty = array())
+  public function resetDirty()
   {
-    $this->array = array_merge($this->array, $this->dirty = $dirty);
+    $this->array = array();
 
     return $this;
   }
@@ -209,7 +242,7 @@ abstract class ActiveRecord extends Arrayy
   public function fetch($id = null)
   {
     if ($id) {
-      $this->reset()->eq($this->primaryKey, $id);
+      $this->reset()->eq($this->primaryKeyName, $id);
     }
 
     return self::_query(
@@ -264,7 +297,7 @@ abstract class ActiveRecord extends Arrayy
   public function delete()
   {
     return self::execute(
-        $this->eq($this->primaryKey, $this->{$this->primaryKey})->_buildSql(
+        $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
             array(
                 'delete',
                 'from',
@@ -273,6 +306,26 @@ abstract class ActiveRecord extends Arrayy
         ),
         $this->params
     );
+  }
+
+  /**
+   * @param string $primaryKeyName
+   *
+   * @return $this
+   */
+  public function setPrimaryKeyName($primaryKeyName)
+  {
+    $this->primaryKeyName = $primaryKeyName;
+
+    return $this;
+  }
+
+  /**
+   * @param string $table
+   */
+  public function setTable($table)
+  {
+    $this->table = $table;
   }
 
   /**
@@ -290,8 +343,8 @@ abstract class ActiveRecord extends Arrayy
       $this->addCondition($field, '=', $value, ',', 'set');
     }
 
-    if (self::execute(
-        $this->eq($this->primaryKey, $this->{$this->primaryKey})->_buildSql(
+    $result = self::execute(
+        $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
             array(
                 'update',
                 'set',
@@ -299,8 +352,9 @@ abstract class ActiveRecord extends Arrayy
             )
         ),
         $this->params
-    )) {
-      return $this->dirty()->reset();
+    );
+    if ($result) {
+      return $this->resetDirty()->reset();
     }
 
     return false;
@@ -322,24 +376,24 @@ abstract class ActiveRecord extends Arrayy
     }
 
     $value = $this->_filterParam($this->dirty);
-    $this->insert = new Expressions(
+    $this->insert = new ActiveRecordExpressions(
         array(
             'operator' => 'INSERT INTO ' . $this->table,
-            'target'   => new WrapExpressions(array('target' => array_keys($this->dirty))),
+            'target'   => new ActiveRecordExpressionsWrap(array('target' => array_keys($this->dirty))),
         )
     );
-    $this->values = new Expressions(
+    $this->values = new ActiveRecordExpressions(
         array(
             'operator' => 'VALUES',
-            'target'   => new WrapExpressions(array('target' => $value)),
+            'target'   => new ActiveRecordExpressionsWrap(array('target' => $value)),
         )
     );
 
     $result = self::execute($this->_buildSql(array('insert', 'values')), $this->params);
     if ($result) {
-      $this->{$this->primaryKey} = $result;
+      $this->{$this->primaryKeyName} = $result;
 
-      return $this->dirty()->reset();
+      return $this->resetDirty()->reset();
     }
 
     return false;
@@ -387,17 +441,24 @@ abstract class ActiveRecord extends Arrayy
       return false;
     }
 
-    if ($obj && class_exists($obj)) {
+    $useObject = is_object($obj);
+    if ($useObject === true) {
       $called_class = $obj;
     } else {
       $called_class = get_called_class();
     }
 
+    self::setNewDataAreDirty(false);
+
     if ($single) {
-      return $result->fetchObject($called_class);
+      $return = $result->fetchObject($called_class);
+    } else {
+      $return = $result->fetchAllObject($called_class);
     }
 
-    return $result->fetchAllObject($called_class);
+    self::setNewDataAreDirty(true);
+
+    return $return;
   }
 
   /**
@@ -408,7 +469,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return mixed
    *
-   * @throws \Exception
+   * @throws ActiveRecordException <p>If the relation can't be found .</p>
    */
   protected function &getRelation($name)
   {
@@ -442,7 +503,7 @@ abstract class ActiveRecord extends Arrayy
         self::HAS_ONE == $relation[0]
     ) {
 
-      $this->relations[$name] = $obj->eq($relation[2], $this->{$this->primaryKey})->fetch();
+      $this->relations[$name] = $obj->eq($relation[2], $this->{$this->primaryKeyName})->fetch();
 
       if ($backref) {
         $this->relations[$name] && $backref && $obj->__set($backref, $this);
@@ -454,7 +515,7 @@ abstract class ActiveRecord extends Arrayy
         self::HAS_MANY == $relation[0]
     ) {
 
-      $this->relations[$name] = $obj->eq($relation[2], $this->{$this->primaryKey})->fetchAll();
+      $this->relations[$name] = $obj->eq($relation[2], $this->{$this->primaryKeyName})->fetchAll();
       if ($backref) {
         foreach ($this->relations[$name] as $o) {
           $o->__set($backref, $this);
@@ -467,14 +528,14 @@ abstract class ActiveRecord extends Arrayy
         self::BELONGS_TO == $relation[0]
     ) {
 
-      $this->relations[$name] = $obj->eq($obj->primaryKey, $this->{$relation[2]})->fetch();
+      $this->relations[$name] = $obj->eq($obj->primaryKeyName, $this->{$relation[2]})->fetch();
 
       if ($backref) {
         $this->relations[$name] && $backref && $obj->__set($backref, $this);
       }
 
     } else {
-      throw new \Exception("Relation $name not found.");
+      throw new ActiveRecordException("Relation $name not found.");
     }
 
     return $this->relations[$name];
@@ -489,14 +550,34 @@ abstract class ActiveRecord extends Arrayy
    */
   private function _buildSqlCallback(&$n, $i, $o)
   {
-    if ('select' === $n && null == $o->$n) {
+    if (
+        'select' === $n
+        &&
+        null === $o->$n
+    ) {
+
       $n = strtoupper($n) . ' ' . $o->table . '.*';
-    } elseif (('update' === $n || 'from' === $n) && null == $o->$n) {
+
+    } elseif (
+        (
+            'update' === $n
+            ||
+            'from' === $n
+        )
+        &&
+        null === $o->$n
+    ) {
+
       $n = strtoupper($n) . ' ' . $o->table;
+
     } elseif ('delete' === $n) {
+
       $n = strtoupper($n) . ' ';
+
     } else {
+
       $n = (null !== $o->$n) ? $o->$n . ' ' : '';
+
     }
   }
 
@@ -512,7 +593,7 @@ abstract class ActiveRecord extends Arrayy
     array_walk($sqls, array($this, '_buildSqlCallback'), $this);
 
     // DEBUG
-    echo 'SQL: ', implode(' ', $sqls), "\n", 'PARAMS: ', implode(', ', $this->params), "\n";
+    // echo 'SQL: ', implode(' ', $sqls), "\n", 'PARAMS: ', implode(', ', $this->params), "\n";
 
     return implode(' ', $sqls);
   }
@@ -526,7 +607,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this|mixed Return the result of callback or the current object to make chain method calls.
    *
-   * @throws \Exception
+   * @throws ActiveRecordException
    */
   public function __call($name, $args)
   {
@@ -534,13 +615,25 @@ abstract class ActiveRecord extends Arrayy
       self::$db = DB::getInstance();
     }
 
-    if (array_key_exists($name = strtolower($name), self::$operators)) {
+    $nameTmp = strtolower($name);
 
-      $this->addCondition($args[0], self::$operators[$name], isset($args[1]) ? $args[1] : null, (is_string(end($args)) && 'or' === strtolower(end($args))) ? 'OR' : 'AND');
+    if (array_key_exists($nameTmp, self::$operators)) {
 
-    } elseif (array_key_exists($name = str_replace('by', '', $name), self::$sqlParts)) {
+      $this->addCondition(
+          $args[0],
+          self::$operators[$nameTmp],
+          isset($args[1]) ? $args[1] : null,
+          (is_string(end($args)) && 'or' === strtolower(end($args))) ? 'OR' : 'AND'
+      );
 
-      $this->$name = new Expressions(array('operator' => self::$sqlParts[$name], 'target' => implode(', ', $args)));
+    } elseif (array_key_exists($nameTmp = str_replace('by', '', $nameTmp), $this->sqlParts)) {
+
+      $this->$name = new ActiveRecordExpressions(
+          array(
+              'operator' => $this->sqlParts[$nameTmp],
+              'target'   => implode(', ', $args),
+          )
+      );
 
     } elseif (is_callable($callback = array(self::$db, $name))) {
 
@@ -548,7 +641,7 @@ abstract class ActiveRecord extends Arrayy
 
     } else {
 
-      throw new \Exception("Method $name not exist.");
+      throw new ActiveRecordException("Method $name not exist.");
 
     }
 
@@ -569,7 +662,7 @@ abstract class ActiveRecord extends Arrayy
       $this->wrap = false;
       if (is_array($this->expressions) && count($this->expressions) > 0) {
         $this->_addCondition(
-            new WrapExpressions(
+            new ActiveRecordExpressionsWrap(
                 array(
                     'delimiter' => ' ',
                     'target'    => $this->expressions,
@@ -619,12 +712,12 @@ abstract class ActiveRecord extends Arrayy
   public function addCondition($field, $operator, $value, $op = 'AND', $name = 'where')
   {
     $value = $this->_filterParam($value);
-    $exp = new Expressions(
+    $exp = new ActiveRecordExpressions(
         array(
             'source'   => ('where' == $name ? $this->table . '.' : '') . $field,
             'operator' => $operator,
             'target'   => is_array($value)
-                ? new WrapExpressions(
+                ? new ActiveRecordExpressionsWrap(
                     'between' === strtolower($operator)
                         ? array('target' => $value, 'start' => ' ', 'end' => ' ', 'delimiter' => ' AND ')
                         : array('target' => $value)
@@ -652,11 +745,11 @@ abstract class ActiveRecord extends Arrayy
    */
   public function join($table, $on, $type = 'LEFT')
   {
-    $this->join = new Expressions(
+    $this->join = new ActiveRecordExpressions(
         array(
             'source'   => $this->join ?: '',
             'operator' => $type . ' JOIN',
-            'target'   => new Expressions(
+            'target'   => new ActiveRecordExpressions(
                 array('source' => $table, 'operator' => 'ON', 'target' => $on)
             ),
         )
@@ -668,31 +761,31 @@ abstract class ActiveRecord extends Arrayy
   /**
    * helper function to make wrapper. Stored the expression in to array.
    *
-   * @param Expressions $exp      The expression will be stored.
-   * @param string      $operator The operator to concat this Expressions into WHERE statment.
+   * @param ActiveRecordExpressions $exp      The expression will be stored.
+   * @param string                  $operator The operator to concat this Expressions into WHERE statment.
    */
   protected function _addExpression($exp, $operator)
   {
     if (!is_array($this->expressions) || count($this->expressions) == 0) {
       $this->expressions = array($exp);
     } else {
-      $this->expressions[] = new Expressions(array('operator' => $operator, 'target' => $exp));
+      $this->expressions[] = new ActiveRecordExpressions(array('operator' => $operator, 'target' => $exp));
     }
   }
 
   /**
    * helper function to add condition into WHERE.
    *
-   * @param Expressions $exp      The expression will be concat into WHERE or SET statment.
-   * @param string      $operator the operator to concat this Expressions into WHERE or SET statment.
-   * @param string      $name     The Expression will contact to.
+   * @param ActiveRecordExpressions $exp      The expression will be concat into WHERE or SET statment.
+   * @param string                  $operator the operator to concat this Expressions into WHERE or SET statment.
+   * @param string                  $name     The Expression will contact to.
    */
   protected function _addCondition($exp, $operator, $name = 'where')
   {
     if (!$this->$name) {
-      $this->$name = new Expressions(array('operator' => strtoupper($name), 'target' => $exp));
+      $this->$name = new ActiveRecordExpressions(array('operator' => strtoupper($name), 'target' => $exp));
     } else {
-      $this->$name->target = new Expressions(
+      $this->$name->target = new ActiveRecordExpressions(
           array(
               'source'   => $this->$name->target,
               'operator' => $operator,
@@ -700,6 +793,30 @@ abstract class ActiveRecord extends Arrayy
           )
       );
     }
+  }
+
+  /**
+   * @return array
+   */
+  public function getDirty()
+  {
+    return $this->dirty;
+  }
+
+  /**
+   * @return bool
+   */
+  public static function isNewDataAreDirty()
+  {
+    return self::$new_data_are_dirty;
+  }
+
+  /**
+   * @param bool $bool
+   */
+  public static function setNewDataAreDirty($bool)
+  {
+    self::$new_data_are_dirty = (bool)$bool;
   }
 
   /**
@@ -713,7 +830,7 @@ abstract class ActiveRecord extends Arrayy
     if (
         array_key_exists($var, $this->sqlExpressions)
         ||
-        array_key_exists($var, self::$defaultSqlExpressions)
+        array_key_exists($var, $this->defaultSqlExpressions)
     ) {
 
       $this->sqlExpressions[$var] = $val;
@@ -728,7 +845,11 @@ abstract class ActiveRecord extends Arrayy
 
     } else {
 
-      $this->dirty[$var] = $this->array[$var] = $val;
+      $this->array[$var] = $val;
+
+      if (self::$new_data_are_dirty === true) {
+        $this->dirty[$var] = $val;
+      }
 
     }
   }
@@ -754,6 +875,35 @@ abstract class ActiveRecord extends Arrayy
   }
 
   /**
+   * Helper function for "GROUP BY".
+   *
+   * @param array $args
+   * @param null  $dummy <p>only needed for API compatibility with Arrayy</p>
+   *
+   * @return $this
+   */
+  public function group($args, $dummy = null)
+  {
+    $this->__call('group', func_get_args());
+
+    return $this;
+  }
+
+  /**
+   * Helper function for "ORDER BY".
+   *
+   * @param $args ...
+   *
+   * @return $this
+   */
+  public function order($args)
+  {
+    $this->__call('order', func_get_args());
+
+    return $this;
+  }
+
+  /**
    * Magic function to GET the values of current object.
    *
    * @param $var
@@ -762,16 +912,16 @@ abstract class ActiveRecord extends Arrayy
    */
   public function &__get($var)
   {
+    if (isset($this->dirty[$var])) {
+      return $this->dirty[$var];
+    }
+
     if (array_key_exists($var, $this->sqlExpressions)) {
       return $this->sqlExpressions[$var];
     }
 
     if (array_key_exists($var, $this->relations)) {
       return $this->getRelation($var);
-    }
-
-    if (isset($this->dirty[$var])) {
-      return $this->dirty[$var];
     }
 
     return parent::__get($var);

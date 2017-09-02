@@ -430,6 +430,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // select - true
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
+
+    /* @var $tmpPage Foobar */
     $tmpPage = $result->fetchObject(
         'Foobar',
         array(
@@ -440,14 +442,22 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         )
     );
 
-    /* @var $tmpPage Foobar */
-
     self::assertSame(1, $tmpPage->foo);
     self::assertSame(2, $tmpPage->bar);
     self::assertTrue($tmpPage->test);
     self::assertNull($tmpPage->nothing);
     self::assertSame('tpl_new_中', $tmpPage->page_template);
 
+    $tmpFooBar = new Foobar();
+    $tmpPage = $result->fetchObject($tmpFooBar, null, true);
+
+    self::assertSame(null, $tmpPage->foo);
+    self::assertSame(null, $tmpPage->bar);
+    self::assertTrue($tmpPage->test);
+    self::assertNull($tmpPage->nothing);
+    self::assertSame('tpl_new_中', $tmpPage->page_template);
+
+    /* @var $tmpPages Foobar[] */
     $tmpPages = $result->fetchAllObject(
         'Foobar',
         array(
@@ -458,19 +468,16 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         )
     );
 
-    /* @var $tmpPages [] Foobar */
-
     self::assertSame(1, $tmpPages[0]->foo);
     self::assertSame(2, $tmpPages[0]->bar);
     self::assertTrue($tmpPages[0]->test);
     self::assertNull($tmpPages[0]->nothing);
     self::assertSame('tpl_new_中', $tmpPages[0]->page_template);
 
-    $tmpPages = $result->fetchAllObject(
-        'Foobar'
-    );
 
     /* @var $tmpPages [] Foobar */
+    $tmpPages = $result->fetchAllObject('Foobar');
+
 
     self::assertNull($tmpPages[0]->foo);
     self::assertNull($tmpPages[0]->bar);

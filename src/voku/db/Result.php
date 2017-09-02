@@ -3,6 +3,7 @@
 namespace voku\db;
 
 use Arrayy\Arrayy;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 use voku\helper\Bootup;
 use voku\helper\UTF8;
 
@@ -258,7 +259,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *   and you can change the behaviour via "Result->setDefaultResultType()"
    * </p>
    *
-   * @param $reset
+   * @param bool $reset optional <p>Reset the \mysqli_result counter.</p>
    *
    * @return array|object|false <p><strong>false</strong> on error</p>
    */
@@ -371,35 +372,66 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   /**
    * Fetch all results as array with objects.
    *
-   * @param string     $class
-   * @param null|array $params
+   * @param object|string $class  <p>
+   *                              <strong>string</strong>: create a new object (with optional constructor
+   *                              parameter)<br>
+   *                              <strong>object</strong>: use a object and fill the the data into
+   *                              </p>
+   * @param null|array    $params optional
+   *                              <p>
+   *                              An array of parameters to pass to the constructor, used if $class is a
+   *                              string.
+   *                              </p>
    *
    * @return array
    */
   public function fetchAllObject($class = '', $params = null)
   {
+
+    if ($this->is_empty()) {
+      return array();
+    }
+
     // init
     $data = array();
+    $this->reset();
 
-    if (!$this->is_empty()) {
-      $this->reset();
-
-      if ($class && $params) {
-        /** @noinspection PhpAssignmentInConditionInspection */
-        while ($row = \mysqli_fetch_object($this->_result, $class, $params)) {
-          $data[] = $row;
+    if ($class && is_object($class)) {
+      /** @noinspection PhpAssignmentInConditionInspection */
+      while ($row = \mysqli_fetch_assoc($this->_result)) {
+        $classTmp = clone $class;
+        $row = $this->cast($row);
+        $propertyAccessor = PropertyAccess::createPropertyAccessor();
+        foreach ($row as $key => $value) {
+          $propertyAccessor->setValue($classTmp, $key, $value);
         }
-      } elseif ($class) {
-        /** @noinspection PhpAssignmentInConditionInspection */
-        while ($row = \mysqli_fetch_object($this->_result, $class)) {
-          $data[] = $row;
-        }
-      } else {
-        /** @noinspection PhpAssignmentInConditionInspection */
-        while ($row = \mysqli_fetch_object($this->_result)) {
-          $data[] = $this->cast($row);
-        }
+        $data[] = $classTmp;
       }
+
+      return $data;
+    }
+
+    if ($class && $params) {
+      /** @noinspection PhpAssignmentInConditionInspection */
+      while ($row = \mysqli_fetch_object($this->_result, $class, $params)) {
+        $data[] = $this->cast($row);
+      }
+
+      return $data;
+    }
+
+    if ($class) {
+      /** @noinspection PhpAssignmentInConditionInspection */
+      while ($row = \mysqli_fetch_object($this->_result, $class)) {
+        $data[] = $this->cast($row);
+      }
+
+      return $data;
+    }
+
+    /** @noinspection PhpAssignmentInConditionInspection */
+    while ($row = \mysqli_fetch_object($this->_result)) {
+      $data[] = $this->cast($row);
     }
 
     return $data;
@@ -474,7 +506,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   /**
    * Fetch as "Arrayy"-object.
    *
-   * @param bool $reset
+   * @param bool $reset optional <p>Reset the \mysqli_result counter.</p>
    *
    * @return Arrayy|false <p><strong>false</strong> on error</p>
    */
@@ -558,9 +590,17 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   /**
    * Fetch as object.
    *
-   * @param string     $class
-   * @param null|array $params
-   * @param bool       $reset
+   * @param object|string $class  <p>
+   *                              <strong>string</strong>: create a new object (with optional constructor
+   *                              parameter)<br>
+   *                              <strong>object</strong>: use a object and fill the the data into
+   *                              </p>
+   * @param null|array    $params optional
+   *                              <p>
+   *                              An array of parameters to pass to the constructor, used if $class is a
+   *                              string.
+   *                              </p>
+   * @param bool          $reset  optional <p>Reset the \mysqli_result counter.</p>
    *
    * @return object|false <p><strong>false</strong> on error</p>
    */
@@ -570,15 +610,37 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       $this->reset();
     }
 
+    if ($class && is_object($class)) {
+      $row = \mysqli_fetch_assoc($this->_result);
+      $row = $row ? $this->cast($row) : false;
+
+      if (!$row) {
+        return false;
+      }
+
+      $propertyAccessor = PropertyAccess::createPropertyAccessor();
+      foreach ($row as $key => $value) {
+        $propertyAccessor->setValue($class, $key, $value);
+      }
+
+      return $class;
+    }
+
     if ($class && $params) {
-      return ($row = \mysqli_fetch_object($this->_result, $class, $params)) ? $this->cast($row) : false;
+      $row = \mysqli_fetch_object($this->_result, $class, $params);
+
+      return $row ? $this->cast($row) : false;
     }
 
     if ($class) {
-      return ($row = \mysqli_fetch_object($this->_result, $class)) ? $this->cast($row) : false;
+      $row = \mysqli_fetch_object($this->_result, $class);
+
+      return $row ? $this->cast($row) : false;
     }
 
-    return ($row = \mysqli_fetch_object($this->_result)) ? $this->cast($row) : false;
+    $row = \mysqli_fetch_object($this->_result);
+
+    return $row ? $this->cast($row) : false;
   }
 
   /**

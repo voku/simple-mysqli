@@ -76,8 +76,8 @@ But you can also use a method for select-queries:
 Example: SELECT
 ```php
   $where = array(
-      'page_type ='        => 'article',
-      'page_type NOT LIKE' => '%öäü123',
+      'page_type ='         => 'article',
+      'page_type NOT LIKE'  => '%öäü123',
       'page_id >='          => 2,
   );
   $articles = $db->select('page', $where);
@@ -514,7 +514,201 @@ To iterate a result-set you can use any fetch() method listed above.
   // INFO: "while + fetch()" will use less memory that "foreach + "fetchAll()", because we will fetch each result entry seperatly
 ```
 
-#### Logging and Errors
+## Active Record (OOP Database-Access)
+
+A simple implement of active record pattern via Arrayy.
+
+#### setDb(DB $db) 
+set the DB connection.
+
+```php
+  $db = DB::getInstance('YOUR_MYSQL_SERVER', 'YOUR_MYSQL_USER', 'YOUR_MYSQL_PW', 'YOUR_DATABASE');
+  ActiveRecord::setDb($db);
+```
+
+#### insert() : boolean|ActiveRecord
+This function can build insert SQL queries and can insert the current record into database.
+If the insert was successful it, will return the current object, otherwise it will return false.
+
+```php
+  $user = new User();
+  $user->name = 'demo';
+  $user->password = password_hash('demo', PASSWORD_BCRYPT, array("cost"=>15));
+  $user->insert();
+```
+
+#### fetch(integer  $id = null) : boolean|\ActiveRecord
+This function can find one record and assign in to current object, otherwise it will return "false".
+If you call this function with the $id parameter, it will find records by using the current primary-key-name.
+
+```php
+  $user = new User();
+
+  $user->notnull('id')->order('id desc')->fetch();
+  // OR
+  $user->fetch(1);
+```
+
+#### fetchAll() : array
+This function can find all records in database, it will return an array of ActiveRecord objects.
+
+```php
+  $user = new User();
+  $users = $user->findAll();
+```
+
+#### update() : boolean|\ActiveRecord
+This function can build update SQL queries and can update the current record in database, just write the dirty data into database.
+if the update was successful it will return the current object, otherwise it will return false.
+
+```php
+  $user = new User();
+  $user->notnull('id')->orderby('id desc')->find();
+  $user->email = 'test@example.com';
+  $user->update();
+```
+
+#### delete() : boolean
+This function can delete the current record in the database. 
+
+### Active Record | SQL part functions
+
+#### select()
+This function can set the select columns.
+
+```php
+  $user = new User();
+  $user->select('id', 'name')->find();
+```
+
+#### from()
+This function can set the table to find record from.
+
+```php
+  $user = new User();
+  $user->select('id', 'name')->from('user')->find();
+```
+
+#### join()
+This function can set the table to find record from.
+
+```php
+  $user = new User();
+  $user->join('contact', 'contact.user_id = user.id')->find();
+```
+
+#### where()
+This function can set where conditions.
+
+```php
+  $user = new User();
+  $user->where('id=1 AND name="demo"')->find();
+```
+
+#### group()
+This function can set the "group by" conditions.
+
+```php
+  $user = new User();
+  $user->select('count(1) as count')->group('name')->findAll();
+```
+
+#### order()
+This function can set the "order by" conditions.
+
+```php
+  $user = new User();
+  $user->order('name DESC')->find();
+```
+
+#### limit()
+This function can set the "limit" conditions.
+
+```php
+  $user = new User();
+  $user->order('name DESC')->limit(0, 1)->find();
+```
+
+### Active Record | WHERE conditions
+
+#### equal()/eq()
+
+```php
+  $user = new User();
+  $user->eq('id', 1)->find();
+```
+
+#### notequal()/ne()
+
+```php
+  $user = new User();
+  $user->ne('id', 1)->find();
+```
+
+#### greaterthan()/gt()
+
+```php
+  $user = new User();
+  $user->gt('id', 1)->find();
+```
+
+#### lessthan()/lt()
+
+```php
+  $user = new User();
+  $user->lt('id', 1)->find();
+```
+
+#### greaterthanorequal()/ge()/gte()
+
+```php
+  $user = new User();
+  $user->ge('id', 1)->find();
+```
+
+#### lessthanorequal()/le()/lte()
+
+```php
+  $user = new User();
+  $user->le('id', 1)->find();
+```
+
+#### like()
+
+```php
+  $user = new User();
+  $user->like('name', 'de')->find();
+```
+
+#### in()
+
+```php
+  $user = new User();
+  $user->in('id', array(1, 2))->find();
+```
+
+#### notin()
+
+```php
+  $user = new User();
+  $user->notin('id', array(1,3))->find();
+```
+
+#### isnull()
+
+```php
+  $user = new User();
+  $user->isnull('id')->find();
+```
+
+#### isnotnull()/notnull()
+
+```php
+  $user = new User();
+  $user->isnotnull('id')->find();
+```
+
+## Logging and Errors
 
 You can hook into the "DB"-Class, so you can use your personal "Logger"-Class. But you have to cover the methods:
 
@@ -562,6 +756,6 @@ To debug mysql errors, use `$db->errors()` to fetch all errors (returns false if
 
 But the easiest way for debugging is to configure "DB"-Class via "DB::getInstance()" to show errors and exit on error (see the example above). Now you can see SQL-errors in your browser if you are working on "localhost" or you can implement your own "checkForDev()" via a simple function, you don't need to extend the "Debug"-Class. If you will receive error-messages via e-mail, you can implement your own "mailToAdmin()"-function instead of extending the "Debug"-Class.
 
-# Changelog
+## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).

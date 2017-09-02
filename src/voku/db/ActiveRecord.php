@@ -6,7 +6,7 @@ use Arrayy\Arrayy;
 use voku\db\exceptions\ActiveRecordException;
 
 /**
- * A simple implement of active record via mysqli + php.
+ * A simple implement of active record via Arrayy.
  *
  * @method $this select(string $dbProperty)
  * @method $this eq(string $dbProperty, string | null $value = null)

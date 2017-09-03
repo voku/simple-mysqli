@@ -60,12 +60,37 @@ You can download it from here, or require it using [composer](https://packagist.
   * [INSERT-Prepare-Query (example)](#insert-prepare-query-example)
   * [SELECT-Prepare-Query (example)](#select-prepare-query-example)
 * [Using the "ActiveRecord"-Class (OOP database-access)](using-the-activerecord-class-oop-database-access)
-  * [setDb(DB $db)](#setdbdb-db)
-  * [insert() : boolean|int](#insert--booleanint)
-  * [fetch(integer $id = null) : boolean|\ActiveRecord](#fetchinteger--id--null--booleanactiverecord)
-  * [insert() : boolean|int](#insert--booleanint)
-  
-  
+    * [setDb(DB $db)](#setdbdb-db)
+    * [insert() : boolean|int](#insert--booleanint)
+    * [fetch(integer $id = null) : boolean|\ActiveRecord](#fetchinteger--id--null--booleanactiverecord)
+    * [fetchAll() : $this[]](#fetchall--this)
+    * [update() : boolean|int](#update--booleanint)
+    * [delete() : boolean](#update--booleanint)
+  * [Active Record | SQL part functions](#active-record--sql-part-functions)
+    * [select()](#select)
+    * [from()](#from)
+    * [join()](#join)
+    * [where()](#where)
+    * [group()](#group)
+    * [order()](#order)
+    * [limit()](#limit)
+  * [Active Record | WHERE conditions](#active-record--where-conditions)
+    * [equal()/eq()](#equaleq)
+    * [notEqual()/ne()](#notequalne)
+    * [greaterThan()/gt()](#greaterthangt)
+    * [lessThan()/lt()](#lessthanlt)
+    * [greaterThanOrEqual()/ge()/gte()](#greaterthanorequalgegte)
+    * [lessThanOrEqual()/le()/lte()](#lessthanorequallelte)
+    * [like()](#like)
+    * [in()](#in)
+    * [notIn()](#notin)
+    * [isNull()](#isnull)
+    * [isNotNull()/notNull()](#isnotnullnotnull)
+  * [Active Record | Demo](#active-record---demo)
+* [Logging and Errors](#logging-and-errors)
+* [Changelog](#changelog)
+
+
 ## Starting the driver
 ```php
   use voku\db\DB;

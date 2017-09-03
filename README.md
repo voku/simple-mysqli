@@ -178,7 +178,7 @@ the methods are:
 ```php
   $db->insert( string $table, array $data );                // generate an INSERT query
   $db->replace( string $table, array $data );               // generate an REPLACE query
-  $db->update( string $table, array $data, Array $where );  // generate an UPDATE query
+  $db->update( string $table, array $data, array $where );  // generate an UPDATE query
   $db->delete( string $table, array $where );               // generate a DELETE query
 ```
 

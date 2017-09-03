@@ -4,6 +4,7 @@ Changelog
 5.3.0 (2017-09-03)
 
 - [+]: "ActiveRecord" -> add more fetch methods
+- [+]: "ActiveRecord" -> fix "resetDirty()"
 
 5.2.1 (2017-09-03)
 

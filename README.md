@@ -978,7 +978,7 @@ DB::getInstance(
     'cms\Logger',                       // logger_class_name
     getConfig('logger', 'level'),       // logger_level | 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'
     getConfig('session', 'db')          // session_to_db
-)->set_convert_null_to_empty_string(false);
+);
 ```
 
 Showing the query log: The log comes with the SQL executed, the execution time and the result row count.

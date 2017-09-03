@@ -120,19 +120,19 @@ final class DB
   /**
    * __construct()
    *
-   * @param string         $hostname
-   * @param string         $username
-   * @param string         $password
-   * @param string         $database
-   * @param int            $port
-   * @param string         $charset
-   * @param bool|string $exit_on_error   <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
-   *                                     Use a empty string "" or false to disable it.</p>
-   * @param bool|string $echo_on_error   <p>Echo the error if "checkForDev()" returns true.
-   *                                     Use a empty string "" or false to disable it.</p>
-   * @param string         $logger_class_name
-   * @param string         $logger_level  <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
-   * @param array          $extra_config  <p>
+   * @param string      $hostname
+   * @param string      $username
+   * @param string      $password
+   * @param string      $database
+   * @param int         $port
+   * @param string      $charset
+   * @param bool|string $exit_on_error    <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
+   *                                      Use a empty string "" or false to disable it.</p>
+   * @param bool|string $echo_on_error    <p>Echo the error if "checkForDev()" returns true.
+   *                                      Use a empty string "" or false to disable it.</p>
+   * @param string      $logger_class_name
+   * @param string      $logger_level     <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
+   * @param array       $extra_config     <p>
    *                                      'session_to_db' => false|true<br>
    *                                      'socket' => 'string (path)'<br>
    *                                      'ssl' => 'bool'<br>
@@ -245,19 +245,19 @@ final class DB
   /**
    * Load the config from the constructor.
    *
-   * @param string         $hostname
-   * @param string         $username
-   * @param string         $password
-   * @param string         $database
-   * @param int|string     $port          <p>default is (int)3306</p>
-   * @param string         $charset       <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
-   * @param bool|string $exit_on_error   <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
-   *                                     Use a empty string "" or false to disable it.</p>
-   * @param bool|string $echo_on_error   <p>Echo the error if "checkForDev()" returns true.
-   *                                     Use a empty string "" or false to disable it.</p>
-   * @param string         $logger_class_name
-   * @param string         $logger_level
-   * @param array          $extra_config  <p>
+   * @param string      $hostname
+   * @param string      $username
+   * @param string      $password
+   * @param string      $database
+   * @param int|string  $port             <p>default is (int)3306</p>
+   * @param string      $charset          <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
+   * @param bool|string $exit_on_error    <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
+   *                                      Use a empty string "" or false to disable it.</p>
+   * @param bool|string $echo_on_error    <p>Echo the error if "checkForDev()" returns true.
+   *                                      Use a empty string "" or false to disable it.</p>
+   * @param string      $logger_class_name
+   * @param string      $logger_level
+   * @param array       $extra_config     <p>
    *                                      'session_to_db' => false|true<br>
    *                                      'socket' => 'string (path)'<br>
    *                                      'ssl' => 'bool'<br>
@@ -1726,7 +1726,7 @@ final class DB
     }
 
     if (
-        $this->_convert_null_to_empty_string === FALSE
+        $this->_convert_null_to_empty_string === false
         &&
         $var === null
     ) {
@@ -1840,11 +1840,17 @@ final class DB
    *
    * Used in secure() => select(), insert(), update(), delete()
    *
+   * @deprecated It's not recommended to convert NULL into an empty string!
+   *
    * @param $bool
+   *
+   * @return $this
    */
   public function set_convert_null_to_empty_string($bool)
   {
     $this->_convert_null_to_empty_string = (bool)$bool;
+
+    return $this;
   }
 
   /**

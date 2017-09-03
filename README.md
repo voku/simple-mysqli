@@ -534,7 +534,11 @@ If insert was successful, it will return the new id, otherwise it will return fa
   $user = new User();
   $user->name = 'demo';
   $user->password = password_hash('demo', PASSWORD_BCRYPT, array("cost"=>15));
-  $user->insert();
+  $user_id = $user->insert();
+  
+  var_dump($user_id); // the new id 
+  var_dump($user->id); // also the new id 
+  var_dump($user->getPrimaryKey()); // also the new id 
 ```
 
 #### fetch(integer  $id = null) : boolean|\ActiveRecord
@@ -545,8 +549,30 @@ If you call this function with the $id parameter, it will fetch records by using
   $user = new User();
 
   $user->notnull('id')->order('id desc')->fetch();
-  // OR
+  
+  // OR //
+  
   $user->fetch(1);
+  
+  // OR //
+  
+  $user->fetchById(1); // thows "FetchingException" if the ID did not exists
+  
+  // OR //
+  
+  $user->fetchByIdIfExists(1); // return NULL if the ID did not exists
+  
+  // OR //
+  
+  $users = $user->fetchByIds(array(1)); // return an array of User objects 
+  
+  // OR //
+  
+  $users = $user->fetchByIdsPrimaryKeyAsArrayIndex(array(1)); // return an array of User objects 
+  
+  var_dump($user->id); // (int) 1
+  var_dump($user->getPrimaryKey()); // (int) 1
+  var_dump($users[0]->id) // (int) 1
 ```
 
 #### fetchAll() : array

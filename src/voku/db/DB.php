@@ -2019,6 +2019,8 @@ final class DB
     if (
         $check !== false
         &&
+        $check instanceof Result
+        &&
         $check->num_rows > 0
     ) {
       return true;
@@ -2037,6 +2039,14 @@ final class DB
   public function num_rows($query)
   {
     $check = $this->query($query);
+
+    if (
+        $check === false
+        ||
+        !$check instanceof Result
+    ) {
+      return 0;
+    }
 
     return $check->num_rows;
   }

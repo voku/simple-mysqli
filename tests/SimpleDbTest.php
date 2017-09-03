@@ -641,6 +641,34 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     self::assertFalse($result);
   }
 
+  public function testTableExists()
+  {
+    $result = $this->db->table_exists($this->tableName);
+    self::assertTrue($result);
+
+    // ---------
+
+    $result = $this->db->table_exists('no_table_name');
+    self::assertFalse($result);
+  }
+
+  public function testNumRows()
+  {
+    $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
+      WHERE page_id = 1
+    ';
+    $num_rows = $this->db->num_rows($sql);
+    self::assertEquals(1, $num_rows);
+
+    // ---------
+
+    $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
+      WHERE page_id = -1
+    ';
+    $num_rows = $this->db->num_rows($sql);
+    self::assertEquals(0, $num_rows);
+  }
+
   public function testEscape()
   {
     $date = new DateTime('2016-08-15 09:22:18');
@@ -855,11 +883,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             array('id' => 1),
         )
     );
-    $this->assertEquals(
+    self::assertEquals(
         'SELECT * FROM `post` WHERE `id` = 1',
         $result['sql']
     );
-    $this->assertEquals(
+    self::assertEquals(
         array(),
         $result['params']
     );
@@ -871,11 +899,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             array('id' => 1),
         )
     );
-    $this->assertEquals(
+    self::assertEquals(
         'SELECT * FROM `post` WHERE id=1',
         $result['sql']
     );
-    $this->assertEquals(
+    self::assertEquals(
         array(),
         $result['params']
     );
@@ -887,11 +915,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             array('id' => 1),
         )
     );
-    $this->assertEquals(
+    self::assertEquals(
         'SELECT * FROM `post` WHERE id = ' . "\n" . '  1;',
         $result['sql']
     );
-    $this->assertEquals(
+    self::assertEquals(
         array(),
         $result['params']
     );
@@ -903,11 +931,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
             array('id' => 1, 'foo' => 'bar'),
         )
     );
-    $this->assertEquals(
+    self::assertEquals(
         'SELECT * FROM `post` WHERE id = ' . "\n" . '  1;',
         $result['sql']
     );
-    $this->assertEquals(
+    self::assertEquals(
         array('foo' => 'bar'),
         $result['params']
     );
@@ -1534,8 +1562,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
   public function testInvoke()
   {
     $db = $this->db;
-    $this->assertInstanceOf('\\voku\\db\\DB', $db());
-    $this->assertInstanceOf('\\voku\\db\\Result', $db('SELECT * FROM ' . $this->tableName));
+    self::assertInstanceOf('\\voku\\db\\DB', $db());
+    self::assertInstanceOf('\\voku\\db\\Result', $db('SELECT * FROM ' . $this->tableName));
   }
 
   public function testConnector2()
@@ -2036,7 +2064,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // --------------------
 
-    $this->assertTrue(
+    self::assertTrue(
         $this->db->transact(
             function (DB $db) use ($tableName) {
               return $db->insert(
@@ -2052,7 +2080,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // --------------------
 
-    $this->assertFalse(
+    self::assertFalse(
         $this->db->transact(
             function (DB $db) {
               /** @noinspection ThrowRawExceptionInspection */
@@ -2064,7 +2092,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     // --------------------
 
     $this->db->beginTransaction(); // (1)
-    $this->assertFalse(
+    self::assertFalse(
         $this->db->transact(
             function (DB $db) {
               return $db->beginTransaction(); // (2)
@@ -2075,7 +2103,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // --------------------
 
-    $this->assertFalse(
+    self::assertFalse(
         $this->db->transact(
             function (DB $db) use ($tableName) {
               return $db->insert(

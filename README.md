@@ -45,7 +45,21 @@ You can download it from here, or require it using [composer](https://packagist.
   * [Transactions](#transactions)
 * [Using the "Result"-Class](#using-the-result-class)
   * [Fetching all data](#fetching-all-data) 
-
+  * [Fetching database-table-fields](#fetching-database-table-fields)
+  * [Fetching + Callable](#fetching--callable)
+  * [Fetching + Transpose](#fetching--transpose)
+  * [Fetching + Pairs](#fetching--pairs)
+  * [Fetching + Groups](#fetching--groups)
+  * [Fetching + first](#fetching--first)
+  * [Fetching + last](#fetching--last)
+  * [Fetching + slice](#fetching--slice)
+  * [Fetching + map](#fetching--map)
+  * [Fetching + aliases](#fetching--aliases)
+  * [Fetching + Iterations](#fetching--iterations)
+* [Using the "Prepare"-Class](#using-the-prepare-class)
+  * [INSERT-Prepare-Query (example)](#insert-prepare-query-example)
+  * [SELECT-Prepare-Query (example)](#select-prepare-query-example)
+    
 ## Starting the driver
 ```php
   use voku\db\DB;
@@ -406,7 +420,7 @@ $object = $result->fetchCallable(0);
 The above example will map one row (0) from the result into a
 object. Set the mapper callback function to null to disable it.
 
-#### Aliases
+#### Fetching + aliases
 ```php
   $db->get()                  // alias for $db->fetch();
   $db->getAll()               // alias for $db->fetchAll();
@@ -416,7 +430,7 @@ object. Set the mapper callback function to null to disable it.
   $db->getColumn($key)        // alias for $db->fetchColumn($key);
 ```
 
-#### Iterations
+#### Fetching + Iterations
 To iterate a result-set you can use any fetch() method listed above.
 
 ```php
@@ -549,7 +563,7 @@ INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you 
   // $data['page_template'] === 'tpl_test_new123123'
 ```
 
-## Active Record (OOP Database-Access)
+## Using the "ActiveRecord"-Class (OOP database-access)
 
 A simple implement of active record pattern via Arrayy.
 
@@ -597,17 +611,8 @@ If you call this function with the $id parameter, it will fetch records by using
   
   $user->fetchByIdIfExists(1); // return NULL if the ID did not exists
   
-  // OR //
-  
-  $users = $user->fetchByIds(array(1)); // return an array of User objects 
-  
-  // OR //
-  
-  $users = $user->fetchByIdsPrimaryKeyAsArrayIndex(array(1)); // return an array of User objects 
-  
   var_dump($user->id); // (int) 1
   var_dump($user->getPrimaryKey()); // (int) 1
-  var_dump($users[0]->id) // (int) 1
 ```
 
 #### fetchAll() : array
@@ -615,8 +620,18 @@ This function can fetch all records in database, it will return an array of Acti
 
 ```php
   $user = new User();
-  /* @var $users User[] */
+
   $users = $user->fetchAll();
+  
+  // OR //
+  
+  $users = $user->fetchByIds(array(1));
+  
+  // OR //
+  
+  $users = $user->fetchByIdsPrimaryKeyAsArrayIndex(array(1));
+    
+  var_dump($users[0]->id) // (int) 1
 ```
 
 #### update() : boolean|int

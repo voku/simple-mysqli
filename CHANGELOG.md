@@ -1,6 +1,10 @@
 Changelog
 =========
 
+5.2.1 (2017-09-03)
+
+- [+]: DB->table_exists() && DB->num_rows() -> fix + tests
+
 5.2.0 (2017-09-02)
 
 - add "ActiveRecord"-class + doc + tests

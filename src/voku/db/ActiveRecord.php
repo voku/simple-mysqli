@@ -3,7 +3,6 @@
 namespace voku\db;
 
 use Arrayy\Arrayy;
-use Symfony\Component\PropertyAccess\PropertyAccess;
 use voku\db\exceptions\ActiveRecordException;
 use voku\db\exceptions\FetchingException;
 
@@ -243,7 +242,7 @@ abstract class ActiveRecord extends Arrayy
    */
   public function resetDirty()
   {
-    $this->array = array();
+    $this->dirty = array();
 
     return $this;
   }
@@ -592,7 +591,8 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this
    */
-  public function copy($insert = true) {
+  public function copy($insert = true)
+  {
     $new = clone $this;
 
     if ($insert) {
@@ -1126,16 +1126,16 @@ abstract class ActiveRecord extends Arrayy
    */
   public function &__get($var)
   {
-    if (isset($this->dirty[$var])) {
-      return $this->dirty[$var];
-    }
-
     if (array_key_exists($var, $this->sqlExpressions)) {
       return $this->sqlExpressions[$var];
     }
 
     if (array_key_exists($var, $this->relations)) {
       return $this->getRelation($var);
+    }
+
+    if (isset($this->dirty[$var])) {
+      return $this->dirty[$var];
     }
 
     return parent::__get($var);

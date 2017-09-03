@@ -1632,41 +1632,43 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testSecure()
   {
+    // --- object: DateTime
+
     $date = new DateTime('2016-08-15 09:22:18');
 
     self::assertSame("'" . $date->format('Y-m-d H:i:s') . "'", $this->db->secure($date));
 
-    // ---
+    // --- object: stdClass
 
     $object = new stdClass();
     $object->bar = 'foo';
 
     self::assertFalse($this->db->secure($object));
 
-    // ---
+    // --- object: Arrayy
 
     $object = new Arrayy(array('foo', 123, 'öäü'));
 
     self::assertSame('\'foo,123,öäü\'', $this->db->secure($object));
 
-    // ---
+    // --- 0.0
 
     self::assertSame(0.0, $this->db->secure(0.0));
     self::assertSame("'0,0'", $this->db->secure('0,0'));
 
-    // ---
+    // --- empty string
 
     self::assertSame("''", $this->db->secure(''));
 
-    // ---
+    // --- NULL
 
     $this->db->set_convert_null_to_empty_string(true);
     self::assertSame("''", $this->db->secure(null));
 
     $this->db->set_convert_null_to_empty_string(false);
-    self::assertNull($this->db->secure(null));
+    self::assertSame('NULL', $this->db->secure(null));
 
-    // ---
+    // --- array
 
     $testArray = array(
         'NOW()'                                  => 'NOW()',

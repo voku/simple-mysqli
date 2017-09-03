@@ -9,9 +9,10 @@ use Arrayy\Arrayy;
  * Every SQL can be split into multiple expressions.
  * Each expression contains three parts:
  *
- * @property string|ActiveRecordExpressions $source   of this expression, (option)
+ * @property string|ActiveRecordExpressions $source   source of this expression, (option)
  * @property string                         $operator (required)
- * @property string|ActiveRecordExpressions $target   of this expression (required)
+ * @property string|ActiveRecordExpressions $target   target of this expression (required)
+ *
  * Just implement one function __toString.
  */
 class ActiveRecordExpressions extends Arrayy

@@ -7,13 +7,15 @@ use voku\db\ActiveRecord;
 /**
  * Class FoobarUser
  *
- * @property string name
- * @property string password
+ * @property int    $id
+ * @property string $name
+ * @property string $password
  */
 class FoobarUser extends ActiveRecord
 {
   public $table          = 'user';
   public $primaryKeyName = 'id';
+
   public $relations      = array(
       'contacts'              => array(
           self::HAS_MANY,

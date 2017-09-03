@@ -397,11 +397,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $this->reset();
 
     if ($class && is_object($class)) {
+      $propertyAccessor = PropertyAccess::createPropertyAccessor();
       /** @noinspection PhpAssignmentInConditionInspection */
       while ($row = \mysqli_fetch_assoc($this->_result)) {
         $classTmp = clone $class;
         $row = $this->cast($row);
-        $propertyAccessor = PropertyAccess::createPropertyAccessor();
         foreach ($row as $key => $value) {
           $propertyAccessor->setValue($classTmp, $key, $value);
         }

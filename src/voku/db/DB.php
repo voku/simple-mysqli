@@ -813,11 +813,12 @@ final class DB
 
       $parseKeyInner = $nameTmp . '-' . $parseKey;
       $sqlBefore = $sql;
+      $secureParamValue = $this->secure($params[$name]);
 
       while (strpos($sql, $parseKeyInner) !== false) {
         $sql = UTF8::str_replace_first(
             $parseKeyInner,
-            $this->secure($params[$name]),
+            $secureParamValue,
             $sql
         );
       }
@@ -1715,9 +1716,21 @@ final class DB
     if (
         $var === ''
         ||
-        ($this->_convert_null_to_empty_string === true && $var === null)
+        (
+            $this->_convert_null_to_empty_string === true
+            &&
+            $var === null
+        )
     ) {
       return "''";
+    }
+
+    if (
+        $this->_convert_null_to_empty_string === FALSE
+        &&
+        $var === null
+    ) {
+      return "NULL";
     }
 
     if (in_array($var, $this->mysqlDefaultTimeFunctions, true)) {

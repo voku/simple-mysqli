@@ -3,7 +3,9 @@
 namespace voku\db;
 
 use Arrayy\Arrayy;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 use voku\db\exceptions\ActiveRecordException;
+use voku\db\exceptions\FetchingException;
 
 /**
  * A simple implement of active record via Arrayy.
@@ -168,6 +170,14 @@ abstract class ActiveRecord extends Arrayy
   const PREFIX = ':active_record';
 
   /**
+   * @return array
+   */
+  public function getParams()
+  {
+    return $this->params;
+  }
+
+  /**
    * @return string
    */
   public function getPrimaryKeyName()
@@ -186,6 +196,23 @@ abstract class ActiveRecord extends Arrayy
     }
 
     return null;
+  }
+
+  /**
+   * @param mixed $primaryKey
+   * @param bool  $dirty
+   *
+   * @return $this
+   */
+  public function setPrimaryKey($primaryKey, $dirty = true)
+  {
+    if ($dirty === true) {
+      $this->dirty[$this->primaryKeyName] = $primaryKey;
+    } else {
+      $this->array[$this->primaryKeyName] = $primaryKey;
+    }
+
+    return $this;
   }
 
   /**
@@ -232,12 +259,17 @@ abstract class ActiveRecord extends Arrayy
   }
 
   /**
-   * function to find one record and assign in to current object.
+   * Function to find one record and assign in to current object.
    *
-   * @param int $id If call this function using this param, will find record by using this id. If not set, just find
-   *                the first record in database.
+   * @param mixed $id <p>
+   *                  If call this function using this param, we will find the record by using this id.
+   *                  If not set, just find the first record in database.
+   *                  </p>
    *
-   * @return bool|ActiveRecord if find record, assign in to current object and return it, otherwise return "false".
+   * @return false|$this <p>
+   *                     If we could find the record, assign in to current object and return it,
+   *                     otherwise return "false".
+   *                     </p>
    */
   public function fetch($id = null)
   {
@@ -265,12 +297,154 @@ abstract class ActiveRecord extends Arrayy
   }
 
   /**
+   * @param string $query
+   *
+   * @return $this[]
+   */
+  public function fetchManyByQuery($query)
+  {
+    $list = $this->fetchByQuery($query);
+
+    if (!$list || empty($list)) {
+      return array();
+    }
+
+    return $list;
+  }
+
+  /**
+   * @param string $query
+   *
+   * @return $this|null
+   */
+  public function fetchOneByQuery($query)
+  {
+    $list = $this->fetchByQuery($query);
+
+    if (!$list || empty($list)) {
+      return null;
+    }
+
+    if (is_array($list) && count($list) > 0) {
+      $this->array = $list[0]->getArray();
+    } else {
+      $this->array = $list->getArray();
+    }
+
+    return $this;
+  }
+
+  /**
+   * @param mixed $id
+   *
+   * @return $this
+   *
+   * @throws FetchingException <p>Will be thrown, if we can not find the id.</p>
+   */
+  public function fetchById($id)
+  {
+    $obj = $this->fetchByIdIfExists($id);
+    if ($obj === null) {
+      throw new FetchingException("No row with primary key '$id' in table '$this->table'.");
+    }
+
+    return $obj;
+  }
+
+  /**
+   * @param mixed $id
+   *
+   * @return $this|null
+   */
+  public function fetchByIdIfExists($id)
+  {
+    $list = $this->fetch($id);
+
+    if (!$list || $list->isEmpty()) {
+      return null;
+    }
+
+    return $list;
+  }
+
+  /**
+   * @param array $ids
+   *
+   * @return $this[]
+   */
+  public function fetchByIds($ids)
+  {
+    if (empty($ids)) {
+      return array();
+    }
+
+    $list = $this->fetchAll($ids);
+    if (is_array($list) && count($list) > 0) {
+      return $list;
+    }
+
+    return array();
+  }
+
+  /**
+   * @param string $query
+   *
+   * @return $this[]|$this
+   */
+  public function fetchByQuery($query)
+  {
+    $list = self::query(
+        $query,
+        $this->params,
+        $this->reset()
+    );
+
+    if (is_array($list)) {
+      if (count($list) === 0) {
+        return array();
+      }
+
+      return $list;
+    }
+
+    $this->array = $list->getArray();
+
+    return $this;
+  }
+
+  /**
+   * @param array $ids
+   *
+   * @return $this[]
+   */
+  public function fetchByIdsPrimaryKeyAsArrayIndex($ids)
+  {
+    $result = $this->fetchAll($ids);
+
+    $resultNew = array();
+    foreach ($result as $item) {
+      $resultNew[$item->getPrimaryKey()] = $item;
+    }
+
+    return $resultNew;
+  }
+
+  /**
    * Function to find all records in database.
    *
-   * @return array return array of ActiveRecord
+   * @param array|null $ids <p>
+   *                        If call this function using this param, we will find the record by using this id's.
+   *                        If not set, just find all records in database.
+   *                        </p>
+   *
+   * @return $this[]
    */
-  public function fetchAll()
+  public function fetchAll(array $ids = null)
   {
+    if ($ids) {
+      $this->reset()->in($this->primaryKeyName, $ids);
+    }
+
     return self::query(
         $this->_buildSql(
             array(
@@ -412,6 +586,25 @@ abstract class ActiveRecord extends Arrayy
   }
 
   /**
+   * Helper function to copy an existing active record (and insert it into the database).
+   *
+   * @param bool $insert
+   *
+   * @return $this
+   */
+  public function copy($insert = true) {
+    $new = clone $this;
+
+    if ($insert) {
+      $new->setPrimaryKey(null);
+      $id = $new->insert();
+      $new->setPrimaryKey($id);
+    }
+
+    return $new;
+  }
+
+  /**
    * Helper function to exec sql.
    *
    * @param string $sql   The SQL need to be execute.
@@ -452,9 +645,9 @@ abstract class ActiveRecord extends Arrayy
    *                                  will find all records.
    *                                  </p>
    *
-   * @return bool|ActiveRecord|array
+   * @return bool|$this|array
    */
-  public static function query($sql, array $param = array(), $obj = null, $single = false)
+  public static function query($sql, array $param = array(), ActiveRecord $obj = null, $single = false)
   {
     $result = self::execute($sql, $param);
 
@@ -614,7 +807,7 @@ abstract class ActiveRecord extends Arrayy
     array_walk($sqls, array($this, '_buildSqlCallback'), $this);
 
     // DEBUG
-    // echo 'SQL: ', implode(' ', $sqls), "\n", 'PARAMS: ', implode(', ', $this->params), "\n";
+    //echo 'SQL: ', implode(' ', $sqls), "\n", 'PARAMS: ', implode(', ', $this->params), "\n";
 
     return implode(' ', $sqls);
   }

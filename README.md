@@ -59,7 +59,13 @@ You can download it from here, or require it using [composer](https://packagist.
 * [Using the "Prepare"-Class](#using-the-prepare-class)
   * [INSERT-Prepare-Query (example)](#insert-prepare-query-example)
   * [SELECT-Prepare-Query (example)](#select-prepare-query-example)
-    
+* [Using the "ActiveRecord"-Class (OOP database-access)](using-the-activerecord-class-oop-database-access)
+  * [setDb(DB $db)](#setdbdb-db)
+  * [insert() : boolean|int](#insert--booleanint)
+  * [fetch(integer $id = null) : boolean|\ActiveRecord](#fetchinteger--id--null--booleanactiverecord)
+  * [insert() : boolean|int](#insert--booleanint)
+  
+  
 ## Starting the driver
 ```php
   use voku\db\DB;
@@ -615,8 +621,8 @@ If you call this function with the $id parameter, it will fetch records by using
   var_dump($user->getPrimaryKey()); // (int) 1
 ```
 
-#### fetchAll() : array
-This function can fetch all records in database, it will return an array of ActiveRecord objects.
+#### fetchAll() : $this[]
+This function can fetch all records in the database and will return an array of ActiveRecord objects.
 
 ```php
   $user = new User();

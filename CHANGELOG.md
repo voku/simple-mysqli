@@ -1,6 +1,11 @@
 Changelog
 =========
 
+5.3.1 (2017-09-03)
+
+- update docs + examples
+- [+]: DB->set_convert_null_to_empty_string() -> is deprecated
+
 5.3.0 (2017-09-03)
 
 - [+]: "ActiveRecord" -> add more fetch methods

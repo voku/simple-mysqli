@@ -36,6 +36,16 @@ You can download it from here, or require it using [composer](https://packagist.
   composer require voku/simple-mysqli
 ```
 
+* [Starting the driver](#starting-the-driver)
+* [Multiton && Singleton](#multiton--singleton)
+* [Using the "DB"-Class](#using-the-db-class)
+  * [Selecting and retrieving data from a table](#selecting-and-retrieving-data-from-a-table)
+  * [Inserting data on a table](#inserting-data-on-a-table)
+  * [Binding parameters on queries](#binding-parameters-on-queries)
+  * [Transactions](#transactions)
+* [Using the "Result"-Class](#using-the-result-class)
+  * [Fetching all data](#fetching-all-data) 
+
 ## Starting the driver
 ```php
   use voku\db\DB;
@@ -56,7 +66,7 @@ You can use ```DB::getInstance()``` without any parameters and you will get your
 
 There are numerous ways of using this library, here are some examples of the most common methods.
 
-### Selecting and retrieving data from a table
+#### Selecting and retrieving data from a table
 
 ```php
   use voku\db\DB;
@@ -114,7 +124,7 @@ Example: SELECT with Cache
 
 The result (via $result->fetchAllArray()) is only cached for 3600s when the query was a SELECT statement, otherwise you get the default result from the ```$db->query()``` function. 
 
-### Inserting data on a table
+#### Inserting data on a table
 
 to manipulate tables you have the most important methods wrapped,
 they all work the same way: parsing arrays of key/value pairs and forming a safe query
@@ -167,7 +177,7 @@ Example: REPLACE
   $tmpId = $db->replace('users', $replaceArray);
 ```
 
-### Binding parameters on queries
+#### Binding parameters on queries
 
 Binding parameters is a good way of preventing mysql injections as the parameters are sanitized before execution.
 
@@ -186,7 +196,7 @@ Binding parameters is a good way of preventing mysql injections as the parameter
   }
 ```
 
-## Transactions
+#### Transactions
 
 Use `begin()`, `commit()`, and `rollback()` to manage transactions:
 
@@ -223,7 +233,7 @@ $db->transact(function($db) {
 });
 ```
 
-### Using the Result-Class
+## Using the "Result"-Class
 
 After executing a `SELECT` query you receive a `Result` object that will help you manipulate the resultant data.
 there are different ways of accessing this data, check the examples bellow:
@@ -251,7 +261,7 @@ Other methods are:
   $data = $result->fetchArrayPair(string $key, string $value);           // fetch data as a key/value pair array
 ```
 
-#### fetchFields
+#### Fetching database-table-fields
 
 Returns rows of field information in a result set:
 
@@ -263,7 +273,7 @@ Pass `true` as argument if you want each field information returned as an
 associative array instead of an object. The default is to return each as an
 object, exactly like the `mysqli_fetch_fields` function.
 
-#### fetchCallable
+#### Fetching + Callable
 
 Fetches a row or a single column within a row:
 
@@ -275,7 +285,7 @@ This method forms the basis of all fetch_ methods. All forms of fetch_ advances
 the internal row pointer to the next row. `null` will be returned when there are
 no more rows to be fetched.
 
-#### fetchTranspose
+#### Fetching + Transpose
 
 Returns all rows at once, transposed as an array of arrays:
 
@@ -290,7 +300,18 @@ Pass a column name as argument to return each column as an associative array
 with keys taken from values of the provided column. If not provided, the keys
 will be numeric starting from zero.
 
-#### fetchPairs
+e.g.:
+```php
+$transposedExample = array(
+  'title' => array(
+    1 => 'Title #1',
+    2 => 'Title #2',
+    3 => 'Title #3',
+  )
+);
+```
+
+#### Fetching + Pairs
 
 Returns all rows at once as key-value pairs using the column in the first
 argument as the key:
@@ -304,9 +325,17 @@ value in each pair:
 
 ```php
 $countries = $result->fetchPairs('id', 'name');
+
+/*
+array(
+  1 => 'Title #1',
+  2 => 'Title #2',
+  3 => 'Title #3',
+)
+*/
 ```
 
-#### fetchGroups
+#### Fetching + Groups
 
 Returns all rows at once as a grouped array:
 
@@ -321,7 +350,7 @@ values in each groups:
 $student_names_grouped_by_gender = $result->fetchGroups('gender', 'name');
 ```
 
-#### first
+#### Fetching + first
 
 Returns the first row element from the result:
 
@@ -335,7 +364,7 @@ Pass a column name as argument to return a single column from the first row:
 $name = $result->first('name');
 ```
 
-#### last
+#### Fetching + last
 
 Returns the last row element from the result:
 
@@ -349,7 +378,7 @@ Pass a column name as argument to return a single column from the last row:
 $name = $result->last('name');
 ```
 
-#### slice
+#### Fetching + slice
 
 Returns a slice of rows from the result:
 
@@ -363,7 +392,7 @@ parameter is a boolean value to indicate whether to preserve the keys or not
 (optional and defaults to false). This methods essentially behaves the same as
 PHP's built-in `array_slice()` function.
 
-#### map
+#### Fetching + map
 
 Sets a mapper callback function that's used inside the `Result->fetchCallable()` method:
 
@@ -377,7 +406,44 @@ $object = $result->fetchCallable(0);
 The above example will map one row (0) from the result into a
 object. Set the mapper callback function to null to disable it.
 
-### Using the Prepare-Class
+#### Aliases
+```php
+  $db->get()                  // alias for $db->fetch();
+  $db->getAll()               // alias for $db->fetchAll();
+  $db->getObject()            // alias for $db->fetchAllObject();
+  $db->getArray()             // alias for $db->fetchAllArray();
+  $db->getArrayy()            // alias for $db->fetchAllArrayy();
+  $db->getColumn($key)        // alias for $db->fetchColumn($key);
+```
+
+#### Iterations
+To iterate a result-set you can use any fetch() method listed above.
+
+```php
+  $result = $db->select('users');
+
+  // using while
+  while ($row = $result->fetch()) {
+    echo $row->name;
+    echo $row->email;
+  }
+
+  // using foreach (v1)
+  foreach($result->fetchAll() as $row) {
+    echo $row->name;
+    echo $row->email;
+  }
+  
+  // using foreach (v2)
+  foreach($result as $row) {
+    echo $row->name;
+    echo $row->email;
+  }
+  
+  // INFO: "while + fetch()" will use less memory that "foreach + "fetchAll()", because we will fetch each result entry seperatly
+```
+
+## Using the "Prepare"-Class
 
 Prepare statements have the advantage that they are built together in the MySQL-Server, so the performance is better.
 
@@ -386,7 +452,7 @@ With this wrapper we pre-build the sql-query via php (only for debugging / loggi
 
 INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you need better performance.
 
-##### INSERT-Prepare-Query (example)
+#### INSERT-Prepare-Query (example)
 ```php
   use voku\db\DB;
   
@@ -433,7 +499,7 @@ INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you 
   echo $prepare->get_sql_with_bound_parameters();
 ```
 
-##### SELECT-Prepare-Query (example)
+#### SELECT-Prepare-Query (example)
 ```php
   use voku\db\DB;
   
@@ -481,37 +547,6 @@ INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you 
 
   // $data['page_id'] === $page_id
   // $data['page_template'] === 'tpl_test_new123123'
-```
-
-#### Aliases
-```php
-  $db->get()                  // alias for $db->fetch();
-  $db->getAll()               // alias for $db->fetchAll();
-  $db->getObject()            // alias for $db->fetchAllObject();
-  $db->getArray()             // alias for $db->fetchAllArray();
-  $db->getArrayy()            // alias for $db->fetchAllArrayy();
-  $db->getColumn($key)        // alias for $db->fetchColumn($key);
-```
-
-#### Iterations
-To iterate a result-set you can use any fetch() method listed above.
-
-```php
-  $result = $db->select('users');
-
-  // using while
-  while ($row = $result->fetch()) {
-    echo $row->name;
-    echo $row->email;
-  }
-
-  // using foreach
-  foreach($result->fetchAll() as $row) {
-    echo $row->name;
-    echo $row->email;
-  }
-  
-  // INFO: "while + fetch()" will use less memory that "foreach + "fetchAll()", because we will fetch each result entry seperatly
 ```
 
 ## Active Record (OOP Database-Access)

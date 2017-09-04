@@ -1,6 +1,12 @@
 Changelog
 =========
 
+5.4.0 (2017-09-03)
+
+- update docs + examples
+- fix code-style
+- add ActiveRecord::fetchEmpty()
+
 5.3.1 (2017-09-03)
 
 - update docs + examples

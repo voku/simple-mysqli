@@ -59,7 +59,7 @@ You can download it from here, or require it using [composer](https://packagist.
 * [Using the "Prepare"-Class](#using-the-prepare-class)
   * [INSERT-Prepare-Query (example)](#insert-prepare-query-example)
   * [SELECT-Prepare-Query (example)](#select-prepare-query-example)
-* [Using the "ActiveRecord"-Class (OOP database-access)](using-the-activerecord-class-oop-database-access)
+* [Using the "ActiveRecord"-Class (OOP database-access)](#using-the-activerecord-class-oop-database-access)
     * [setDb(DB $db)](#setdbdb-db)
     * [insert() : boolean|int](#insert--booleanint)
     * [fetch(integer $id = null) : boolean|\ActiveRecord](#fetchinteger--id--null--booleanactiverecord)

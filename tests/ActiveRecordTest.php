@@ -245,7 +245,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
   public function testFetchOneByQuery($contact)
   {
     $user = new FoobarUser();
-    $sql = "SELECT * FROM user WHERE id = " . (int)$contact->user_id;
+    $sql = 'SELECT * FROM user WHERE id = ' . (int)$contact->user_id;
     $user->fetchOneByQuery($sql);
 
     // name etc. will stored in user data array.
@@ -262,7 +262,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
   public function testFetchManyByQuery($contact)
   {
     $user = new FoobarUser();
-    $sql = "SELECT * FROM user WHERE id >= " . (int)$contact->user_id;
+    $sql = 'SELECT * FROM user WHERE id >= ' . (int)$contact->user_id;
     $users = $user->fetchManyByQuery($sql);
 
     $found = false;

@@ -1730,7 +1730,7 @@ final class DB
         &&
         $var === null
     ) {
-      return "NULL";
+      return 'NULL';
     }
 
     if (in_array($var, $this->mysqlDefaultTimeFunctions, true)) {

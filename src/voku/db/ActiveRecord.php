@@ -540,6 +540,15 @@ abstract class ActiveRecord extends Arrayy
   }
 
   /**
+   * @return $this
+   */
+  public static function fetchEmpty()
+  {
+    $class = get_called_class();
+    return new $class;
+  }
+
+  /**
    * Function to build insert SQL, and insert current record into database.
    *
    * @return bool|int <p>

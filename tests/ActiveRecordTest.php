@@ -68,6 +68,30 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
   }
 
   /**
+   * @depends testInit
+   */
+  public function testInsertUserV2()
+  {
+    $user = FoobarUser::fetchEmpty();
+    $user->name = 'demo';
+    $user->password = md5('demo');
+
+    self::assertSame('demo', $user->get('name'));
+    self::assertSame('demo', $user->name);
+
+    $id = $user->insert();
+
+    self::assertGreaterThan(0, $user->id);
+    self::assertGreaterThan(0, $id);
+    self::assertSame($id, $user->getPrimaryKey());
+
+    self::assertSame('demo', $user->get('name'));
+    self::assertSame('demo', $user->name);
+
+    return $user;
+  }
+
+  /**
    * @depends testInsertUser
    *
    * @param FoobarUser $user

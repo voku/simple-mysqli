@@ -663,6 +663,7 @@ This function can fetch all records in the database and will return an array of 
   $users = $user->fetchByIdsPrimaryKeyAsArrayIndex(array(1));
     
   var_dump($users[0]->id) // (int) 1
+  var_dump($users[0]->getPrimaryKey()); // (int) 1
 ```
 
 #### update() : boolean|int

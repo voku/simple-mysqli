@@ -1,6 +1,11 @@
 Changelog
 =========
 
+5.4.1 (2017-09-08)
+
+- update php-docs
+- [+]: DB->set_convert_null_to_empty_string(false) -> NULL === 'NULL'
+
 5.4.0 (2017-09-03)
 
 - update docs + examples

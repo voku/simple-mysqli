@@ -3,13 +3,20 @@
 namespace voku\db;
 
 /**
- * Class ActiveRecordExpressionsWrap
+ * Class Expressions Wrap via Arrayy.
+ *
+ * @property string $start     (option)
+ * @property string $end       (option)
+ * @property string $delimiter (option) <p>default is ","</p>
  */
 class ActiveRecordExpressionsWrap extends ActiveRecordExpressions
 {
+  /**
+   * @return string
+   */
   public function __toString()
   {
-    $delimiter = $this->delimiter ?: ',';
+    $delimiter = (string)($this->delimiter ?: ',');
 
     if ($this->start) {
       return $this->start . implode($delimiter, $this->target->getArray()) . ($this->end ?: ')');

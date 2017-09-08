@@ -352,13 +352,12 @@ final class DB
    *
    * @internal
    */
-  public function _parseArrayPair($arrayPair, $glue = ',')
+  public function _parseArrayPair(array $arrayPair, $glue = ',')
   {
     // init
     $sql = '';
 
-    /** @noinspection IsEmptyFunctionUsageInspection */
-    if (empty($arrayPair)) {
+    if (count($arrayPair) === 0) {
       return '';
     }
 
@@ -507,7 +506,7 @@ final class DB
    *
    * @return array <p>with the keys -> 'sql', 'params'</p>
    */
-  private function _parseQueryParams($sql, array $params)
+  private function _parseQueryParams($sql, array $params = array())
   {
     // is there anything to parse?
     if (
@@ -850,12 +849,18 @@ final class DB
    */
   public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = false, $convert_array = false)
   {
-    if ($var === '') {
-      return '';
+    if ($var === '' || $var === "''") {
+      return "''";
     }
 
     if ($var === null) {
-      return null;
+      if (
+          $this->_convert_null_to_empty_string === true
+      ) {
+        return "''";
+      }
+
+      return 'NULL';
     }
 
     // save the current value as int (for later usage)
@@ -1713,23 +1718,17 @@ final class DB
    */
   public function secure($var)
   {
-    if (
-        $var === ''
-        ||
-        (
-            $this->_convert_null_to_empty_string === true
-            &&
-            $var === null
-        )
-    ) {
+    if ($var === '' || $var === "''") {
       return "''";
     }
 
-    if (
-        $this->_convert_null_to_empty_string === false
-        &&
-        $var === null
-    ) {
+    if ($var === null) {
+      if (
+          $this->_convert_null_to_empty_string === true
+      ) {
+        return "''";
+      }
+
       return 'NULL';
     }
 

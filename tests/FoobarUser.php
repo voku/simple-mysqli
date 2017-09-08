@@ -33,7 +33,7 @@ class FoobarUser extends ActiveRecord
           self::HAS_ONE,
           'tests\FoobarContact',
           'user_id',
-          array('where' => '1', 'order' => 'id desc'),
+          array('where' => '1', 'orderBy' => 'id desc'),
       ),
   );
 }

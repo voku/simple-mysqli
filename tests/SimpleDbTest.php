@@ -495,9 +495,9 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $false = $this->db->update($this->tableName, array(), 'page_id = ' . (int)$tmpId);
     self::assertFalse($false);
 
-    // update - true
-    $false = $this->db->update($this->tableName, $pageArray, '');
-    self::assertFalse($false);
+    // update - nothing
+    $nothing = $this->db->update($this->tableName, $pageArray, '');
+    self::assertSame(0, $nothing);
 
     // update - false
     $false = $this->db->update($this->tableName, $pageArray, null);
@@ -551,9 +551,9 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     );
     $tmpId = $this->db->insert($this->tableName, $pageArray);
 
-    // delete - false
-    $false = $this->db->delete($this->tableName, '');
-    self::assertFalse($false);
+    // delete - nothing
+    $nothing = $this->db->delete($this->tableName, '');
+    self::assertSame(0, $nothing);
 
     // delete - false
     $false = $this->db->delete($this->tableName, null);
@@ -690,11 +690,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // ---
 
-    self::assertSame('', $this->db->escape(''));
+    self::assertSame("''", $this->db->escape(''));
 
     // ---
 
-    self::assertNull($this->db->escape(null));
+    self::assertSame('NULL', $this->db->escape(null));
 
     // ---
 
@@ -1535,7 +1535,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
   public function testEscapeData()
   {
-    self::assertSame(null, $this->db->escape(null, true));
+    self::assertSame('NULL', $this->db->escape(null, true));
     self::assertSame(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), $this->db->escape("O'Toole"));
     self::assertSame(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), $this->db->escape("O'Toole", true));
     self::assertSame(1, $this->db->escape(true));
@@ -1547,15 +1547,17 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
         array(
             \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
             1,
-            null,
-        ), $this->db->escape(array("O'Toole", true, null))
+            'NULL',
+        ),
+        $this->db->escape(array("O'Toole", true, null))
     );
     self::assertSame(
         array(
             \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
             1,
-            null,
-        ), $this->db->escape(array("O'Toole", true, null), false)
+            'NULL',
+        ),
+        $this->db->escape(array("O'Toole", true, null), false)
     );
   }
 

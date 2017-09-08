@@ -40,19 +40,19 @@ use voku\db\exceptions\FetchingException;
 abstract class ActiveRecord extends Arrayy
 {
   /**
-   * @var DB static property to connect database.
+   * @var DB static
    */
   protected static $db;
 
   /**
-   * @var array maping the function name and the operator, to build Expressions in WHERE condition.
+   * @var array <p>Mapping the function name and the operator, to build Expressions in WHERE condition.</p>
    *
-   * user can call it like this:
+   * call the function like this:
    * <pre>
-   *   $user->isnotnull()->eq('id', 1);
+   *   $user->isNotNull()->eq('id', 1);
    * </pre>
    *
-   * will create Expressions can explain to SQL:
+   * the result in SQL:
    * <pre>
    *   WHERE user.id IS NOT NULL AND user.id = :ph1
    * </pre>
@@ -82,11 +82,19 @@ abstract class ActiveRecord extends Arrayy
   );
 
   /**
-   * @var array Part of SQL, maping the function name and the operator to build SQL Part.
-   * <pre>call function like this:
-   *      $user->order('id DESC', 'name ASC')->limit(2, 1);
-   *  can explain to SQL:
-   *      ORDER BY id DESC, name ASC LIMIT 2,1</pre>
+   * @var array <p>Part of the SQL, mapping the function name and the operator to build SQL Part.</p>
+   *
+   * <br />
+   *
+   * call the function like this:
+   * <pre>
+   *      $user->orderBy('id DESC', 'name ASC')->limit(2, 1);
+   * </pre>
+   *
+   * the result in SQL:
+   * <pre>
+   *      ORDER BY id DESC, name ASC LIMIT 2,1
+   * </pre>
    */
   protected $sqlParts = array(
       'select' => 'SELECT',
@@ -101,7 +109,7 @@ abstract class ActiveRecord extends Arrayy
   );
 
   /**
-   * @var array Static property to stored the default Sql Expressions values.
+   * @var array <p>The default sql expressions values.</p>
    */
   protected $defaultSqlExpressions = array(
       'expressions' => array(),
@@ -122,23 +130,23 @@ abstract class ActiveRecord extends Arrayy
   );
 
   /**
-   * @var array Stored the Expressions of the SQL.
+   * @var array <p>Stored the Expressions of the SQL.</p>
    */
   protected $sqlExpressions = array();
 
   /**
-   * @var string  The table name in database.
+   * @var string <p>The table name in database.</p>
    */
   protected $table;
 
   /**
-   * @var string  The primary key of this ActiveRecord, just suport single primary key.
+   * @var string  <p>The primary key of this ActiveRecord, just support single primary key.</p>
    */
   protected $primaryKeyName = 'id';
 
   /**
-   * @var array Stored the drity data of this object, when call "insert" or "update" function, will write this data
-   *      into database.
+   * @var array <p>Stored the dirty data of this object, when call "insert" or "update" function, will write this data
+   *      into database.</p>
    */
   protected $dirty = array();
 
@@ -148,17 +156,17 @@ abstract class ActiveRecord extends Arrayy
   protected static $new_data_are_dirty = true;
 
   /**
-   * @var array Stored the params will bind to SQL when call DB->query(),
+   * @var array <p>Stored the params will bind to SQL when call DB->query().</p>
    */
   protected $params = array();
 
   /**
-   * @var ActiveRecordExpressions[] Stored the configure of the relation, or target of the relation.
+   * @var ActiveRecordExpressions[] <p>Stored the configure of the relation, or target of the relation.</p>
    */
   protected $relations = array();
 
   /**
-   * @var int The count of bind params, using this count and const "PREFIX" (:ph) to generate place holder in SQL.
+   * @var int <p>The count of bind params, using this count and const "PREFIX" (:ph) to generate place holder in SQL.</p>
    */
   private static $count = 0;
 
@@ -371,7 +379,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this[]
    */
-  public function fetchByIds($ids)
+  public function fetchByIds(array $ids)
   {
     if (empty($ids)) {
       return array();
@@ -416,7 +424,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this[]
    */
-  public function fetchByIdsPrimaryKeyAsArrayIndex($ids)
+  public function fetchByIdsPrimaryKeyAsArrayIndex(array $ids)
   {
     $result = $this->fetchAll($ids);
 
@@ -451,9 +459,9 @@ abstract class ActiveRecord extends Arrayy
                 'from',
                 'join',
                 'where',
-                'group',
+                'groupBy',
                 'having',
-                'order',
+                'orderBy',
                 'limit',
             )
         ),
@@ -616,8 +624,8 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to exec sql.
    *
-   * @param string $sql   The SQL need to be execute.
-   * @param array  $param The param will be bind to the sql statement.
+   * @param string $sql   <p>The SQL need to be execute.</p>
+   * @param array  $param <p>The param will be bind to the sql statement.</p>
    *
    * @return bool|int|Result              <p>
    *                                      "Result" by "<b>SELECT</b>"-queries<br />
@@ -688,7 +696,7 @@ abstract class ActiveRecord extends Arrayy
    * Helper function to get relation of this object.
    * There was three types of relations: {BELONGS_TO, HAS_ONE, HAS_MANY}
    *
-   * @param string $name The name of the relation, the array key when defind the relation.
+   * @param string $name <p>The name of the relation (the array key from the definition).</p>
    *
    * @return mixed
    *
@@ -720,8 +728,9 @@ abstract class ActiveRecord extends Arrayy
     }
 
     $backref = isset($relation[4]) ? $relation[4] : '';
+    $relationInstanceOfSelf = ($relation instanceof self);
     if (
-        (!$relation instanceof self)
+        $relationInstanceOfSelf === false
         &&
         self::HAS_ONE == $relation[0]
     ) {
@@ -746,7 +755,7 @@ abstract class ActiveRecord extends Arrayy
       }
 
     } elseif (
-        (!$relation instanceof self)
+        $relationInstanceOfSelf === false
         &&
         self::BELONGS_TO == $relation[0]
     ) {
@@ -767,9 +776,9 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to build SQL with sql parts.
    *
-   * @param string       $n The SQL part will be build.
-   * @param int          $i The index of $n in $sql array.
-   * @param ActiveRecord $o The reference to $this
+   * @param string       $n <p>The SQL part will be build.</p>
+   * @param int          $i <p>The index of $n in $sql array.</p>
+   * @param ActiveRecord $o <p>The reference to $this.</p>
    */
   private function _buildSqlCallback(&$n, $i, $o)
   {
@@ -807,7 +816,7 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to build SQL with sql parts.
    *
-   * @param array $sqls The SQL part will be build.
+   * @param array $sqls <p>The SQL part will be build.</p>
    *
    * @return string
    */
@@ -825,10 +834,10 @@ abstract class ActiveRecord extends Arrayy
    * Magic function to make calls witch in function mapping stored in $operators and $sqlPart.
    * also can call function of DB object.
    *
-   * @param string $name function name
-   * @param array  $args The arguments of the function.
+   * @param string $name <p>The name of the function.</p>
+   * @param array  $args <p>The arguments of the function.</p>
    *
-   * @return $this|mixed Return the result of callback or the current object to make chain method calls.
+   * @return $this|mixed <p>Return the result of callback or the current object to make chain method calls.</p>
    *
    * @throws ActiveRecordException
    */
@@ -874,8 +883,8 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Make wrap when build the SQL expressions of WHERE.
    *
-   * @param string $op If give this param will build one WrapExpressions include the stored expressions add into WHERE.
-   *                   otherwise wil stored the expressions into array.
+   * @param string $op <p>If given, this param will build one "ActiveRecordExpressionsWrap" and include the stored expressions add into WHERE,
+   *                   otherwise it will stored the expressions into an array.</p>
    *
    * @return $this
    */
@@ -904,7 +913,7 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to build place holder when make SQL expressions.
    *
-   * @param mixed $value The value will bind to SQL, just store it in $this->params.
+   * @param mixed $value <p>The value will be bind to SQL, just store it in $this->params.</p>
    *
    * @return mixed $value
    */
@@ -924,13 +933,12 @@ abstract class ActiveRecord extends Arrayy
 
   /**
    * Helper function to add condition into WHERE.
-   * create the SQL Expressions.
    *
-   * @param string $field The field name, the source of Expressions
+   * @param string $field <p>The field name, the source of Expressions</p>
    * @param string $operator
-   * @param mixed  $value The target of the Expressions
-   * @param string $op    The operator to concat this Expressions into WHERE or SET statement.
-   * @param string $name  The Expression will contact to.
+   * @param mixed  $value <p>The target of the Expressions.</p>
+   * @param string $op    <p>The operator to concat this Expressions into WHERE or SET statement.</p>
+   * @param string $name  <p>The Expression will contact to.</p>
    */
   public function addCondition($field, $operator, $value, $op = 'AND', $name = 'where')
   {
@@ -957,12 +965,11 @@ abstract class ActiveRecord extends Arrayy
   }
 
   /**
-   * helper function to add condition into JOIN.
-   * create the SQL Expressions.
+   * Helper function to add condition into JOIN.
    *
-   * @param string $table The join table name
-   * @param string $on    The condition of ON
-   * @param string $type  The join type, like "LEFT", "INNER", "OUTER"
+   * @param string $table <p>The join table name.</p>
+   * @param string $on    <p>The condition of ON.</p>
+   * @param string $type  <p>The join type, like "LEFT", "INNER", "OUTER".</p>
    *
    * @return $this
    */
@@ -984,12 +991,16 @@ abstract class ActiveRecord extends Arrayy
   /**
    * helper function to make wrapper. Stored the expression in to array.
    *
-   * @param ActiveRecordExpressions $exp      The expression will be stored.
-   * @param string                  $operator The operator to concat this Expressions into WHERE statment.
+   * @param ActiveRecordExpressions $exp      <p>The expression will be stored.</p>
+   * @param string                  $operator <p>The operator to concat this Expressions into WHERE statement.</p>
    */
   protected function _addExpression($exp, $operator)
   {
-    if (!is_array($this->expressions) || count($this->expressions) == 0) {
+    if (
+        !is_array($this->expressions)
+        ||
+        count($this->expressions) === 0
+    ) {
       $this->expressions = array($exp);
     } else {
       $this->expressions[] = new ActiveRecordExpressions(array('operator' => $operator, 'target' => $exp));
@@ -999,9 +1010,9 @@ abstract class ActiveRecord extends Arrayy
   /**
    * helper function to add condition into WHERE.
    *
-   * @param ActiveRecordExpressions $exp      The expression will be concat into WHERE or SET statment.
-   * @param string                  $operator the operator to concat this Expressions into WHERE or SET statment.
-   * @param string                  $name     The Expression will contact to.
+   * @param ActiveRecordExpressions $exp      <p>The expression will be concat into WHERE or SET statement.</p>
+   * @param string                  $operator <p>The operator to concat this Expressions into WHERE or SET statement.</p>
+   * @param string                  $name     <p>The Expression will contact to.</p>
    */
   protected function _addCondition($exp, $operator, $name = 'where')
   {
@@ -1101,13 +1112,12 @@ abstract class ActiveRecord extends Arrayy
    * Helper function for "GROUP BY".
    *
    * @param array $args
-   * @param null  $dummy <p>only needed for API compatibility with Arrayy</p>
    *
    * @return $this
    */
-  public function group($args, $dummy = null)
+  public function groupBy($args)
   {
-    $this->__call('group', func_get_args());
+    $this->__call('groupBy', func_get_args());
 
     return $this;
   }
@@ -1119,9 +1129,9 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this
    */
-  public function order($args)
+  public function orderBy($args)
   {
-    $this->__call('order', func_get_args());
+    $this->__call('orderBy', func_get_args());
 
     return $this;
   }

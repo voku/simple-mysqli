@@ -438,7 +438,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
   public function testOrder($contact)
   {
     $user = new FoobarUser();
-    $user->where('id = ' . $contact->user_id)->order('id DESC', 'name ASC')->limit(2, 1)->fetch();
+    $user->where('id = ' . $contact->user_id)->orderBy('id DESC', 'name ASC')->limit(2, 1)->fetch();
 
     // email and address will stored in user data array.
     self::assertSame($contact->user_id, $user->id);

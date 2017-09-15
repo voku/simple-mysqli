@@ -1,6 +1,10 @@
 Changelog
 =========
 
+5.4.2 (2017-09-15)
+
+- [!]: fix -> DB->secure()
+
 5.4.1 (2017-09-08)
 
 - update php-docs

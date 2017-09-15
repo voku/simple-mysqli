@@ -1718,7 +1718,11 @@ final class DB
    */
   public function secure($var)
   {
-    if ($var === '' || $var === "''") {
+    if ($var === '') {
+      return '';
+    }
+
+    if ($var === "''") {
       return "''";
     }
 

@@ -1660,7 +1660,11 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // --- empty string
 
-    self::assertSame("''", $this->db->secure(''));
+    self::assertSame('', $this->db->secure(''));
+
+    // --- '' string
+
+    self::assertSame("''", $this->db->secure("''"));
 
     // --- NULL
 

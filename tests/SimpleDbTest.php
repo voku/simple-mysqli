@@ -495,9 +495,9 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $false = $this->db->update($this->tableName, array(), 'page_id = ' . (int)$tmpId);
     self::assertFalse($false);
 
-    // update - nothing
-    $nothing = $this->db->update($this->tableName, $pageArray, '');
-    self::assertSame(0, $nothing);
+    // update - false
+    $false = $this->db->update($this->tableName, $pageArray, '');
+    self::assertFalse($false);
 
     // update - false
     $false = $this->db->update($this->tableName, $pageArray, null);
@@ -552,8 +552,8 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $tmpId = $this->db->insert($this->tableName, $pageArray);
 
     // delete - nothing
-    $nothing = $this->db->delete($this->tableName, '');
-    self::assertSame(0, $nothing);
+    $false = $this->db->delete($this->tableName, '');
+    self::assertFalse($false);
 
     // delete - false
     $false = $this->db->delete($this->tableName, null);
@@ -690,7 +690,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // ---
 
-    self::assertSame("''", $this->db->escape(''));
+    self::assertSame('', $this->db->escape(''));
 
     // ---
 

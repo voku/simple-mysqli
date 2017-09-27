@@ -1,6 +1,10 @@
 Changelog
 =========
 
+5.4.3 (2017-09-28)
+
+- [!]: fix -> DB->escape() (same fix as for "DB->secure()")
+
 5.4.2 (2017-09-15)
 
 - [!]: fix -> DB->secure()

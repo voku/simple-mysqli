@@ -484,6 +484,10 @@ final class DB
           $_glueHelperInner = 'AND ('; // inner-loop "OR"-query glue
         }
 
+        if (is_string($valueInner) && $valueInner === '') {
+          $valueInner = "''";
+        }
+
         $sql .= ' ' . $_glueHelperInner . ' ' . $quoteString . ' ' . $_connector . ' ' . $valueInner . " \n";
         $tmpCounter++;
       }

@@ -2078,6 +2078,22 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
               return $db->insert(
                   $tableName,
                   array(
+                      'page_template' => '',
+                      'page_type'  => 'foo!',
+                  )
+              );
+            }
+        )
+    );
+
+    // --------------------
+
+    self::assertTrue(
+        $this->db->transact(
+            function (DB $db) use ($tableName) {
+              return $db->insert(
+                  $tableName,
+                  array(
                       'page_template' => 'page' . mt_rand(),
                       'page_type'  => 'foo!',
                   )

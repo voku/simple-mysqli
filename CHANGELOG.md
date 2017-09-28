@@ -1,6 +1,10 @@
 Changelog
 =========
 
+5.4.4 (2017-09-28)
+
+- [+]: fix "insert()", "delete()", etc. with empty string input
+
 5.4.3 (2017-09-28)
 
 - [!]: fix -> DB->escape() (same fix as for "DB->secure()")

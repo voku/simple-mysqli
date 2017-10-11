@@ -480,8 +480,8 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
     $new_user = new FoobarUser();
     self::assertSame($cid, $new_contact->fetch($cid)->id);
     self::assertSame($uid, $new_user->eq('id', $uid)->fetch()->id);
-    self::assertSame(1, $contact->user->delete());
-    self::assertSame(1, $contact->delete());
+    self::assertSame(true, $contact->user->delete());
+    self::assertSame(true, $contact->delete());
     $new_contact = new FoobarContact();
     $new_user = new FoobarUser();
     self::assertFalse($new_contact->eq('id', $cid)->fetch());

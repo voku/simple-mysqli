@@ -477,7 +477,7 @@ abstract class ActiveRecord extends Arrayy
    */
   public function delete()
   {
-    return self::execute(
+    $return = self::execute(
         $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
             array(
                 'delete',
@@ -487,6 +487,12 @@ abstract class ActiveRecord extends Arrayy
         ),
         $this->params
     );
+
+    if ($return !== false) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -537,7 +543,7 @@ abstract class ActiveRecord extends Arrayy
         ),
         $this->params
     );
-    if ($result) {
+    if ($result !== false) {
       $this->resetDirty();
       $this->reset();
 
@@ -589,7 +595,7 @@ abstract class ActiveRecord extends Arrayy
     );
 
     $result = self::execute($this->_buildSql(array('insert', 'values')), $this->params);
-    if ($result) {
+    if ($result !== false) {
       $this->{$this->primaryKeyName} = $result;
 
       $this->resetDirty();
@@ -668,7 +674,7 @@ abstract class ActiveRecord extends Arrayy
   {
     $result = self::execute($sql, $param);
 
-    if (!$result) {
+    if ($result === false) {
       return false;
     }
 

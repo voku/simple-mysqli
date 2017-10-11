@@ -1,6 +1,10 @@
 Changelog
 =========
 
+5.4.5 (2017-10-11)
+
+- [+]: "ActiveRecord" -> fix return values from DB-class
+
 5.4.4 (2017-09-28)
 
 - [+]: fix "insert()", "delete()", etc. with empty string input

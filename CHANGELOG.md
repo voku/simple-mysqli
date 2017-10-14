@@ -1,6 +1,10 @@
 Changelog
 =========
 
+5.4.6 (2017-10-14)
+
+- [+]: fix + test for double connection close
+
 5.4.5 (2017-10-11)
 
 - [+]: "ActiveRecord" -> fix return values from DB-class

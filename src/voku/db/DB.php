@@ -22,9 +22,9 @@ final class DB
   public $query_count = 0;
 
   /**
-   * @var \mysqli
+   * @var \mysqli|null
    */
-  private $link;
+  private $link = null;
 
   /**
    * @var bool
@@ -592,8 +592,13 @@ final class DB
   {
     $this->connected = false;
 
-    if ($this->link) {
+    if (
+        $this->link
+        &&
+        $this->link instanceof \mysqli
+    ) {
       \mysqli_close($this->link);
+      $this->link = null;
     }
   }
 

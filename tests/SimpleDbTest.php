@@ -881,12 +881,12 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $result = $this->invokeMethod(
         $this->db, '_parseQueryParamsByName',
         array(
-            'SELECT * FROM `post` WHERE `id` = :id',
+            'SELECT * FROM post WHERE id = :id',
             array('id' => 1),
         )
     );
     self::assertEquals(
-        'SELECT * FROM `post` WHERE `id` = 1',
+        'SELECT * FROM post WHERE id = 1',
         $result['sql']
     );
     self::assertEquals(
@@ -897,12 +897,12 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $result = $this->invokeMethod(
         $this->db, '_parseQueryParamsByName',
         array(
-            'SELECT * FROM `post` WHERE id=:id',
+            'SELECT * FROM post WHERE id=:id',
             array('id' => 1),
         )
     );
     self::assertEquals(
-        'SELECT * FROM `post` WHERE id=1',
+        'SELECT * FROM post WHERE id=1',
         $result['sql']
     );
     self::assertEquals(
@@ -913,12 +913,12 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $result = $this->invokeMethod(
         $this->db, '_parseQueryParamsByName',
         array(
-            'SELECT * FROM `post` WHERE id = ' . "\n" . '  :id;',
+            'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
             array('id' => 1),
         )
     );
     self::assertEquals(
-        'SELECT * FROM `post` WHERE id = ' . "\n" . '  1;',
+        'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
         $result['sql']
     );
     self::assertEquals(
@@ -929,12 +929,12 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $result = $this->invokeMethod(
         $this->db, '_parseQueryParamsByName',
         array(
-            'SELECT * FROM `post` WHERE id = ' . "\n" . '  :id;',
+            'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
             array('id' => 1, 'foo' => 'bar'),
         )
     );
     self::assertEquals(
-        'SELECT * FROM `post` WHERE id = ' . "\n" . '  1;',
+        'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
         $result['sql']
     );
     self::assertEquals(
@@ -2029,7 +2029,10 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
     $testArray = array(
         'NOW()'                                  => '`NOW()`',
         'fooo'                                   => '`fooo`',
+        '`fooo'                                  => '`fooo`',
+        'fooo`'                                  => '`fooo`',
         '`fooo`'                                 => '`fooo`',
+        '``fooo``'                               => '`fooo`',
         '`fo`oo`'                                => '`fo``oo`',
         '``fooo'                                 => '`fooo`',
         '``fooo`'                                => '`fooo`',
@@ -2081,7 +2084,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
                   $tableName,
                   array(
                       'page_template' => '',
-                      'page_type'  => 'foo!',
+                      'page_type'     => 'foo!',
                   )
               );
             }
@@ -2097,7 +2100,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
                   $tableName,
                   array(
                       'page_template' => 'page' . mt_rand(),
-                      'page_type'  => 'foo!',
+                      'page_type'     => 'foo!',
                   )
               );
             }
@@ -2136,7 +2139,7 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
                   $tableName,
                   array(
                       'page_template_noop' => 'page' . mt_rand(),
-                      'page_type'  => 'foo!',
+                      'page_type'          => 'foo!',
                   )
               );
             }

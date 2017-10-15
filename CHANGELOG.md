@@ -1,6 +1,10 @@
 Changelog
 =========
 
+5.4.7 (2017-10-15)
+
+- [+]: improve "DB->close()" + tests
+
 5.4.6 (2017-10-14)
 
 - [+]: fix + test for double connection close

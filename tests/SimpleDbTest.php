@@ -113,9 +113,9 @@ class SimpleDbTest extends PHPUnit_Framework_TestCase
 
     // close db-connection
     self::assertTrue($this->db->isReady());
-    $this->db->close();
+    self::assertTrue($this->db->close());
     self::assertFalse($this->db->isReady());
-    $this->db->close();
+    self::assertFalse($this->db->close());
     self::assertFalse($this->db->isReady());
 
     // insert - false

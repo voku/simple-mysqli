@@ -597,9 +597,13 @@ final class DB
         &&
         $this->link instanceof \mysqli
     ) {
-      \mysqli_close($this->link);
+      $result = \mysqli_close($this->link);
       $this->link = null;
+
+      return $result;
     }
+
+    return false;
   }
 
   /**

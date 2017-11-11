@@ -173,7 +173,7 @@ final class Prepare extends \mysqli_stmt
    * @param mixed  $v34
    * @param mixed  $v35
    *
-   * @return mixed
+   * @return boolean
    */
   public function bind_param_debug(string $types, &$v1 = null, &$v2 = null, &$v3 = null, &$v4 = null, &$v5 = null, &$v6 = null, &$v7 = null, &$v8 = null, &$v9 = null, &$v10 = null, &$v11 = null, &$v12 = null, &$v13 = null, &$v14 = null, &$v15 = null, &$v16 = null, &$v17 = null, &$v18 = null, &$v19 = null, &$v20 = null, &$v21 = null, &$v22 = null, &$v23 = null, &$v24 = null, &$v25 = null, &$v26 = null, &$v27 = null, &$v28 = null, &$v29 = null, &$v30 = null, &$v31 = null, &$v32 = null, &$v33 = null, &$v34 = null, &$v35 = null)
   {

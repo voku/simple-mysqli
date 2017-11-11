@@ -822,7 +822,7 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to build SQL with sql parts.
    *
-   * @param array $sqls <p>The SQL part will be build.</p>
+   * @param string[] $sqls <p>The SQL part will be build.</p>
    *
    * @return string
    */

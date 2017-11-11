@@ -659,7 +659,7 @@ abstract class ActiveRecord extends Arrayy
    * @param array             $param  <p>
    *                                  The param will be bind to the $sql query.
    *                                  </p>
-   * @param ActiveRecord|null $obj    <p>
+   * @param null|\self $obj    <p>
    *                                  The object, if find record in database, we will assign the attributes into
    *                                  this object.
    *                                  </p>

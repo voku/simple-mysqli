@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace voku\db;
 
 use voku\cache\Cache;
@@ -24,7 +26,7 @@ final class DB
   /**
    * @var \mysqli|null
    */
-  private $link = null;
+  private $link;
 
   /**
    * @var bool
@@ -141,10 +143,8 @@ final class DB
    *                                      'cacert' => 'string (path)'<br>
    *                                      </p>
    */
-  protected function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $extra_config = array())
+  private function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, array $extra_config = array())
   {
-    $this->connected = false;
-
     $this->_debug = new Debug($this);
 
     $this->_loadConfig(
@@ -229,7 +229,7 @@ final class DB
    */
   public function __invoke($sql = null, array $bindings = array())
   {
-    return isset($sql) ? $this->query($sql, $bindings) : $this;
+    return null !== $sql ? $this->query($sql, $bindings) : $this;
   }
 
   /**
@@ -268,7 +268,7 @@ final class DB
    *
    * @return bool
    */
-  private function _loadConfig($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $extra_config)
+  private function _loadConfig($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $extra_config): bool
   {
     $this->hostname = (string)$hostname;
     $this->username = (string)$username;
@@ -283,7 +283,6 @@ final class DB
       $this->port = (int)$port;
     } else {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
-      /** @noinspection UsageOfSilenceOperatorInspection */
       $this->port = (int)@ini_get('mysqli.default_port');
     }
 
@@ -308,7 +307,7 @@ final class DB
     $this->_debug->setLoggerClassName($logger_class_name);
     $this->_debug->setLoggerLevel($logger_level);
 
-    if (is_array($extra_config) === true) {
+    if (\is_array($extra_config) === true) {
 
       if (isset($extra_config['session_to_db'])) {
         $this->session_to_db = (boolean)$extra_config['session_to_db'];
@@ -352,12 +351,12 @@ final class DB
    *
    * @internal
    */
-  public function _parseArrayPair(array $arrayPair, $glue = ',')
+  public function _parseArrayPair(array $arrayPair, $glue = ','): string
   {
     // init
     $sql = '';
 
-    if (count($arrayPair) === 0) {
+    if (\count($arrayPair) === 0) {
       return '';
     }
 
@@ -431,7 +430,7 @@ final class DB
         $_glueHelper = 'AND';
       }
 
-      if (is_array($_value) === true) {
+      if (\is_array($_value) === true) {
         foreach ($_value as $oldKey => $oldValue) {
           $_value[$oldKey] = $this->secure($oldValue);
         }
@@ -459,7 +458,7 @@ final class DB
           )
       );
 
-      if (!is_array($_value)) {
+      if (!\is_array($_value)) {
         $_value = array($_value);
       }
 
@@ -484,7 +483,7 @@ final class DB
           $_glueHelperInner = 'AND ('; // inner-loop "OR"-query glue
         }
 
-        if (is_string($valueInner) && $valueInner === '') {
+        if (\is_string($valueInner) && $valueInner === '') {
           $valueInner = "''";
         }
 
@@ -510,13 +509,13 @@ final class DB
    *
    * @return array <p>with the keys -> 'sql', 'params'</p>
    */
-  private function _parseQueryParams($sql, array $params = array())
+  private function _parseQueryParams($sql, array $params = array()): array
   {
     // is there anything to parse?
     if (
         strpos($sql, '?') === false
         ||
-        count($params) === 0
+        \count($params) === 0
     ) {
       return array('sql' => $sql, 'params' => $params);
     }
@@ -547,7 +546,7 @@ final class DB
    *
    * @return int
    */
-  public function affected_rows()
+  public function affected_rows(): int
   {
     return \mysqli_affected_rows($this->link);
   }
@@ -557,7 +556,7 @@ final class DB
    *
    * @return bool <p>This will return true or false indicating success of transaction</p>
    */
-  public function beginTransaction()
+  public function beginTransaction(): bool
   {
     if ($this->_in_transaction === true) {
       $this->_debug->displayError('Error: mysql server already in transaction!', false);
@@ -580,7 +579,7 @@ final class DB
    *
    * @return bool
    */
-  public function clearErrors()
+  public function clearErrors(): bool
   {
     return $this->_debug->clearErrors();
   }
@@ -588,7 +587,7 @@ final class DB
   /**
    * Closes a previously opened database connection.
    */
-  public function close()
+  public function close(): bool
   {
     $this->connected = false;
 
@@ -611,7 +610,7 @@ final class DB
    *
    * @return bool <p>Boolean true on success, false otherwise.</p>
    */
-  public function commit()
+  public function commit(): bool
   {
     if ($this->_in_transaction === false) {
       $this->_debug->displayError('Error: mysql server is not in transaction!', false);
@@ -633,7 +632,7 @@ final class DB
    *
    * @throws DBConnectException
    */
-  public function connect()
+  public function connect(): bool
   {
     if ($this->isReady()) {
       return true;
@@ -687,7 +686,7 @@ final class DB
           $this->database,
           $this->port,
           $this->socket,
-          $flags
+          (int)$flags
       );
 
     } catch (\Exception $e) {
@@ -731,9 +730,9 @@ final class DB
       return false;
     }
 
-    if (is_string($where)) {
+    if (\is_string($where)) {
       $WHERE = $this->escape($where, false);
-    } elseif (is_array($where)) {
+    } elseif (\is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {
       $WHERE = '';
@@ -753,7 +752,7 @@ final class DB
    *
    * @return bool <p>This will return true or false indicating success of transactions.</p>
    */
-  public function endTransaction()
+  public function endTransaction(): bool
   {
     if ($this->_in_transaction === false) {
       $this->_debug->displayError('Error: mysql server is not in transaction!', false);
@@ -783,7 +782,7 @@ final class DB
   {
     $errors = $this->_debug->getErrors();
 
-    return count($errors) > 0 ? $errors : false;
+    return \count($errors) > 0 ? $errors : false;
   }
 
   /**
@@ -794,13 +793,13 @@ final class DB
    *
    * @return array <p>with the keys -> 'sql', 'params'</p>
    */
-  public function _parseQueryParamsByName($sql, array $params = array())
+  public function _parseQueryParamsByName($sql, array $params = array()): array
   {
     // is there anything to parse?
     if (
         strpos($sql, ':') === false
         ||
-        count($params) === 0
+        \count($params) === 0
     ) {
       return array('sql' => $sql, 'params' => $params);
     }
@@ -881,15 +880,15 @@ final class DB
     }
 
     // save the current value as int (for later usage)
-    if (!is_object($var)) {
+    if (!\is_object($var)) {
       $varInt = (int)$var;
     }
 
     /** @noinspection TypeUnsafeComparisonInspection */
     if (
-        is_int($var)
+        \is_int($var)
         ||
-        is_bool($var)
+        \is_bool($var)
         ||
         (
             isset($varInt, $var[0])
@@ -905,14 +904,14 @@ final class DB
       return (int)$var;
     }
 
-    if (is_float($var)) {
+    if (\is_float($var)) {
 
       // float
 
       return $var;
     }
 
-    if (is_array($var)) {
+    if (\is_array($var)) {
 
       // array
 
@@ -940,10 +939,10 @@ final class DB
     }
 
     if (
-        is_string($var)
+        \is_string($var)
         ||
         (
-            is_object($var)
+            \is_object($var)
             &&
             method_exists($var, '__toString')
         )
@@ -1056,7 +1055,7 @@ final class DB
    *
    * @return array
    */
-  public function getAllTables()
+  public function getAllTables(): array
   {
     $query = 'SHOW TABLES';
     $result = $this->query($query);
@@ -1067,7 +1066,7 @@ final class DB
   /**
    * @return Debug
    */
-  public function getDebugger()
+  public function getDebugger(): Debug
   {
     return $this->_debug;
   }
@@ -1077,7 +1076,7 @@ final class DB
    *
    * @return array
    */
-  public function getErrors()
+  public function getErrors(): array
   {
     return $this->_debug->getErrors();
   }
@@ -1108,7 +1107,7 @@ final class DB
    *
    * @return \voku\db\DB
    */
-  public static function getInstance($hostname = '', $username = '', $password = '', $database = '', $port = '', $charset = '', $exit_on_error = true, $echo_on_error = true, $logger_class_name = '', $logger_level = '', $extra_config = array())
+  public static function getInstance($hostname = '', $username = '', $password = '', $database = '', $port = '', $charset = '', $exit_on_error = true, $echo_on_error = true, $logger_class_name = '', $logger_level = '', array $extra_config = array()): DB
   {
     /**
      * @var $instance DB[]
@@ -1129,7 +1128,7 @@ final class DB
     }
 
     $extra_config_string = '';
-    if (is_array($extra_config) === true) {
+    if (\is_array($extra_config) === true) {
       foreach ($extra_config as $extra_config_key => $extra_config_value) {
         $extra_config_string .= $extra_config_key . (string)$extra_config_value;
       }
@@ -1170,7 +1169,7 @@ final class DB
    *
    * @return \mysqli
    */
-  public function getLink()
+  public function getLink(): \mysqli
   {
     return $this->link;
   }
@@ -1180,7 +1179,7 @@ final class DB
    *
    * @return string
    */
-  public function get_charset()
+  public function get_charset(): string
   {
     return $this->charset;
   }
@@ -1190,7 +1189,7 @@ final class DB
    *
    * @return bool
    */
-  public function inTransaction()
+  public function inTransaction(): bool
   {
     return $this->_in_transaction;
   }
@@ -1217,7 +1216,7 @@ final class DB
       return false;
     }
 
-    if (count($data) === 0) {
+    if (\count($data) === 0) {
       $this->_debug->displayError('Invalid data for INSERT, data is empty.', false);
 
       return false;
@@ -1249,7 +1248,7 @@ final class DB
    *
    * @return boolean
    */
-  public function isReady()
+  public function isReady(): bool
   {
     return $this->connected ? true : false;
   }
@@ -1263,7 +1262,7 @@ final class DB
   {
     $errors = $this->_debug->getErrors();
 
-    return count($errors) > 0 ? end($errors) : false;
+    return \count($errors) > 0 ? end($errors) : false;
   }
 
   /**
@@ -1336,9 +1335,9 @@ final class DB
     }
 
     if (
-        count($result) > 0
+        \count($result) > 0
         &&
-        in_array(false, $result, true) === false
+        \in_array(false, $result, true) === false
     ) {
       return true;
     }
@@ -1352,7 +1351,7 @@ final class DB
    *
    * @return boolean
    */
-  public function ping()
+  public function ping(): bool
   {
     if (
         $this->link
@@ -1360,7 +1359,6 @@ final class DB
         $this->link instanceof \mysqli
     ) {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
-      /** @noinspection UsageOfSilenceOperatorInspection */
       return (bool)@\mysqli_ping($this->link);
     }
 
@@ -1374,7 +1372,7 @@ final class DB
    *
    * @return Prepare
    */
-  public function prepare($query)
+  public function prepare($query): Prepare
   {
     return new Prepare($this, $query);
   }
@@ -1392,7 +1390,7 @@ final class DB
   {
     $db = self::getInstance();
 
-    $args = func_get_args();
+    $args = \func_get_args();
     /** @noinspection SuspiciousAssignmentsInspection */
     $query = array_shift($args);
     $query = str_replace('?', '%s', $query);
@@ -1404,7 +1402,7 @@ final class DB
         $args
     );
     array_unshift($args, $query);
-    $query = call_user_func_array('sprintf', $args);
+    $query = sprintf(...$args);
     $result = $db->query($query);
 
     if ($result instanceof Result) {
@@ -1434,7 +1432,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public function query($sql = '', $params = false)
+  public function query(string $sql = '', $params = false)
   {
     if (!$this->isReady()) {
       return false;
@@ -1449,9 +1447,9 @@ final class DB
     if (
         $params !== false
         &&
-        is_array($params)
+        \is_array($params)
         &&
-        count($params) > 0
+        \count($params) > 0
     ) {
       $parseQueryParams = $this->_parseQueryParams($sql, $params);
       $parseQueryParamsByName = $this->_parseQueryParamsByName($parseQueryParams['sql'], $parseQueryParams['params']);
@@ -1496,7 +1494,7 @@ final class DB
 
       // "UPDATE" || "DELETE"
       if (preg_match('/^\s*?(?:UPDATE|DELETE)\s+/i', $sql)) {
-        $affected_rows = (int)$this->affected_rows();
+        $affected_rows = $this->affected_rows();
         $this->_debug->logQuery($sql, $query_duration, $affected_rows);
 
         return $affected_rows;
@@ -1526,9 +1524,9 @@ final class DB
    * @throws QueryException
    * @throws DBGoneAwayException
    *
-   * @return bool
+   * @return mixed|false
    */
-  private function queryErrorHandling($errorMessage, $errorNumber, $sql, $sqlParams = false, $sqlMultiQuery = false)
+  private function queryErrorHandling(string $errorMessage, int $errorNumber, string $sql, $sqlParams = false, bool $sqlMultiQuery = false)
   {
     $errorNumber = (int)$errorNumber;
 
@@ -1581,13 +1579,13 @@ final class DB
    *
    * @return string
    */
-  public function quote_string($str)
+  public function quote_string($str): string
   {
     $str = str_replace(
         '`',
         '``',
         trim(
-            $this->escape($str, false),
+            (string)$this->escape($str, false),
             '`'
         )
     );
@@ -1602,7 +1600,7 @@ final class DB
    *
    * @return bool
    */
-  public function reconnect($checkViaPing = false)
+  public function reconnect($checkViaPing = false): bool
   {
     $ping = false;
 
@@ -1640,7 +1638,7 @@ final class DB
       return false;
     }
 
-    if (count($data) === 0) {
+    if (\count($data) === 0) {
       $this->_debug->displayError('Invalid data for REPLACE, data is empty.', false);
 
       return false;
@@ -1676,7 +1674,7 @@ final class DB
    *
    * @return bool <p>Boolean true on success, false otherwise.</p>
    */
-  public function rollback()
+  public function rollback(): bool
   {
     if ($this->_in_transaction === false) {
       $this->_debug->displayError('Error: mysql server is not in transaction!', false);
@@ -1753,17 +1751,17 @@ final class DB
       return 'NULL';
     }
 
-    if (in_array($var, $this->mysqlDefaultTimeFunctions, true)) {
+    if (\in_array($var, $this->mysqlDefaultTimeFunctions, true)) {
       return $var;
     }
 
-    if (is_string($var)) {
+    if (\is_string($var)) {
       $var = trim(trim($var), "'");
     }
 
     $var = $this->escape($var, false, false, null);
 
-    if (is_string($var)) {
+    if (\is_string($var)) {
       $var = "'" . trim($var, "'") . "'";
     }
 
@@ -1792,9 +1790,9 @@ final class DB
       return false;
     }
 
-    if (is_string($where)) {
+    if (\is_string($where)) {
       $WHERE = $this->escape($where, false);
-    } elseif (is_array($where)) {
+    } elseif (\is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {
       $WHERE = '';
@@ -1816,7 +1814,7 @@ final class DB
    *
    * @return bool <p>Boolean true on success, false otherwise.</p>
    */
-  public function select_db($database)
+  public function select_db($database): bool
   {
     if (!$this->isReady()) {
       return false;
@@ -1832,7 +1830,7 @@ final class DB
    *
    * @return bool
    */
-  public function set_charset($charset)
+  public function set_charset($charset): bool
   {
     $charsetLower = strtolower($charset);
     if ($charsetLower === 'utf8' || $charsetLower === 'utf-8') {
@@ -1846,10 +1844,8 @@ final class DB
 
     $return = mysqli_set_charset($this->link, $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    /** @noinspection UsageOfSilenceOperatorInspection */
     @\mysqli_query($this->link, 'SET CHARACTER SET ' . $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    /** @noinspection UsageOfSilenceOperatorInspection */
     @\mysqli_query($this->link, "SET NAMES '" . $charset . "'");
 
     return $return;
@@ -1913,7 +1909,7 @@ final class DB
    *
    * @return bool
    */
-  public function set_mysqli_report($flags)
+  public function set_mysqli_report($flags): bool
   {
     return \mysqli_report($flags);
   }
@@ -1925,7 +1921,7 @@ final class DB
    *
    * @throws \InvalidArgumentException
    */
-  public function showConfigError()
+  public function showConfigError(): bool
   {
 
     if (
@@ -1957,9 +1953,9 @@ final class DB
   /**
    * alias: "beginTransaction()"
    */
-  public function startTransaction()
+  public function startTransaction(): bool
   {
-    $this->beginTransaction();
+    return $this->beginTransaction();
   }
 
   /**
@@ -1970,7 +1966,7 @@ final class DB
    *
    * @return bool <p>Boolean true on success, false otherwise.</p>
    */
-  public function transact($callback)
+  public function transact($callback): bool
   {
     try {
 
@@ -2020,7 +2016,7 @@ final class DB
       return false;
     }
 
-    if (count($data) === 0) {
+    if (\count($data) === 0) {
       $this->_debug->displayError('Invalid data for UPDATE, data is empty.', false);
 
       return false;
@@ -2028,9 +2024,9 @@ final class DB
 
     $SET = $this->_parseArrayPair($data);
 
-    if (is_string($where)) {
+    if (\is_string($where)) {
       $WHERE = $this->escape($where, false);
-    } elseif (is_array($where)) {
+    } elseif (\is_array($where)) {
       $WHERE = $this->_parseArrayPair($where, 'AND');
     } else {
       $WHERE = '';
@@ -2052,30 +2048,25 @@ final class DB
    *
    * @return bool
    */
-  public function table_exists($table)
+  public function table_exists($table): bool
   {
     $check = $this->query('SELECT 1 FROM ' . $this->quote_string($table));
-    if (
-        $check !== false
-        &&
-        $check instanceof Result
-        &&
-        $check->num_rows > 0
-    ) {
-      return true;
-    }
 
-    return false;
+    return $check !== false
+           &&
+           $check instanceof Result
+           &&
+           $check->num_rows > 0;
   }
 
   /**
    * Count number of rows found matching a specific query.
    *
-   * @param string
+   * @param string $query
    *
    * @return int
    */
-  public function num_rows($query)
+  public function num_rows($query): int
   {
     $check = $this->query($query);
 

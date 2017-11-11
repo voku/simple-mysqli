@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace voku\db;
 
 /**
@@ -22,6 +24,6 @@ class ActiveRecordExpressionsWrap extends ActiveRecordExpressions
       return $this->start . implode($delimiter, $this->target->getArray()) . ($this->end ?: ')');
     }
 
-    return '(' . implode($delimiter, $this->target->getArray()) . ($this->end ? $this->end : ')');
+    return '(' . implode($delimiter, $this->target->getArray()) . ($this->end ?: ')');
   }
 }

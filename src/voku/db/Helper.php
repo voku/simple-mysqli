@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace voku\db;
 
 use voku\cache\Cache;
@@ -20,7 +22,7 @@ class Helper
    *
    * @return int
    */
-  public static function optimizeTables(array $tables = array(), DB $dbConnection = null)
+  public static function optimizeTables(array $tables = array(), DB $dbConnection = null): int
   {
     if ($dbConnection === null) {
       $dbConnection = DB::getInstance();
@@ -48,7 +50,7 @@ class Helper
    *
    * @return int
    */
-  public static function repairTables(array $tables = array(), DB $dbConnection = null)
+  public static function repairTables(array $tables = array(), DB $dbConnection = null): int
   {
     if ($dbConnection === null) {
       $dbConnection = DB::getInstance();
@@ -73,12 +75,12 @@ class Helper
    *
    * @return bool
    */
-  public static function isMysqlndIsUsed()
+  public static function isMysqlndIsUsed(): bool
   {
     static $_mysqlnd_is_used = null;
 
     if ($_mysqlnd_is_used === null) {
-      $_mysqlnd_is_used = (extension_loaded('mysqlnd') && function_exists('mysqli_fetch_all'));
+      $_mysqlnd_is_used = (\extension_loaded('mysqlnd') && \function_exists('mysqli_fetch_all'));
     }
 
     return $_mysqlnd_is_used;
@@ -91,7 +93,7 @@ class Helper
    *
    * @return bool
    */
-  public static function isUtf8mb4Supported(DB $dbConnection = null)
+  public static function isUtf8mb4Supported(DB $dbConnection = null): bool
   {
     /**
      *  https://make.wordpress.org/core/2015/04/02/the-utf8mb4-upgrade/
@@ -152,12 +154,10 @@ class Helper
    *
    * @return array
    */
-  public static function phoneticSearch($searchString, $searchFieldName, $idFieldName = null, $language = 'de', $table, array $whereArray = null, DB $dbConnection = null, $databaseName = null, $useCache = false, $cacheTTL = 3600)
+  public static function phoneticSearch(string $searchString, string $searchFieldName, string $idFieldName = null, string $language = 'de', string $table, array $whereArray = null, DB $dbConnection = null, string $databaseName = null, bool $useCache = false, int $cacheTTL = 3600): array
   {
     // init
     $cacheKey = null;
-    $searchString = (string)$searchString;
-    $searchFieldName = (string)$searchFieldName;
 
     if ($dbConnection === null) {
       $dbConnection = DB::getInstance();
@@ -246,7 +246,7 @@ class Helper
    *
    * @return string
    */
-  public static function get_mysql_client_version(DB $dbConnection = null)
+  public static function get_mysql_client_version(DB $dbConnection = null): string
   {
     static $_mysqli_client_version = null;
 
@@ -255,7 +255,7 @@ class Helper
     }
 
     if ($_mysqli_client_version === null) {
-      $_mysqli_client_version = \mysqli_get_client_version($dbConnection->getLink());
+      $_mysqli_client_version = (string)\mysqli_get_client_version($dbConnection->getLink());
     }
 
     return $_mysqli_client_version;
@@ -269,7 +269,7 @@ class Helper
    *
    * @return string
    */
-  public static function get_mysql_server_version(DB $dbConnection = null)
+  public static function get_mysql_server_version(DB $dbConnection = null): string
   {
     static $_mysqli_server_version = null;
 
@@ -278,7 +278,7 @@ class Helper
     }
 
     if ($_mysqli_server_version === null) {
-      $_mysqli_server_version = \mysqli_get_server_version($dbConnection->getLink());
+      $_mysqli_server_version = (string)\mysqli_get_server_version($dbConnection->getLink());
     }
 
     return $_mysqli_server_version;
@@ -294,7 +294,7 @@ class Helper
    *
    * @return array
    */
-  public static function getDbFields($table, $useStaticCache = true, DB $dbConnection = null, $databaseName = null)
+  public static function getDbFields(string $table, bool $useStaticCache = true, DB $dbConnection = null, string $databaseName = null): array
   {
     static $DB_FIELDS_CACHE = array();
 
@@ -399,8 +399,8 @@ class Helper
 
         foreach ($tmpArray as $fieldName => $value) {
 
-          if (!in_array($fieldName, $ignoreArray, true)) {
-            if (array_key_exists($fieldName, $updateArray)) {
+          if (!\in_array($fieldName, $ignoreArray, true)) {
+            if (\array_key_exists($fieldName, $updateArray)) {
               $insert_keys .= ',' . $fieldName;
               $insert_values .= ',?';
               $bindings[] = $updateArray[$fieldName]; // INFO: do not escape non selected data

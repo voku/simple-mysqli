@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace voku\db;
 
 use Arrayy\Arrayy;
 use Symfony\Component\PropertyAccess\PropertyAccess;
-use voku\helper\Bootup;
 use voku\helper\UTF8;
 
 /**
@@ -52,7 +53,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    * @param \mysqli_result $result
    * @param \Closure       $mapper Optional callback mapper for the "fetchCallable()" method
    */
-  public function __construct($sql = '', \mysqli_result $result, $mapper = null)
+  public function __construct(string $sql = '', \mysqli_result $result, \Closure $mapper = null)
   {
     $this->sql = $sql;
 
@@ -83,8 +84,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function __invoke($callback = null)
   {
-    if (isset($callback)) {
-      return call_user_func($callback, $this->_result);
+    if (null !== $callback) {
+      return $callback($this->_result);
     }
 
     return $this->_result;
@@ -119,13 +120,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     }
 
     // init
-    if (Bootup::is_php('5.4')) {
-      static $FIELDS_CACHE = array();
-      static $TYPES_CACHE = array();
-    } else {
-      $FIELDS_CACHE = array();
-      $TYPES_CACHE = array();
-    }
+    static $FIELDS_CACHE = array();
+    static $TYPES_CACHE = array();
 
     $result_hash = spl_object_hash($this->_result);
 
@@ -153,13 +149,13 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       }
     }
 
-    if (is_array($data) === true) {
+    if (\is_array($data) === true) {
       foreach ($TYPES_CACHE[$result_hash] as $type_name => $type) {
         if (isset($data[$type_name])) {
           settype($data[$type_name], $type);
         }
       }
-    } elseif (is_object($data)) {
+    } elseif (\is_object($data)) {
       foreach ($TYPES_CACHE[$result_hash] as $type_name => $type) {
         if (isset($data->{$type_name})) {
           settype($data->{$type_name}, $type);
@@ -175,7 +171,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return int The number of rows in the result
    */
-  public function count()
+  public function count(): int
   {
     return $this->num_rows;
   }
@@ -195,7 +191,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return int The current element key (row index; zero-based)
    */
-  public function key()
+  public function key(): int
   {
     return $this->current_row;
   }
@@ -231,9 +227,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return bool Boolean true on success, false otherwise
    */
-  public function seek($row = 0)
+  public function seek($row = 0): bool
   {
-    if (is_int($row) && $row >= 0 && $row < $this->num_rows) {
+    if (\is_int($row) && $row >= 0 && $row < $this->num_rows) {
       return mysqli_data_seek($this->_result, $row);
     }
 
@@ -245,7 +241,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return bool Boolean true if the current index is valid, false otherwise
    */
-  public function valid()
+  public function valid(): bool
   {
     return $this->current_row < $this->num_rows;
   }
@@ -268,7 +264,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $return = false;
 
     if ($this->_default_result_type === 'object') {
-      $return = $this->fetchObject('', '', $reset);
+      $return = $this->fetchObject('', null, $reset);
     } elseif ($this->_default_result_type === 'array') {
       $return = $this->fetchArray($reset);
     } elseif ($this->_default_result_type === 'Arrayy') {
@@ -289,7 +285,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array
    */
-  public function fetchAll()
+  public function fetchAll(): array
   {
     $return = array();
 
@@ -309,7 +305,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array
    */
-  public function fetchAllArray()
+  public function fetchAllArray(): array
   {
     // init
     $data = array();
@@ -335,7 +331,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return Arrayy
    */
-  public function fetchAllArrayy()
+  public function fetchAllArrayy(): Arrayy
   {
     // init
     $data = array();
@@ -364,7 +360,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array <p>Return an empty array if the "$column" wasn't found</p>
    */
-  public function fetchAllColumn($column, $skipNullValues = false)
+  public function fetchAllColumn($column, $skipNullValues = false): array
   {
     return $this->fetchColumn($column, $skipNullValues, true);
   }
@@ -385,7 +381,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array
    */
-  public function fetchAllObject($class = '', $params = null)
+  public function fetchAllObject($class = '', $params = null): array
   {
 
     if ($this->is_empty()) {
@@ -396,7 +392,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $data = array();
     $this->reset();
 
-    if ($class && is_object($class)) {
+    if ($class && \is_object($class)) {
       $propertyAccessor = PropertyAccess::createPropertyAccessor();
       /** @noinspection PhpAssignmentInConditionInspection */
       while ($row = \mysqli_fetch_assoc($this->_result)) {
@@ -444,7 +440,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array|false <p><strong>false</strong> on error</p>
    */
-  public function fetchArray($reset = false)
+  public function fetchArray(bool $reset = false)
   {
     if ($reset === true) {
       $this->reset();
@@ -483,7 +479,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array
    */
-  public function fetchArrayPair($key, $value)
+  public function fetchArrayPair(string $key, string $value): array
   {
     $arrayPair = array();
     $data = $this->fetchAllArray();
@@ -510,7 +506,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return Arrayy|false <p><strong>false</strong> on error</p>
    */
-  public function fetchArrayy($reset = false)
+  public function fetchArrayy(bool $reset = false)
   {
     if ($reset === true) {
       $this->reset();
@@ -538,7 +534,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    * @return string|array <p>Return a empty string or an empty array if the "$column" wasn't found, depend on
    *                      "$asArray"</p>
    */
-  public function fetchColumn($column = '', $skipNullValues = true, $asArray = false)
+  public function fetchColumn(string $column = '', bool $skipNullValues = true, bool $asArray = false)
   {
     if ($asArray === false) {
       $columnData = '';
@@ -604,13 +600,13 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return object|false <p><strong>false</strong> on error</p>
    */
-  public function fetchObject($class = '', $params = null, $reset = false)
+  public function fetchObject($class = '', array $params = null, bool $reset = false)
   {
     if ($reset === true) {
       $this->reset();
     }
 
-    if ($class && is_object($class)) {
+    if ($class && \is_object($class)) {
       $row = \mysqli_fetch_assoc($this->_result);
       $row = $row ? $this->cast($row) : false;
 
@@ -652,23 +648,23 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return mixed An associative array or a scalar value
    */
-  public function fetchCallable($row = null, $column = null)
+  public function fetchCallable(int $row = null, string $column = null)
   {
     if (!$this->num_rows) {
       return null;
     }
 
-    if (isset($row)) {
+    if (null !== $row) {
       $this->seek($row);
     }
 
     $rows = \mysqli_fetch_assoc($this->_result);
 
     if ($column) {
-      return is_array($rows) && isset($rows[$column]) ? $rows[$column] : null;
+      return \is_array($rows) && isset($rows[$column]) ? $rows[$column] : null;
     }
 
-    return is_callable($this->_mapper) ? call_user_func($this->_mapper, $rows) : $rows;
+    return \is_callable($this->_mapper) ? \call_user_func($this->_mapper, $rows) : $rows;
   }
 
   /**
@@ -679,7 +675,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array Array of field information each as an associative array
    */
-  public function fetchFields($as_array = false)
+  public function fetchFields(bool $as_array = false): array
   {
     if ($as_array) {
       return array_map(
@@ -701,7 +697,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array A grouped array of scalar values or arrays
    */
-  public function fetchGroups($group, $column = null)
+  public function fetchGroups(string $group, string $column = null): array
   {
     // init
     $groups = array();
@@ -713,7 +709,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         continue;
       }
 
-      if (isset($column)) {
+      if (null !== $column) {
 
         if (!array_key_exists($column, $row)) {
           continue;
@@ -738,7 +734,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array An array of key-value pairs
    */
-  public function fetchPairs($key, $column = null)
+  public function fetchPairs(string $key, string $column = null): array
   {
     // init
     $pairs = array();
@@ -750,7 +746,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         continue;
       }
 
-      if (isset($column)) {
+      if (null !== $column) {
 
         if (!array_key_exists($column, $row)) {
           continue;
@@ -775,10 +771,10 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return mixed A transposed array of arrays
    */
-  public function fetchTranspose($column = null)
+  public function fetchTranspose(string $column = null)
   {
     // init
-    $keys = isset($column) ? $this->fetchAllColumn($column) : array();
+    $keys = null !== $column ? $this->fetchAllColumn($column) : array();
     $rows = array();
     $pos = $this->current_row;
 
@@ -808,7 +804,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return mixed A row array or a single scalar value
    */
-  public function first($column = null)
+  public function first(string $column = null)
   {
     $pos = $this->current_row;
     $first = $this->fetchCallable(0, $column);
@@ -822,9 +818,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function free()
   {
-    if (isset($this->_result) && $this->_result) {
+    if (!empty($this->_result)) {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
-      /** @noinspection UsageOfSilenceOperatorInspection */
       @\mysqli_free_result($this->_result);
       $this->_result = null;
 
@@ -853,7 +848,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array
    */
-  public function getAll()
+  public function getAll(): array
   {
     return $this->fetchAll();
   }
@@ -868,7 +863,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array
    */
-  public function getAllColumn($column, $skipNullValues = false)
+  public function getAllColumn(string $column, bool $skipNullValues = false): array
   {
     return $this->fetchAllColumn($column, $skipNullValues);
   }
@@ -880,7 +875,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array
    */
-  public function getArray()
+  public function getArray(): array
   {
     return $this->fetchAllArray();
   }
@@ -892,7 +887,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return Arrayy
    */
-  public function getArrayy()
+  public function getArrayy(): \Arrayy\Arrayy
   {
     return $this->fetchAllArrayy();
   }
@@ -902,14 +897,14 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @see Result::fetchColumn()
    *
-   * @param $column
-   * @param $asArray
-   * @param $skipNullValues
+   * @param string $column
+   * @param bool   $asArray
+   * @param bool   $skipNullValues
    *
    * @return string|array <p>Return a empty string or an empty array if the "$column" wasn't found, depend on
    *                      "$asArray"</p>
    */
-  public function getColumn($column, $skipNullValues = true, $asArray = false)
+  public function getColumn(string $column, bool $skipNullValues = true, bool $asArray = false)
   {
     return $this->fetchColumn($column, $skipNullValues, $asArray);
   }
@@ -917,7 +912,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   /**
    * @return string
    */
-  public function getDefaultResultType()
+  public function getDefaultResultType(): string
   {
     return $this->_default_result_type;
   }
@@ -929,7 +924,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array of mysql-objects
    */
-  public function getObject()
+  public function getObject(): array
   {
     return $this->fetchAllObject();
   }
@@ -939,13 +934,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return bool
    */
-  public function is_empty()
+  public function is_empty(): bool
   {
-    if ($this->num_rows > 0) {
-      return false;
-    }
-
-    return true;
+    return !($this->num_rows > 0);
   }
 
   /**
@@ -953,7 +944,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return string
    */
-  public function json()
+  public function json(): string
   {
     $data = $this->fetchAllArray();
 
@@ -967,7 +958,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return mixed A row array or a single scalar value
    */
-  public function last($column = null)
+  public function last(string $column = null)
   {
     $pos = $this->current_row;
     $last = $this->fetchCallable($this->num_rows - 1, $column);
@@ -995,7 +986,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return int The number of rows in the result
    */
-  public function num_rows()
+  public function num_rows(): int
   {
     return $this->count();
   }
@@ -1007,9 +998,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return bool Boolean true if offset exists, false otherwise
    */
-  public function offsetExists($offset)
+  public function offsetExists($offset): bool
   {
-    return is_int($offset) && $offset >= 0 && $offset < $this->num_rows;
+    return \is_int($offset) && $offset >= 0 && $offset < $this->num_rows;
   }
 
   /**
@@ -1056,7 +1047,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return Result
    */
-  public function reset()
+  public function reset(): Result
   {
     if (!$this->is_empty()) {
       \mysqli_data_seek($this->_result, 0);
@@ -1072,7 +1063,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @param string $default_result_type
    */
-  public function setDefaultResultType($default_result_type = 'object')
+  public function setDefaultResultType(string $default_result_type = 'object')
   {
     if (
         $default_result_type === 'object'
@@ -1092,21 +1083,20 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array
    */
-  public function slice($offset = 0, $length = null, $preserve_keys = false)
+  public function slice(int $offset = 0, int $length = null, bool $preserve_keys = false): array
   {
     // init
     $slice = array();
-    $offset = (int)$offset;
 
     if ($offset < 0) {
       if (abs($offset) > $this->num_rows) {
         $offset = 0;
       } else {
-        $offset = $this->num_rows - abs($offset);
+        $offset = $this->num_rows - (int)abs($offset);
       }
     }
 
-    $length = isset($length) ? (int)$length : $this->num_rows;
+    $length = null !== $length ? (int)$length : $this->num_rows;
     $n = 0;
     for ($i = $offset; $i < $this->num_rows && $n < $length; $i++) {
       if ($preserve_keys) {

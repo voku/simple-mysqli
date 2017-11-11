@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Arrayy\Arrayy;
 use voku\db\DB;
 use voku\db\Helper;

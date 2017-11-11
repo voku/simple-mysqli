@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace voku\db;
 
 use voku\db\exceptions\QueryException;
-use voku\helper\Bootup;
 use voku\helper\UTF8;
 
 /**
@@ -77,18 +78,18 @@ class Debug
    *
    * @return bool
    */
-  public function checkForDev()
+  public function checkForDev(): bool
   {
     // init
     $return = false;
 
-    if (function_exists('checkForDev')) {
+    if (\function_exists('checkForDev')) {
       $return = checkForDev();
     } else {
 
       // for testing with dev-address
       $noDev = isset($_GET['noDev']) ? (int)$_GET['noDev'] : 0;
-      $remoteIpAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : false;
+      $remoteIpAddress = $_SERVER['REMOTE_ADDR'] ?? false;
 
       if (
           $noDev != 1
@@ -113,7 +114,7 @@ class Debug
    *
    * @return bool
    */
-  public function clearErrors()
+  public function clearErrors(): bool
   {
     $this->_errors = array();
 
@@ -181,7 +182,7 @@ class Debug
    *
    * @return array
    */
-  public function getErrors()
+  public function getErrors(): array
   {
     return $this->_errors;
   }
@@ -191,18 +192,14 @@ class Debug
    *
    * @return array will return array['file'] and array['line']
    */
-  private function getFileAndLineFromSql()
+  private function getFileAndLineFromSql(): array
   {
     // init
     $return = array();
     $file = '';
     $line = '';
 
-    if (Bootup::is_php('5.4') === true) {
-      $referrer = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
-    } else {
-      $referrer = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-    }
+    $referrer = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
 
     foreach ($referrer as $key => $ref) {
 
@@ -238,7 +235,7 @@ class Debug
   /**
    * @return string
    */
-  public function getLoggerClassName()
+  public function getLoggerClassName(): string
   {
     return $this->logger_class_name;
   }
@@ -246,7 +243,7 @@ class Debug
   /**
    * @return string
    */
-  public function getLoggerLevel()
+  public function getLoggerLevel(): string
   {
     return $this->logger_level;
   }
@@ -254,7 +251,7 @@ class Debug
   /**
    * @return boolean
    */
-  public function isEchoOnError()
+  public function isEchoOnError(): bool
   {
     return $this->echo_on_error;
   }
@@ -262,7 +259,7 @@ class Debug
   /**
    * @return boolean
    */
-  public function isExitOnError()
+  public function isExitOnError(): bool
   {
     return $this->exit_on_error;
   }
@@ -277,7 +274,7 @@ class Debug
    *
    * @return bool
    */
-  public function logQuery($sql, $duration, $results, $sql_error = false)
+  public function logQuery($sql, $duration, $results, $sql_error = false): bool
   {
     $logLevelUse = strtolower($this->logger_level);
 
@@ -331,7 +328,7 @@ class Debug
    *
    * @return bool
    */
-  public function logger(array $log)
+  public function logger(array $log): bool
   {
     $logMethod = '';
     $logText = '';
@@ -370,7 +367,7 @@ class Debug
    */
   public function mailToAdmin($subject, $htmlBody, $priority = 3)
   {
-    if (function_exists('mailToAdmin')) {
+    if (\function_exists('mailToAdmin')) {
       mailToAdmin($subject, $htmlBody, $priority);
     } else {
 

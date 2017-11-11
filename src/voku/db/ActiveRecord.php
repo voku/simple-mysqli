@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace voku\db;
 
 use Arrayy\Arrayy;
@@ -166,7 +168,8 @@ abstract class ActiveRecord extends Arrayy
   protected $relations = array();
 
   /**
-   * @var int <p>The count of bind params, using this count and const "PREFIX" (:ph) to generate place holder in SQL.</p>
+   * @var int <p>The count of bind params, using this count and const "PREFIX" (:ph) to generate place holder in
+   *      SQL.</p>
    */
   private static $count = 0;
 
@@ -179,7 +182,7 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @return array
    */
-  public function getParams()
+  public function getParams(): array
   {
     return $this->params;
   }
@@ -187,7 +190,7 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @return string
    */
-  public function getPrimaryKeyName()
+  public function getPrimaryKeyName(): string
   {
     return $this->primaryKeyName;
   }
@@ -225,7 +228,7 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @return string
    */
-  public function getTable()
+  public function getTable(): string
   {
     return $this->table;
   }
@@ -308,7 +311,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this[]
    */
-  public function fetchManyByQuery($query)
+  public function fetchManyByQuery($query): array
   {
     $list = $this->fetchByQuery($query);
 
@@ -332,7 +335,7 @@ abstract class ActiveRecord extends Arrayy
       return null;
     }
 
-    if (is_array($list) && count($list) > 0) {
+    if (\is_array($list) && \count($list) > 0) {
       $this->array = $list[0]->getArray();
     } else {
       $this->array = $list->getArray();
@@ -379,14 +382,14 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this[]
    */
-  public function fetchByIds(array $ids)
+  public function fetchByIds(array $ids): array
   {
     if (empty($ids)) {
       return array();
     }
 
     $list = $this->fetchAll($ids);
-    if (is_array($list) && count($list) > 0) {
+    if (\is_array($list) && \count($list) > 0) {
       return $list;
     }
 
@@ -406,8 +409,8 @@ abstract class ActiveRecord extends Arrayy
         $this->reset()
     );
 
-    if (is_array($list)) {
-      if (count($list) === 0) {
+    if (\is_array($list)) {
+      if (\count($list) === 0) {
         return array();
       }
 
@@ -424,7 +427,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this[]
    */
-  public function fetchByIdsPrimaryKeyAsArrayIndex(array $ids)
+  public function fetchByIdsPrimaryKeyAsArrayIndex(array $ids): array
   {
     $result = $this->fetchAll($ids);
 
@@ -446,7 +449,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this[]
    */
-  public function fetchAll(array $ids = null)
+  public function fetchAll(array $ids = null): array
   {
     if ($ids) {
       $this->reset()->in($this->primaryKeyName, $ids);
@@ -475,7 +478,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return bool
    */
-  public function delete()
+  public function delete(): bool
   {
     $return = self::execute(
         $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
@@ -488,11 +491,7 @@ abstract class ActiveRecord extends Arrayy
         $this->params
     );
 
-    if ($return !== false) {
-      return true;
-    }
-
-    return false;
+    return $return !== false;
   }
 
   /**
@@ -525,7 +524,7 @@ abstract class ActiveRecord extends Arrayy
    */
   public function update()
   {
-    if (count($this->dirty) == 0) {
+    if (\count($this->dirty) == 0) {
       return true;
     }
 
@@ -558,7 +557,8 @@ abstract class ActiveRecord extends Arrayy
    */
   public static function fetchEmpty()
   {
-    $class = get_called_class();
+    $class = static::class;
+
     return new $class;
   }
 
@@ -576,7 +576,7 @@ abstract class ActiveRecord extends Arrayy
       self::$db = DB::getInstance();
     }
 
-    if (count($this->dirty) === 0) {
+    if (\count($this->dirty) === 0) {
       return true;
     }
 
@@ -678,11 +678,11 @@ abstract class ActiveRecord extends Arrayy
       return false;
     }
 
-    $useObject = is_object($obj);
+    $useObject = \is_object($obj);
     if ($useObject === true) {
       $called_class = $obj;
     } else {
-      $called_class = get_called_class();
+      $called_class = static::class;
     }
 
     self::setNewDataAreDirty(false);
@@ -715,7 +715,7 @@ abstract class ActiveRecord extends Arrayy
         $relation instanceof self
         ||
         (
-            is_array($relation)
+            \is_array($relation)
             &&
             $relation[0] instanceof self
         )
@@ -727,13 +727,13 @@ abstract class ActiveRecord extends Arrayy
     $obj = new $relation[1];
 
     $this->relations[$name] = $obj;
-    if (isset($relation[3]) && is_array($relation[3])) {
+    if (isset($relation[3]) && \is_array($relation[3])) {
       foreach ((array)$relation[3] as $func => $args) {
-        call_user_func_array(array($obj, $func), (array)$args);
+        \call_user_func_array(array($obj, $func), (array)$args);
       }
     }
 
-    $backref = isset($relation[4]) ? $relation[4] : '';
+    $backref = $relation[4] ?? '';
     $relationInstanceOfSelf = ($relation instanceof self);
     if (
         $relationInstanceOfSelf === false
@@ -741,22 +741,22 @@ abstract class ActiveRecord extends Arrayy
         self::HAS_ONE == $relation[0]
     ) {
 
-      $this->relations[$name] = $obj->eq($relation[2], $this->{$this->primaryKeyName})->fetch();
+      $this->relations[$name] = $obj->eq((string)$relation[2], $this->{$this->primaryKeyName})->fetch();
 
       if ($backref) {
-        $this->relations[$name] && $backref && $obj->__set($backref, $this);
+        $this->relations[$name] && $backref && $obj->{$backref} = $this;
       }
 
     } elseif (
-        is_array($relation)
+        \is_array($relation)
         &&
         self::HAS_MANY == $relation[0]
     ) {
 
-      $this->relations[$name] = $obj->eq($relation[2], $this->{$this->primaryKeyName})->fetchAll();
+      $this->relations[$name] = $obj->eq((string)$relation[2], $this->{$this->primaryKeyName})->fetchAll();
       if ($backref) {
         foreach ($this->relations[$name] as $o) {
-          $o->__set($backref, $this);
+          $o->{$backref} = $this;
         }
       }
 
@@ -769,7 +769,7 @@ abstract class ActiveRecord extends Arrayy
       $this->relations[$name] = $obj->eq($obj->primaryKeyName, $this->{$relation[2]})->fetch();
 
       if ($backref) {
-        $this->relations[$name] && $backref && $obj->__set($backref, $this);
+        $this->relations[$name] && $backref && $obj->{$backref} = $this;
       }
 
     } else {
@@ -786,12 +786,12 @@ abstract class ActiveRecord extends Arrayy
    * @param int          $i <p>The index of $n in $sql array.</p>
    * @param ActiveRecord $o <p>The reference to $this.</p>
    */
-  private function _buildSqlCallback(&$n, $i, $o)
+  private function _buildSqlCallback(string &$n, $i, ActiveRecord $o)
   {
     if (
         'select' === $n
         &&
-        null === $o->$n
+        null === $o->{$n}
     ) {
 
       $n = strtoupper($n) . ' ' . $o->table . '.*';
@@ -803,7 +803,7 @@ abstract class ActiveRecord extends Arrayy
             'from' === $n
         )
         &&
-        null === $o->$n
+        null === $o->{$n}
     ) {
 
       $n = strtoupper($n) . ' ' . $o->table;
@@ -814,7 +814,7 @@ abstract class ActiveRecord extends Arrayy
 
     } else {
 
-      $n = (null !== $o->$n) ? $o->$n . ' ' : '';
+      $n = (null !== $o->{$n}) ? $o->{$n} . ' ' : '';
 
     }
   }
@@ -826,7 +826,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return string
    */
-  protected function _buildSql($sqls = array())
+  protected function _buildSql(array $sqls = array()): string
   {
     array_walk($sqls, array($this, '_buildSqlCallback'), $this);
 
@@ -860,22 +860,22 @@ abstract class ActiveRecord extends Arrayy
       $this->addCondition(
           $args[0],
           self::$operators[$nameTmp],
-          isset($args[1]) ? $args[1] : null,
-          (is_string(end($args)) && 'or' === strtolower(end($args))) ? 'OR' : 'AND'
+          $args[1] ?? null,
+          (\is_string(end($args)) && 'or' === strtolower(end($args))) ? 'OR' : 'AND'
       );
 
     } elseif (array_key_exists($nameTmp = str_replace('by', '', $nameTmp), $this->sqlParts)) {
 
-      $this->$name = new ActiveRecordExpressions(
+      $this->{$name} = new ActiveRecordExpressions(
           array(
               'operator' => $this->sqlParts[$nameTmp],
               'target'   => implode(', ', $args),
           )
       );
 
-    } elseif (is_callable($callback = array(self::$db, $name))) {
+    } elseif (\is_callable($callback = array(self::$db, $name))) {
 
-      return call_user_func_array($callback, $args);
+      return \call_user_func_array($callback, $args);
 
     } else {
 
@@ -889,16 +889,16 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Make wrap when build the SQL expressions of WHERE.
    *
-   * @param string $op <p>If given, this param will build one "ActiveRecordExpressionsWrap" and include the stored expressions add into WHERE,
-   *                   otherwise it will stored the expressions into an array.</p>
+   * @param string $op <p>If given, this param will build one "ActiveRecordExpressionsWrap" and include the stored
+   *                   expressions add into WHERE, otherwise it will stored the expressions into an array.</p>
    *
    * @return $this
    */
   public function wrap($op = null)
   {
-    if (1 === func_num_args()) {
+    if (1 === \func_num_args()) {
       $this->wrap = false;
-      if (is_array($this->expressions) && count($this->expressions) > 0) {
+      if (\is_array($this->expressions) && \count($this->expressions) > 0) {
         $this->_addCondition(
             new ActiveRecordExpressionsWrap(
                 array(
@@ -925,11 +925,11 @@ abstract class ActiveRecord extends Arrayy
    */
   protected function _filterParam($value)
   {
-    if (is_array($value)) {
+    if (\is_array($value)) {
       foreach ($value as $key => $val) {
         $this->params[$value[$key] = self::PREFIX . ++self::$count] = $val;
       }
-    } elseif (is_string($value)) {
+    } elseif (\is_string($value)) {
       $this->params[$ph = self::PREFIX . ++self::$count] = $value;
       $value = $ph;
     }
@@ -953,7 +953,7 @@ abstract class ActiveRecord extends Arrayy
         array(
             'source'   => ('where' == $name ? $this->table . '.' : '') . $field,
             'operator' => $operator,
-            'target'   => is_array($value)
+            'target'   => \is_array($value)
                 ? new ActiveRecordExpressionsWrap(
                     'between' === strtolower($operator)
                         ? array('target' => $value, 'start' => ' ', 'end' => ' ', 'delimiter' => ' AND ')
@@ -1003,9 +1003,9 @@ abstract class ActiveRecord extends Arrayy
   protected function _addExpression($exp, $operator)
   {
     if (
-        !is_array($this->expressions)
+        !\is_array($this->expressions)
         ||
-        count($this->expressions) === 0
+        \count($this->expressions) === 0
     ) {
       $this->expressions = array($exp);
     } else {
@@ -1017,17 +1017,18 @@ abstract class ActiveRecord extends Arrayy
    * helper function to add condition into WHERE.
    *
    * @param ActiveRecordExpressions $exp      <p>The expression will be concat into WHERE or SET statement.</p>
-   * @param string                  $operator <p>The operator to concat this Expressions into WHERE or SET statement.</p>
+   * @param string                  $operator <p>The operator to concat this Expressions into WHERE or SET
+   *                                          statement.</p>
    * @param string                  $name     <p>The Expression will contact to.</p>
    */
   protected function _addCondition($exp, $operator, $name = 'where')
   {
-    if (!$this->$name) {
-      $this->$name = new ActiveRecordExpressions(array('operator' => strtoupper($name), 'target' => $exp));
+    if (!$this->{$name}) {
+      $this->{$name} = new ActiveRecordExpressions(array('operator' => strtoupper($name), 'target' => $exp));
     } else {
-      $this->$name->target = new ActiveRecordExpressions(
+      $this->{$name}->target = new ActiveRecordExpressions(
           array(
-              'source'   => $this->$name->target,
+              'source'   => $this->{$name}->target,
               'operator' => $operator,
               'target'   => $exp,
           )
@@ -1038,7 +1039,7 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @return array
    */
-  public function getDirty()
+  public function getDirty(): array
   {
     return $this->dirty;
   }
@@ -1046,7 +1047,7 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @return bool
    */
-  public static function isNewDataAreDirty()
+  public static function isNewDataAreDirty(): bool
   {
     return self::$new_data_are_dirty;
   }
@@ -1123,7 +1124,7 @@ abstract class ActiveRecord extends Arrayy
    */
   public function groupBy($args)
   {
-    $this->__call('groupBy', func_get_args());
+    $this->__call('groupBy', \func_get_args());
 
     return $this;
   }
@@ -1137,7 +1138,7 @@ abstract class ActiveRecord extends Arrayy
    */
   public function orderBy($args)
   {
-    $this->__call('orderBy', func_get_args());
+    $this->__call('orderBy', \func_get_args());
 
     return $this;
   }

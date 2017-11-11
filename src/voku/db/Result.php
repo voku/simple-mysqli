@@ -82,7 +82,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return mixed|\mysqli_result
    */
-  public function __invoke($callback = null)
+  public function __invoke(callable $callback = null)
   {
     if (null !== $callback) {
       return $callback($this->_result);
@@ -259,7 +259,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array|object|false <p><strong>false</strong> on error</p>
    */
-  public function fetch($reset = false)
+  public function fetch(bool $reset = false)
   {
     $return = false;
 
@@ -360,7 +360,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array <p>Return an empty array if the "$column" wasn't found</p>
    */
-  public function fetchAllColumn($column, $skipNullValues = false): array
+  public function fetchAllColumn(string $column, bool $skipNullValues = false): array
   {
     return $this->fetchColumn($column, $skipNullValues, true);
   }
@@ -381,7 +381,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return array
    */
-  public function fetchAllObject($class = '', $params = null): array
+  public function fetchAllObject($class = '', array $params = null): array
   {
 
     if ($this->is_empty()) {

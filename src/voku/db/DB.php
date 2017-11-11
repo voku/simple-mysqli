@@ -122,19 +122,19 @@ final class DB
   /**
    * __construct()
    *
-   * @param string      $hostname
-   * @param string      $username
-   * @param string      $password
-   * @param string      $database
-   * @param int         $port
-   * @param string      $charset
-   * @param bool|string $exit_on_error    <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
-   *                                      Use a empty string "" or false to disable it.</p>
-   * @param bool|string $echo_on_error    <p>Echo the error if "checkForDev()" returns true.
-   *                                      Use a empty string "" or false to disable it.</p>
-   * @param string      $logger_class_name
-   * @param string      $logger_level     <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
-   * @param array       $extra_config     <p>
+   * @param string $hostname
+   * @param string $username
+   * @param string $password
+   * @param string $database
+   * @param int    $port
+   * @param string $charset
+   * @param bool   $exit_on_error         <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
+   *                                      Use false to disable it.</p>
+   * @param bool   $echo_on_error         <p>Echo the error if "checkForDev()" returns true.
+   *                                      Use false to disable it.</p>
+   * @param string $logger_class_name
+   * @param string $logger_level          <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
+   * @param array  $extra_config          <p>
    *                                      'session_to_db' => false|true<br>
    *                                      'socket' => 'string (path)'<br>
    *                                      'ssl' => 'bool'<br>
@@ -143,7 +143,7 @@ final class DB
    *                                      'cacert' => 'string (path)'<br>
    *                                      </p>
    */
-  private function __construct($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, array $extra_config = array())
+  private function __construct(string $hostname, string $username, string $password, string $database, $port, string $charset, bool $exit_on_error, bool $echo_on_error, string $logger_class_name, string $logger_level, array $extra_config = array())
   {
     $this->_debug = new Debug($this);
 
@@ -227,7 +227,7 @@ final class DB
    *                                      "false" on error
    *                                      </p>
    */
-  public function __invoke($sql = null, array $bindings = array())
+  public function __invoke(string $sql = null, array $bindings = array())
   {
     return null !== $sql ? $this->query($sql, $bindings) : $this;
   }
@@ -268,15 +268,15 @@ final class DB
    *
    * @return bool
    */
-  private function _loadConfig($hostname, $username, $password, $database, $port, $charset, $exit_on_error, $echo_on_error, $logger_class_name, $logger_level, $extra_config): bool
+  private function _loadConfig(string $hostname, string $username, string $password, string $database, $port, string $charset, bool $exit_on_error, bool $echo_on_error, string $logger_class_name, string $logger_level, array $extra_config = array()): bool
   {
-    $this->hostname = (string)$hostname;
-    $this->username = (string)$username;
-    $this->password = (string)$password;
-    $this->database = (string)$database;
+    $this->hostname = $hostname;
+    $this->username = $username;
+    $this->password = $password;
+    $this->database = $database;
 
     if ($charset) {
-      $this->charset = (string)$charset;
+      $this->charset = $charset;
     }
 
     if ($port) {
@@ -351,7 +351,7 @@ final class DB
    *
    * @internal
    */
-  public function _parseArrayPair(array $arrayPair, $glue = ','): string
+  public function _parseArrayPair(array $arrayPair, string $glue = ','): string
   {
     // init
     $sql = '';
@@ -509,7 +509,7 @@ final class DB
    *
    * @return array <p>with the keys -> 'sql', 'params'</p>
    */
-  private function _parseQueryParams($sql, array $params = array()): array
+  private function _parseQueryParams(string $sql, array $params = array()): array
   {
     // is there anything to parse?
     if (
@@ -719,7 +719,7 @@ final class DB
    *
    *    * @throws QueryException
    */
-  public function delete($table, $where, $databaseName = null)
+  public function delete(string $table, $where, string $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -793,7 +793,7 @@ final class DB
    *
    * @return array <p>with the keys -> 'sql', 'params'</p>
    */
-  public function _parseQueryParamsByName($sql, array $params = array()): array
+  public function _parseQueryParamsByName(string $sql, array $params = array()): array
   {
     // is there anything to parse?
     if (
@@ -859,7 +859,7 @@ final class DB
    *
    * @return mixed
    */
-  public function escape($var = '', $stripe_non_utf8 = true, $html_entity_decode = false, $convert_array = false)
+  public function escape($var = '', bool $stripe_non_utf8 = true, bool $html_entity_decode = false, $convert_array = false)
   {
     if ($var === '') {
       return '';
@@ -1000,7 +1000,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public static function execSQL($query, $useCache = false, $cacheTTL = 3600, DB $db = null)
+  public static function execSQL(string $query, bool $useCache = false, int $cacheTTL = 3600, DB $db = null)
   {
     // init
     $cacheKey = null;
@@ -1107,7 +1107,7 @@ final class DB
    *
    * @return \voku\db\DB
    */
-  public static function getInstance($hostname = '', $username = '', $password = '', $database = '', $port = '', $charset = '', $exit_on_error = true, $echo_on_error = true, $logger_class_name = '', $logger_level = '', array $extra_config = array()): DB
+  public static function getInstance(string $hostname = '', string $username = '', string $password = '', string $database = '', $port = 3306, string $charset = 'utf8', bool $exit_on_error = true, bool $echo_on_error = true, string $logger_class_name = '', string $logger_level = '', array $extra_config = array()): DB
   {
     /**
      * @var $instance DB[]
@@ -1120,7 +1120,7 @@ final class DB
     static $firstInstance = null;
 
     if (
-        $hostname . $username . $password . $database . $port . $charset == ''
+        $hostname . $username . $password . $database . $port . $charset == '3306utf8'
         &&
         null !== $firstInstance
     ) {
@@ -1205,7 +1205,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public function insert($table, array $data = array(), $databaseName = null)
+  public function insert(string $table, array $data = array(), string $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -1277,7 +1277,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public function multi_query($sql)
+  public function multi_query(string $sql)
   {
     if (!$this->isReady()) {
       return false;
@@ -1372,7 +1372,7 @@ final class DB
    *
    * @return Prepare
    */
-  public function prepare($query): Prepare
+  public function prepare(string $query): Prepare
   {
     return new Prepare($this, $query);
   }
@@ -1386,7 +1386,7 @@ final class DB
    * @deprecated
    * @throws \Exception
    */
-  public static function qry($query)
+  public static function qry(string $query)
   {
     $db = self::getInstance();
 
@@ -1575,7 +1575,7 @@ final class DB
   /**
    * Quote && Escape e.g. a table name string.
    *
-   * @param string $str
+   * @param mixed $str
    *
    * @return string
    */
@@ -1600,7 +1600,7 @@ final class DB
    *
    * @return bool
    */
-  public function reconnect($checkViaPing = false): bool
+  public function reconnect(bool $checkViaPing = false): bool
   {
     $ping = false;
 
@@ -1627,7 +1627,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public function replace($table, array $data = array(), $databaseName = null)
+  public function replace(string $table, array $data = array(), string $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -1779,7 +1779,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public function select($table, $where = '1=1', $databaseName = null)
+  public function select(string $table, $where = '1=1', string $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -1814,7 +1814,7 @@ final class DB
    *
    * @return bool <p>Boolean true on success, false otherwise.</p>
    */
-  public function select_db($database): bool
+  public function select_db(string $database): bool
   {
     if (!$this->isReady()) {
       return false;
@@ -1830,7 +1830,7 @@ final class DB
    *
    * @return bool
    */
-  public function set_charset($charset): bool
+  public function set_charset(string $charset): bool
   {
     $charsetLower = strtolower($charset);
     if ($charsetLower === 'utf8' || $charsetLower === 'utf-8') {
@@ -1862,7 +1862,7 @@ final class DB
    *
    * @return $this
    */
-  public function set_convert_null_to_empty_string($bool)
+  public function set_convert_null_to_empty_string(bool $bool)
   {
     $this->_convert_null_to_empty_string = (bool)$bool;
 
@@ -1909,7 +1909,7 @@ final class DB
    *
    * @return bool
    */
-  public function set_mysqli_report($flags): bool
+  public function set_mysqli_report(int $flags): bool
   {
     return \mysqli_report($flags);
   }
@@ -2005,7 +2005,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public function update($table, array $data = array(), $where = '1=1', $databaseName = null)
+  public function update(string $table, array $data = array(), $where = '1=1', string $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -2048,7 +2048,7 @@ final class DB
    *
    * @return bool
    */
-  public function table_exists($table): bool
+  public function table_exists(string $table): bool
   {
     $check = $this->query('SELECT 1 FROM ' . $this->quote_string($table));
 
@@ -2066,7 +2066,7 @@ final class DB
    *
    * @return int
    */
-  public function num_rows($query): int
+  public function num_rows(string $query): int
   {
     $check = $this->query($query);
 

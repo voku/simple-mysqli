@@ -12,11 +12,11 @@ use voku\db\exceptions\FetchingException;
  * A simple implement of active record via Arrayy.
  *
  * @method $this select(string $dbProperty)
- * @method $this eq(string $dbProperty, string | null $value = null)
+ * @method $this eq(string $dbProperty, string|int|null $value = null)
  * @method $this from(string $table)
  * @method $this where(string $where)
  * @method $this having(string $having)
- * @method $this limit(int $start, int | null $end = null)
+ * @method $this limit(int $start, int|null $end = null)
  *
  * @method $this equal(string $dbProperty, string $value)
  * @method $this notEqual(string $dbProperty, string $value)
@@ -214,7 +214,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this
    */
-  public function setPrimaryKey($primaryKey, $dirty = true)
+  public function setPrimaryKey($primaryKey, bool $dirty = true)
   {
     if ($dirty === true) {
       $this->dirty[$this->primaryKeyName] = $primaryKey;
@@ -263,7 +263,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @param DB $db
    */
-  public static function setDb($db)
+  public static function setDb(DB $db)
   {
     self::$db = $db;
   }
@@ -311,7 +311,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this[]
    */
-  public function fetchManyByQuery($query): array
+  public function fetchManyByQuery(string $query): array
   {
     $list = $this->fetchByQuery($query);
 
@@ -327,7 +327,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this|null
    */
-  public function fetchOneByQuery($query)
+  public function fetchOneByQuery(string $query)
   {
     $list = $this->fetchByQuery($query);
 
@@ -401,7 +401,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this[]|$this
    */
-  public function fetchByQuery($query)
+  public function fetchByQuery(string $query)
   {
     $list = self::query(
         $query,
@@ -499,7 +499,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this
    */
-  public function setPrimaryKeyName($primaryKeyName)
+  public function setPrimaryKeyName(string $primaryKeyName)
   {
     $this->primaryKeyName = $primaryKeyName;
 
@@ -509,7 +509,7 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @param string $table
    */
-  public function setTable($table)
+  public function setTable(string $table)
   {
     $this->table = $table;
   }
@@ -614,7 +614,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this
    */
-  public function copy($insert = true)
+  public function copy(bool $insert = true)
   {
     $new = clone $this;
 
@@ -641,7 +641,7 @@ abstract class ActiveRecord extends Arrayy
    *                                      "false" on error
    *                                      </p>
    */
-  public static function execute($sql, array $param = array())
+  public static function execute(string $sql, array $param = array())
   {
     if (!self::$db instanceof DB) {
       self::$db = DB::getInstance();
@@ -670,7 +670,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return bool|$this|array
    */
-  public static function query($sql, array $param = array(), ActiveRecord $obj = null, $single = false)
+  public static function query(string $sql, array $param = array(), ActiveRecord $obj = null, bool $single = false)
   {
     $result = self::execute($sql, $param);
 
@@ -708,7 +708,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @throws ActiveRecordException <p>If the relation can't be found .</p>
    */
-  protected function &getRelation($name)
+  protected function &getRelation(string $name)
   {
     $relation = $this->relations[$name];
     if (
@@ -847,7 +847,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @throws ActiveRecordException
    */
-  public function __call($name, $args)
+  public function __call(string $name, array $args = array())
   {
     if (!self::$db instanceof DB) {
       self::$db = DB::getInstance();

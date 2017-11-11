@@ -245,19 +245,19 @@ final class DB
   /**
    * Load the config from the constructor.
    *
-   * @param string      $hostname
-   * @param string      $username
-   * @param string      $password
-   * @param string      $database
-   * @param int|string  $port             <p>default is (int)3306</p>
-   * @param string      $charset          <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
-   * @param bool|string $exit_on_error    <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
-   *                                      Use a empty string "" or false to disable it.</p>
-   * @param bool|string $echo_on_error    <p>Echo the error if "checkForDev()" returns true.
-   *                                      Use a empty string "" or false to disable it.</p>
-   * @param string      $logger_class_name
-   * @param string      $logger_level
-   * @param array       $extra_config     <p>
+   * @param string $hostname
+   * @param string $username
+   * @param string $password
+   * @param string $database
+   * @param int    $port                  <p>default is (int)3306</p>
+   * @param string $charset               <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
+   * @param bool   $exit_on_error         <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
+   *                                      Use false to disable it.</p>
+   * @param bool   $echo_on_error         <p>Echo the error if "checkForDev()" returns true.
+   *                                      Use false to disable it.</p>
+   * @param string $logger_class_name
+   * @param string $logger_level
+   * @param array  $extra_config          <p>
    *                                      'session_to_db' => false|true<br>
    *                                      'socket' => 'string (path)'<br>
    *                                      'ssl' => 'bool'<br>
@@ -861,14 +861,17 @@ final class DB
    */
   public function escape($var = '', bool $stripe_non_utf8 = true, bool $html_entity_decode = false, $convert_array = false)
   {
+    // [empty]
     if ($var === '') {
       return '';
     }
 
+    // ''
     if ($var === "''") {
       return "''";
     }
 
+    // NULL
     if ($var === null) {
       if (
           $this->_convert_null_to_empty_string === true
@@ -884,7 +887,7 @@ final class DB
       $varInt = (int)$var;
     }
 
-    /** @noinspection TypeUnsafeComparisonInspection */
+    // "int" || int || bool
     if (
         \is_int($var)
         ||
@@ -898,22 +901,16 @@ final class DB
             "$varInt" == $var
         )
     ) {
-
-      // "int" || int || bool
-
       return (int)$var;
     }
 
+    // float
     if (\is_float($var)) {
-
-      // float
-
       return $var;
     }
 
+    // array
     if (\is_array($var)) {
-
-      // array
 
       if ($convert_array === null) {
         return null;
@@ -935,9 +932,10 @@ final class DB
         return $varCleaned;
       }
 
-      return (array)$varCleaned;
+      return $varCleaned;
     }
 
+    // "string"
     if (
         \is_string($var)
         ||
@@ -947,9 +945,6 @@ final class DB
             method_exists($var, '__toString')
         )
     ) {
-
-      // "string"
-
       $var = (string)$var;
 
       if ($stripe_non_utf8 === true) {
@@ -969,19 +964,12 @@ final class DB
 
     }
 
+    // "DateTime"-object
     if ($var instanceof \DateTime) {
-
-      // "DateTime"-object
-
-      try {
-        return $this->escape($var->format('Y-m-d H:i:s'), false);
-      } catch (\Exception $e) {
-        return null;
-      }
-
-    } else {
-      return false;
+      return $this->escape($var->format('Y-m-d H:i:s'), false);
     }
+
+    return false;
   }
 
   /**
@@ -1084,19 +1072,19 @@ final class DB
   /**
    * getInstance()
    *
-   * @param string      $hostname
-   * @param string      $username
-   * @param string      $password
-   * @param string      $database
-   * @param int|string  $port            <p>default is (int)3306</p>
-   * @param string      $charset         <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
-   * @param bool|string $exit_on_error   <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
-   *                                     Use a empty string "" or false to disable it.</p>
-   * @param bool|string $echo_on_error   <p>Echo the error if "checkForDev()" returns true.
-   *                                     Use a empty string "" or false to disable it.</p>
-   * @param string      $logger_class_name
-   * @param string      $logger_level    <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
-   * @param array       $extra_config    <p>
+   * @param string $hostname
+   * @param string $username
+   * @param string $password
+   * @param string $database
+   * @param int    $port                 <p>default is (int)3306</p>
+   * @param string $charset              <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
+   * @param bool   $exit_on_error        <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
+   *                                     Use false to disable it.</p>
+   * @param bool   $echo_on_error        <p>Echo the error if "checkForDev()" returns true.
+   *                                     Use false to disable it.</p>
+   * @param string $logger_class_name
+   * @param string $logger_level         <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
+   * @param array  $extra_config         <p>
    *                                     'session_to_db' => false|true<br>
    *                                     'socket' => 'string (path)'<br>
    *                                     'ssl' => 'bool'<br>
@@ -1840,7 +1828,7 @@ final class DB
       $charset = 'utf8mb4';
     }
 
-    $this->charset = (string)$charset;
+    $this->charset = $charset;
 
     $return = mysqli_set_charset($this->link, $charset);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
@@ -1864,7 +1852,7 @@ final class DB
    */
   public function set_convert_null_to_empty_string(bool $bool)
   {
-    $this->_convert_null_to_empty_string = (bool)$bool;
+    $this->_convert_null_to_empty_string = $bool;
 
     return $this;
   }

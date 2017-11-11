@@ -192,7 +192,7 @@ class Helper
 
     if ($useCache === true) {
       $cache = new Cache(null, null, false, $useCache);
-      $cacheKey = 'sql-phonetic-search-' . md5($query);
+      $cacheKey = 'sql-phonetic-search-' . \md5($query);
 
       if (
           $cache->getCacheIsReady() === true

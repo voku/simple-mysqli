@@ -180,7 +180,7 @@ final class Prepare extends \mysqli_stmt
     $this->_use_bound_parameters_interpolated = true;
 
     // debug_backtrace returns arguments by reference, see comments at http://php.net/manual/de/function.func-get-args.php
-    $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1);
+    $trace = \debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1);
 
     $args =& $trace[0]['args'];
     $types = \str_split($types);
@@ -189,7 +189,7 @@ final class Prepare extends \mysqli_stmt
     $types_count = \count($types);
 
     if ($args_count !== $types_count) {
-      trigger_error('Number of variables doesn\'t match number of parameters in prepared statement', E_WARNING);
+      \trigger_error('Number of variables doesn\'t match number of parameters in prepared statement', E_WARNING);
 
       return false;
     }
@@ -235,14 +235,14 @@ final class Prepare extends \mysqli_stmt
       \call_user_func_array(array('parent', 'bind_param'), $this->_buildArguments());
     }
 
-    $query_start_time = microtime(true);
+    $query_start_time = \microtime(true);
     $result = parent::execute();
-    $query_duration = microtime(true) - $query_start_time;
+    $query_duration = \microtime(true) - $query_start_time;
 
     if ($result === true) {
 
       // "INSERT" || "REPLACE"
-      if (preg_match('/^\s*"?(INSERT|REPLACE)\s+/i', $this->_sql)) {
+      if (\preg_match('/^\s*"?(INSERT|REPLACE)\s+/i', $this->_sql)) {
         $insert_id = (int)$this->insert_id;
         $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $insert_id);
 
@@ -250,7 +250,7 @@ final class Prepare extends \mysqli_stmt
       }
 
       // "UPDATE" || "DELETE"
-      if (preg_match('/^\s*"?(UPDATE|DELETE)\s+/i', $this->_sql)) {
+      if (\preg_match('/^\s*"?(UPDATE|DELETE)\s+/i', $this->_sql)) {
         $affected_rows = (int)$this->affected_rows;
         $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $affected_rows);
 
@@ -258,7 +258,7 @@ final class Prepare extends \mysqli_stmt
       }
 
       // "SELECT"
-      if (preg_match('/^\s*"?(SELECT)\s+/i', $this->_sql)) {
+      if (\preg_match('/^\s*"?(SELECT)\s+/i', $this->_sql)) {
         $result = $this->get_result();
         $num_rows = (int)$result->num_rows;
         $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $num_rows);
@@ -390,12 +390,12 @@ final class Prepare extends \mysqli_stmt
         // set new values
         $param['value'] = $values[0];
         // we need to replace the question mark "?" here
-        $values[1] = str_replace('?', '###simple_mysqli__prepare_question_mark###', $values[1]);
+        $values[1] = \str_replace('?', '###simple_mysqli__prepare_question_mark###', $values[1]);
         // build the query (only for debugging)
-        $testQuery = preg_replace("/\?/", $values[1], $testQuery, 1);
+        $testQuery = \preg_replace("/\?/", $values[1], $testQuery, 1);
       }
       unset($param);
-      $testQuery = str_replace('###simple_mysqli__prepare_question_mark###', '?', $testQuery);
+      $testQuery = \str_replace('###simple_mysqli__prepare_question_mark###', '?', $testQuery);
     }
     $this->_sql_with_bound_parameters = $testQuery;
 

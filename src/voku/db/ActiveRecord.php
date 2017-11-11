@@ -584,7 +584,7 @@ abstract class ActiveRecord extends Arrayy
     $this->insert = new ActiveRecordExpressions(
         array(
             'operator' => 'INSERT INTO ' . $this->table,
-            'target'   => new ActiveRecordExpressionsWrap(array('target' => array_keys($this->dirty))),
+            'target'   => new ActiveRecordExpressionsWrap(array('target' => \array_keys($this->dirty))),
         )
     );
     $this->values = new ActiveRecordExpressions(
@@ -794,7 +794,7 @@ abstract class ActiveRecord extends Arrayy
         null === $o->{$n}
     ) {
 
-      $n = strtoupper($n) . ' ' . $o->table . '.*';
+      $n = \strtoupper($n) . ' ' . $o->table . '.*';
 
     } elseif (
         (
@@ -806,11 +806,11 @@ abstract class ActiveRecord extends Arrayy
         null === $o->{$n}
     ) {
 
-      $n = strtoupper($n) . ' ' . $o->table;
+      $n = \strtoupper($n) . ' ' . $o->table;
 
     } elseif ('delete' === $n) {
 
-      $n = strtoupper($n) . ' ';
+      $n = \strtoupper($n) . ' ';
 
     } else {
 
@@ -828,12 +828,12 @@ abstract class ActiveRecord extends Arrayy
    */
   protected function _buildSql(array $sqls = array()): string
   {
-    array_walk($sqls, array($this, '_buildSqlCallback'), $this);
+    \array_walk($sqls, array($this, '_buildSqlCallback'), $this);
 
     // DEBUG
     //echo 'SQL: ', implode(' ', $sqls), "\n", 'PARAMS: ', implode(', ', $this->params), "\n";
 
-    return implode(' ', $sqls);
+    return \implode(' ', $sqls);
   }
 
   /**
@@ -853,23 +853,23 @@ abstract class ActiveRecord extends Arrayy
       self::$db = DB::getInstance();
     }
 
-    $nameTmp = strtolower($name);
+    $nameTmp = \strtolower($name);
 
-    if (array_key_exists($nameTmp, self::$operators)) {
+    if (\array_key_exists($nameTmp, self::$operators)) {
 
       $this->addCondition(
           $args[0],
           self::$operators[$nameTmp],
           $args[1] ?? null,
-          (\is_string(end($args)) && 'or' === strtolower(end($args))) ? 'OR' : 'AND'
+          (\is_string(\end($args)) && 'or' === \strtolower(\end($args))) ? 'OR' : 'AND'
       );
 
-    } elseif (array_key_exists($nameTmp = str_replace('by', '', $nameTmp), $this->sqlParts)) {
+    } elseif (\array_key_exists($nameTmp = \str_replace('by', '', $nameTmp), $this->sqlParts)) {
 
       $this->{$name} = new ActiveRecordExpressions(
           array(
               'operator' => $this->sqlParts[$nameTmp],
-              'target'   => implode(', ', $args),
+              'target'   => \implode(', ', $args),
           )
       );
 
@@ -905,7 +905,7 @@ abstract class ActiveRecord extends Arrayy
                     'delimiter' => ' ',
                     'target'    => $this->expressions,
                 )
-            ), 'or' === strtolower($op) ? 'OR' : 'AND'
+            ), 'or' === \strtolower($op) ? 'OR' : 'AND'
         );
       }
       $this->expressions = array();
@@ -955,7 +955,7 @@ abstract class ActiveRecord extends Arrayy
             'operator' => $operator,
             'target'   => \is_array($value)
                 ? new ActiveRecordExpressionsWrap(
-                    'between' === strtolower($operator)
+                    'between' === \strtolower($operator)
                         ? array('target' => $value, 'start' => ' ', 'end' => ' ', 'delimiter' => ' AND ')
                         : array('target' => $value)
                 ) : $value,
@@ -1024,7 +1024,7 @@ abstract class ActiveRecord extends Arrayy
   protected function _addCondition($exp, $operator, $name = 'where')
   {
     if (!$this->{$name}) {
-      $this->{$name} = new ActiveRecordExpressions(array('operator' => strtoupper($name), 'target' => $exp));
+      $this->{$name} = new ActiveRecordExpressions(array('operator' => \strtoupper($name), 'target' => $exp));
     } else {
       $this->{$name}->target = new ActiveRecordExpressions(
           array(
@@ -1069,15 +1069,15 @@ abstract class ActiveRecord extends Arrayy
   public function __set($var, $val)
   {
     if (
-        array_key_exists($var, $this->sqlExpressions)
+        \array_key_exists($var, $this->sqlExpressions)
         ||
-        array_key_exists($var, $this->defaultSqlExpressions)
+        \array_key_exists($var, $this->defaultSqlExpressions)
     ) {
 
       $this->sqlExpressions[$var] = $val;
 
     } elseif (
-        array_key_exists($var, $this->relations)
+        \array_key_exists($var, $this->relations)
         &&
         $val instanceof self
     ) {
@@ -1102,7 +1102,7 @@ abstract class ActiveRecord extends Arrayy
    */
   public function __unset($var)
   {
-    if (array_key_exists($var, $this->sqlExpressions)) {
+    if (\array_key_exists($var, $this->sqlExpressions)) {
       unset($this->sqlExpressions[$var]);
     }
 
@@ -1152,11 +1152,11 @@ abstract class ActiveRecord extends Arrayy
    */
   public function &__get($var)
   {
-    if (array_key_exists($var, $this->sqlExpressions)) {
+    if (\array_key_exists($var, $this->sqlExpressions)) {
       return $this->sqlExpressions[$var];
     }
 
-    if (array_key_exists($var, $this->relations)) {
+    if (\array_key_exists($var, $this->relations)) {
       return $this->getRelation($var);
     }
 

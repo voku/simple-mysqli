@@ -123,7 +123,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     static $FIELDS_CACHE = array();
     static $TYPES_CACHE = array();
 
-    $result_hash = spl_object_hash($this->_result);
+    $result_hash = \spl_object_hash($this->_result);
 
     if (!isset($FIELDS_CACHE[$result_hash])) {
       $FIELDS_CACHE[$result_hash] = \mysqli_fetch_fields($this->_result);
@@ -158,7 +158,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     } elseif (\is_object($data)) {
       foreach ($TYPES_CACHE[$result_hash] as $type_name => $type) {
         if (isset($data->{$type_name})) {
-          settype($data->{$type_name}, $type);
+          \settype($data->{$type_name}, $type);
         }
       }
     }
@@ -230,7 +230,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function seek($row = 0): bool
   {
     if (\is_int($row) && $row >= 0 && $row < $this->num_rows) {
-      return mysqli_data_seek($this->_result, $row);
+      return \mysqli_data_seek($this->_result, $row);
     }
 
     return false;
@@ -486,9 +486,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     foreach ($data as $_row) {
       if (
-          array_key_exists($key, $_row) === true
+          \array_key_exists($key, $_row) === true
           &&
-          array_key_exists($value, $_row) === true
+          \array_key_exists($value, $_row) === true
       ) {
         $_key = $_row[$key];
         $_value = $_row[$value];
@@ -547,7 +547,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             continue;
           }
         } else {
-          if (array_key_exists($column, $_row) === false) {
+          if (\array_key_exists($column, $_row) === false) {
             break;
           }
         }
@@ -572,7 +572,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
           continue;
         }
       } else {
-        if (array_key_exists($column, $_row) === false) {
+        if (\array_key_exists($column, $_row) === false) {
           break;
         }
       }
@@ -678,7 +678,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function fetchFields(bool $as_array = false): array
   {
     if ($as_array) {
-      return array_map(
+      return \array_map(
           function ($object) {
             return (array)$object;
           },
@@ -705,13 +705,13 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     foreach ($this as $row) {
 
-      if (!array_key_exists($group, $row)) {
+      if (!\array_key_exists($group, $row)) {
         continue;
       }
 
       if (null !== $column) {
 
-        if (!array_key_exists($column, $row)) {
+        if (!\array_key_exists($column, $row)) {
           continue;
         }
 
@@ -742,13 +742,13 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     foreach ($this as $row) {
 
-      if (!array_key_exists($key, $row)) {
+      if (!\array_key_exists($key, $row)) {
         continue;
       }
 
       if (null !== $column) {
 
-        if (!array_key_exists($column, $row)) {
+        if (!\array_key_exists($column, $row)) {
           continue;
         }
 
@@ -790,9 +790,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       return $rows;
     }
 
-    return array_map(
+    return \array_map(
         function ($values) use ($keys) {
-          return array_combine($keys, $values);
+          return \array_combine($keys, $values);
         }, $rows
     );
   }
@@ -1089,10 +1089,10 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $slice = array();
 
     if ($offset < 0) {
-      if (abs($offset) > $this->num_rows) {
+      if (\abs($offset) > $this->num_rows) {
         $offset = 0;
       } else {
-        $offset = $this->num_rows - (int)abs($offset);
+        $offset = $this->num_rows - (int)\abs($offset);
       }
     }
 

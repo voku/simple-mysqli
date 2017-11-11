@@ -364,69 +364,69 @@ final class DB
     foreach ($arrayPair as $_key => $_value) {
       $_connector = '=';
       $_glueHelper = '';
-      $_key_upper = strtoupper($_key);
+      $_key_upper = \strtoupper($_key);
 
-      if (strpos($_key_upper, ' NOT') !== false) {
+      if (\strpos($_key_upper, ' NOT') !== false) {
         $_connector = 'NOT';
       }
 
-      if (strpos($_key_upper, ' IS') !== false) {
+      if (\strpos($_key_upper, ' IS') !== false) {
         $_connector = 'IS';
       }
 
-      if (strpos($_key_upper, ' IS NOT') !== false) {
+      if (\strpos($_key_upper, ' IS NOT') !== false) {
         $_connector = 'IS NOT';
       }
 
-      if (strpos($_key_upper, ' IN') !== false) {
+      if (\strpos($_key_upper, ' IN') !== false) {
         $_connector = 'IN';
       }
 
-      if (strpos($_key_upper, ' NOT IN') !== false) {
+      if (\strpos($_key_upper, ' NOT IN') !== false) {
         $_connector = 'NOT IN';
       }
 
-      if (strpos($_key_upper, ' BETWEEN') !== false) {
+      if (\strpos($_key_upper, ' BETWEEN') !== false) {
         $_connector = 'BETWEEN';
       }
 
-      if (strpos($_key_upper, ' NOT BETWEEN') !== false) {
+      if (\strpos($_key_upper, ' NOT BETWEEN') !== false) {
         $_connector = 'NOT BETWEEN';
       }
 
-      if (strpos($_key_upper, ' LIKE') !== false) {
+      if (\strpos($_key_upper, ' LIKE') !== false) {
         $_connector = 'LIKE';
       }
 
-      if (strpos($_key_upper, ' NOT LIKE') !== false) {
+      if (\strpos($_key_upper, ' NOT LIKE') !== false) {
         $_connector = 'NOT LIKE';
       }
 
-      if (strpos($_key_upper, ' >') !== false && strpos($_key_upper, ' =') === false) {
+      if (\strpos($_key_upper, ' >') !== false && \strpos($_key_upper, ' =') === false) {
         $_connector = '>';
       }
 
-      if (strpos($_key_upper, ' <') !== false && strpos($_key_upper, ' =') === false) {
+      if (\strpos($_key_upper, ' <') !== false && \strpos($_key_upper, ' =') === false) {
         $_connector = '<';
       }
 
-      if (strpos($_key_upper, ' >=') !== false) {
+      if (\strpos($_key_upper, ' >=') !== false) {
         $_connector = '>=';
       }
 
-      if (strpos($_key_upper, ' <=') !== false) {
+      if (\strpos($_key_upper, ' <=') !== false) {
         $_connector = '<=';
       }
 
-      if (strpos($_key_upper, ' <>') !== false) {
+      if (\strpos($_key_upper, ' <>') !== false) {
         $_connector = '<>';
       }
 
-      if (strpos($_key_upper, ' OR') !== false) {
+      if (\strpos($_key_upper, ' OR') !== false) {
         $_glueHelper = 'OR';
       }
 
-      if (strpos($_key_upper, ' AND') !== false) {
+      if (\strpos($_key_upper, ' AND') !== false) {
         $_glueHelper = 'AND';
       }
 
@@ -436,9 +436,9 @@ final class DB
         }
 
         if ($_connector === 'NOT IN' || $_connector === 'IN') {
-          $_value = '(' . implode(',', $_value) . ')';
+          $_value = '(' . \implode(',', $_value) . ')';
         } elseif ($_connector === 'NOT BETWEEN' || $_connector === 'BETWEEN') {
-          $_value = '(' . implode(' AND ', $_value) . ')';
+          $_value = '(' . \implode(' AND ', $_value) . ')';
         }
 
       } else {
@@ -446,8 +446,8 @@ final class DB
       }
 
       $quoteString = $this->quote_string(
-          trim(
-              str_ireplace(
+          \trim(
+              \str_ireplace(
                   array(
                       $_connector,
                       $_glueHelper,
@@ -513,18 +513,18 @@ final class DB
   {
     // is there anything to parse?
     if (
-        strpos($sql, '?') === false
+        \strpos($sql, '?') === false
         ||
         \count($params) === 0
     ) {
       return array('sql' => $sql, 'params' => $params);
     }
 
-    $parseKey = md5(uniqid((string)mt_rand(), true));
-    $sql = str_replace('?', $parseKey, $sql);
+    $parseKey = \md5(\uniqid((string)\mt_rand(), true));
+    $sql = \str_replace('?', $parseKey, $sql);
 
     $k = 0;
-    while (strpos($sql, $parseKey) !== false) {
+    while (\strpos($sql, $parseKey) !== false) {
       $sql = UTF8::str_replace_first(
           $parseKey,
           isset($params[$k]) ? $this->secure($params[$k]) : '',
@@ -722,7 +722,7 @@ final class DB
   public function delete(string $table, $where, string $databaseName = null)
   {
     // init
-    $table = trim($table);
+    $table = \trim($table);
 
     if ($table === '') {
       $this->_debug->displayError('Invalid table name, table name in empty.', false);
@@ -739,7 +739,7 @@ final class DB
     }
 
     if ($databaseName) {
-      $databaseName = $this->quote_string(trim($databaseName)) . '.';
+      $databaseName = $this->quote_string(\trim($databaseName)) . '.';
     }
 
     $sql = 'DELETE FROM ' . $databaseName . $this->quote_string($table) . " WHERE ($WHERE);";
@@ -797,36 +797,36 @@ final class DB
   {
     // is there anything to parse?
     if (
-        strpos($sql, ':') === false
+        \strpos($sql, ':') === false
         ||
         \count($params) === 0
     ) {
       return array('sql' => $sql, 'params' => $params);
     }
 
-    $parseKey = md5(uniqid((string)mt_rand(), true));
+    $parseKey = \md5(\uniqid((string)\mt_rand(), true));
 
     foreach ($params as $name => $value) {
       $nameTmp = $name;
-      if (strpos($name, ':') === 0) {
-        $nameTmp = substr($name, 1);
+      if (\strpos($name, ':') === 0) {
+        $nameTmp = \substr($name, 1);
       }
 
       $parseKeyInner = $nameTmp . '-' . $parseKey;
-      $sql = str_replace(':' . $nameTmp, $parseKeyInner, $sql);
+      $sql = \str_replace(':' . $nameTmp, $parseKeyInner, $sql);
     }
 
     foreach ($params as $name => $value) {
       $nameTmp = $name;
-      if (strpos($name, ':') === 0) {
-        $nameTmp = substr($name, 1);
+      if (\strpos($name, ':') === 0) {
+        $nameTmp = \substr($name, 1);
       }
 
       $parseKeyInner = $nameTmp . '-' . $parseKey;
       $sqlBefore = $sql;
       $secureParamValue = $this->secure($params[$name]);
 
-      while (strpos($sql, $parseKeyInner) !== false) {
+      while (\strpos($sql, $parseKeyInner) !== false) {
         $sql = UTF8::str_replace_first(
             $parseKeyInner,
             $secureParamValue,
@@ -927,7 +927,7 @@ final class DB
       }
 
       if ($convert_array === true) {
-        $varCleaned = implode(',', $varCleaned);
+        $varCleaned = \implode(',', $varCleaned);
 
         return $varCleaned;
       }
@@ -998,7 +998,7 @@ final class DB
 
     if ($useCache === true) {
       $cache = new Cache(null, null, false, $useCache);
-      $cacheKey = 'sql-' . md5($query);
+      $cacheKey = 'sql-' . \md5($query);
 
       if (
           $cache->getCacheIsReady() === true
@@ -1125,7 +1125,7 @@ final class DB
       $extra_config_string = (int)$extra_config;
     }
 
-    $connection = md5(
+    $connection = \md5(
         $hostname . $username . $password . $database . $port . $charset . (int)$exit_on_error . (int)$echo_on_error . $logger_class_name . $logger_level . $extra_config_string
     );
 
@@ -1196,7 +1196,7 @@ final class DB
   public function insert(string $table, array $data = array(), string $databaseName = null)
   {
     // init
-    $table = trim($table);
+    $table = \trim($table);
 
     if ($table === '') {
       $this->_debug->displayError('Invalid table name, table name in empty.', false);
@@ -1213,7 +1213,7 @@ final class DB
     $SET = $this->_parseArrayPair($data);
 
     if ($databaseName) {
-      $databaseName = $this->quote_string(trim($databaseName)) . '.';
+      $databaseName = $this->quote_string(\trim($databaseName)) . '.';
     }
 
     $sql = 'INSERT INTO ' . $databaseName . $this->quote_string($table) . " SET $SET;";
@@ -1380,17 +1380,17 @@ final class DB
 
     $args = \func_get_args();
     /** @noinspection SuspiciousAssignmentsInspection */
-    $query = array_shift($args);
-    $query = str_replace('?', '%s', $query);
-    $args = array_map(
+    $query = \array_shift($args);
+    $query = \str_replace('?', '%s', $query);
+    $args = \array_map(
         array(
             $db,
             'escape',
         ),
         $args
     );
-    array_unshift($args, $query);
-    $query = sprintf(...$args);
+    \array_unshift($args, $query);
+    $query = \sprintf(...$args);
     $result = $db->query($query);
 
     if ($result instanceof Result) {
@@ -1516,8 +1516,6 @@ final class DB
    */
   private function queryErrorHandling(string $errorMessage, int $errorNumber, string $sql, $sqlParams = false, bool $sqlMultiQuery = false)
   {
-    $errorNumber = (int)$errorNumber;
-
     if (
         $errorMessage === 'DB server has gone away'
         ||
@@ -1569,10 +1567,10 @@ final class DB
    */
   public function quote_string($str): string
   {
-    $str = str_replace(
+    $str = \str_replace(
         '`',
         '``',
-        trim(
+        \trim(
             (string)$this->escape($str, false),
             '`'
         )
@@ -1618,7 +1616,7 @@ final class DB
   public function replace(string $table, array $data = array(), string $databaseName = null)
   {
     // init
-    $table = trim($table);
+    $table = \trim($table);
 
     if ($table === '') {
       $this->_debug->displayError('Invalid table name, table name in empty.', false);
@@ -1633,23 +1631,23 @@ final class DB
     }
 
     // extracting column names
-    $columns = array_keys($data);
+    $columns = \array_keys($data);
     foreach ($columns as $k => $_key) {
       /** @noinspection AlterInForeachInspection */
       $columns[$k] = $this->quote_string($_key);
     }
 
-    $columns = implode(',', $columns);
+    $columns = \implode(',', $columns);
 
     // extracting values
     foreach ($data as $k => $_value) {
       /** @noinspection AlterInForeachInspection */
       $data[$k] = $this->secure($_value);
     }
-    $values = implode(',', $data);
+    $values = \implode(',', $data);
 
     if ($databaseName) {
-      $databaseName = $this->quote_string(trim($databaseName)) . '.';
+      $databaseName = $this->quote_string(\trim($databaseName)) . '.';
     }
 
     $sql = 'REPLACE INTO ' . $databaseName . $this->quote_string($table) . " ($columns) VALUES ($values);";
@@ -1693,10 +1691,10 @@ final class DB
    * <p>
    * <strong>string:</strong><br />
    * 1. check if the string isn't a default mysql-time-function e.g. 'CURDATE()'<br />
-   * 2. trim whitespace<br />
-   * 3. trim '<br />
+   * 2. \trim whitespace<br />
+   * 3. \trim '<br />
    * 4. escape the string (and remove non utf-8 chars)<br />
-   * 5. trim ' again (because we maybe removed some chars)<br />
+   * 5. \trim ' again (because we maybe removed some chars)<br />
    * 6. add ' around the new string<br />
    * </p><br />
    *
@@ -1744,13 +1742,13 @@ final class DB
     }
 
     if (\is_string($var)) {
-      $var = trim(trim($var), "'");
+      $var = \trim(\trim($var), "'");
     }
 
     $var = $this->escape($var, false, false, null);
 
     if (\is_string($var)) {
-      $var = "'" . trim($var, "'") . "'";
+      $var = "'" . \trim($var, "'") . "'";
     }
 
     return $var;
@@ -1770,7 +1768,7 @@ final class DB
   public function select(string $table, $where = '1=1', string $databaseName = null)
   {
     // init
-    $table = trim($table);
+    $table = \trim($table);
 
     if ($table === '') {
       $this->_debug->displayError('Invalid table name, table name in empty.', false);
@@ -1787,7 +1785,7 @@ final class DB
     }
 
     if ($databaseName) {
-      $databaseName = $this->quote_string(trim($databaseName)) . '.';
+      $databaseName = $this->quote_string(\trim($databaseName)) . '.';
     }
 
     $sql = 'SELECT * FROM ' . $databaseName . $this->quote_string($table) . " WHERE ($WHERE);";
@@ -1965,7 +1963,7 @@ final class DB
         return false;
       }
 
-      $result = call_user_func($callback, $this);
+      $result = $callback($this);
       if ($result === false) {
         /** @noinspection ThrowRawExceptionInspection */
         throw new \Exception('call_user_func [' . $callback . '] === false');
@@ -1996,7 +1994,7 @@ final class DB
   public function update(string $table, array $data = array(), $where = '1=1', string $databaseName = null)
   {
     // init
-    $table = trim($table);
+    $table = \trim($table);
 
     if ($table === '') {
       $this->_debug->displayError('Invalid table name, table name in empty.', false);
@@ -2021,7 +2019,7 @@ final class DB
     }
 
     if ($databaseName) {
-      $databaseName = $this->quote_string(trim($databaseName)) . '.';
+      $databaseName = $this->quote_string(\trim($databaseName)) . '.';
     }
 
     $sql = 'UPDATE ' . $databaseName . $this->quote_string($table) . " SET $SET WHERE ($WHERE);";

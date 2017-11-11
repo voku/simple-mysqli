@@ -139,7 +139,7 @@ class Debug
     $this->logger(
         array(
             'error',
-            '<strong>' . date(
+            '<strong>' . \date(
                 'd. m. Y G:i:s'
             ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . ') (sql-error):</strong> ' . $error . '<br>',
         )
@@ -199,7 +199,7 @@ class Debug
     $file = '';
     $line = '';
 
-    $referrer = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+    $referrer = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
 
     foreach ($referrer as $key => $ref) {
 
@@ -276,7 +276,7 @@ class Debug
    */
   public function logQuery($sql, $duration, $results, $sql_error = false): bool
   {
-    $logLevelUse = strtolower($this->logger_level);
+    $logLevelUse = \strtolower($this->logger_level);
 
     if (
         $sql_error === false
@@ -302,14 +302,14 @@ class Debug
     // logging
     //
 
-    $info = 'time => ' . round($duration, 5) . ' | results => ' . (int)$results . $infoExtra . ' | SQL => ' . UTF8::htmlentities($sql);
+    $info = 'time => ' . \round($duration, 5) . ' | results => ' . (int)$results . $infoExtra . ' | SQL => ' . UTF8::htmlentities($sql);
 
     $fileInfo = $this->getFileAndLineFromSql();
 
     return $this->logger(
         array(
             $logLevel,
-            '<strong>' . date('d. m. Y G:i:s') . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
+            '<strong>' . \date('d. m. Y G:i:s') . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
             'sql',
         )
     );
@@ -348,9 +348,9 @@ class Debug
     if (
         $logClass
         &&
-        class_exists($logClass)
+        \class_exists($logClass)
         &&
-        method_exists($logClass, $logMethod)
+        \method_exists($logClass, $logMethod)
     ) {
       return $logClass::$logMethod($logText, $logType);
     }

@@ -1047,7 +1047,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return Result
    */
-  public function reset(): Result
+  public function reset(): self
   {
     if (!$this->is_empty()) {
       \mysqli_data_seek($this->_result, 0);

@@ -988,7 +988,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public static function execSQL(string $query, bool $useCache = false, int $cacheTTL = 3600, DB $db = null)
+  public static function execSQL(string $query, bool $useCache = false, int $cacheTTL = 3600, self $db = null)
   {
     // init
     $cacheKey = null;
@@ -1095,7 +1095,7 @@ final class DB
    *
    * @return \voku\db\DB
    */
-  public static function getInstance(string $hostname = '', string $username = '', string $password = '', string $database = '', $port = 3306, string $charset = 'utf8', bool $exit_on_error = true, bool $echo_on_error = true, string $logger_class_name = '', string $logger_level = '', array $extra_config = array()): DB
+  public static function getInstance(string $hostname = '', string $username = '', string $password = '', string $database = '', $port = 3306, string $charset = 'utf8', bool $exit_on_error = true, bool $echo_on_error = true, string $logger_class_name = '', string $logger_level = '', array $extra_config = array()): self
   {
     /**
      * @var $instance DB[]

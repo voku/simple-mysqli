@@ -670,7 +670,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return bool|$this|array
    */
-  public static function query(string $sql, array $param = array(), ActiveRecord $obj = null, bool $single = false)
+  public static function query(string $sql, array $param = array(), self $obj = null, bool $single = false)
   {
     $result = self::execute($sql, $param);
 
@@ -786,7 +786,7 @@ abstract class ActiveRecord extends Arrayy
    * @param int          $i <p>The index of $n in $sql array.</p>
    * @param ActiveRecord $o <p>The reference to $this.</p>
    */
-  private function _buildSqlCallback(string &$n, $i, ActiveRecord $o)
+  private function _buildSqlCallback(string &$n, $i, self $o)
   {
     if (
         'select' === $n

@@ -5,7 +5,7 @@ declare(strict_types=1);
 use voku\db\DB;
 use voku\db\Result;
 
-class SimpleResultTest extends PHPUnit_Framework_TestCase
+class SimpleResultTest extends \PHPUnit\Framework\TestCase
 {
   /**
    * @var DB

@@ -11,7 +11,7 @@ use voku\helper\UTF8;
 /**
  * Class SimpleDbTest
  */
-class SimpleDbTest extends PHPUnit_Framework_TestCase
+class SimpleDbTest extends \PHPUnit\Framework\TestCase
 {
 
   /**

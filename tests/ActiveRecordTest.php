@@ -13,7 +13,7 @@ use voku\db\DB;
 /**
  * Class ActiveRecordTest
  */
-class ActiveRecordTest extends \PHPUnit_Framework_TestCase
+class ActiveRecordTest extends \PHPUnit\Framework\TestCase
 {
 
   /**
@@ -25,7 +25,9 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
   {
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, true);
 
-    ActiveRecord::execute(
+    $result = [];
+
+    $result[] = ActiveRecord::execute(
         'CREATE TABLE IF NOT EXISTS user (
             id INTEGER NOT NULL AUTO_INCREMENT, 
             name TEXT, 
@@ -34,7 +36,7 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
         );'
     );
 
-    ActiveRecord::execute(
+    $result[] = ActiveRecord::execute(
         'CREATE TABLE IF NOT EXISTS contact (
             id INTEGER NOT NULL AUTO_INCREMENT, 
             user_id INTEGER, 
@@ -43,6 +45,8 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase
             PRIMARY KEY (id)
         );'
     );
+
+    self::assertFalse(in_array(false, $result, true));
   }
 
   /**

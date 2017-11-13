@@ -8,7 +8,7 @@ use voku\db\Prepare;
 /**
  * Class SimplePrepareTest
  */
-class SimplePrepareTest extends PHPUnit_Framework_TestCase
+class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 {
 
   /**

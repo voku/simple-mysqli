@@ -1,6 +1,11 @@
 Changelog
 =========
 
+6.0.0 (2017-11-13)
+- [!]: "php": ">=7.0" 
+  * drop support for PHP < 7.0
+  * use "strict_types"
+
 5.4.7 (2017-10-15)
 
 - [+]: improve "DB->close()" + tests

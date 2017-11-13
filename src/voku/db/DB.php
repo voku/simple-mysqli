@@ -527,7 +527,7 @@ final class DB
     while (\strpos($sql, $parseKey) !== false) {
       $sql = UTF8::str_replace_first(
           $parseKey,
-          isset($params[$k]) ? $this->secure($params[$k]) : '',
+          (string)(isset($params[$k]) ? $this->secure($params[$k]) : ''),
           $sql
       );
 
@@ -829,7 +829,7 @@ final class DB
       while (\strpos($sql, $parseKeyInner) !== false) {
         $sql = UTF8::str_replace_first(
             $parseKeyInner,
-            $secureParamValue,
+            (string)$secureParamValue,
             $sql
         );
       }

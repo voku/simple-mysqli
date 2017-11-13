@@ -8,7 +8,7 @@ use voku\db\Helper;
 /**
  * Class SimpleHelperTest
  */
-class SimpleHelperTest extends PHPUnit_Framework_TestCase
+class SimpleHelperTest extends \PHPUnit\Framework\TestCase
 {
 
   /**

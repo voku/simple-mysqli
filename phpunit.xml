@@ -10,7 +10,6 @@
          syntaxCheck="false"
          bootstrap="tests/bootstrap.php"
          verbose="true"
-         tap="true"
          testdox="true"
 >
     <testsuite name="Simple MySQLi Test Suite">

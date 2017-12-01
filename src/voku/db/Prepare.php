@@ -33,7 +33,7 @@ final class Prepare extends \mysqli_stmt
   /**
    * @var array $_boundParams - array of arrays containing values that have been bound to the query as parameters
    */
-  private $_boundParams = array();
+  private $_boundParams = [];
 
   /**
    * @var DB
@@ -77,7 +77,7 @@ final class Prepare extends \mysqli_stmt
    */
   private function _buildArguments(): array
   {
-    $arguments = array();
+    $arguments = [];
     $arguments[0] = '';
 
     foreach ($this->_boundParams as $param) {
@@ -114,7 +114,7 @@ final class Prepare extends \mysqli_stmt
       $valueForSqlWithBoundParameters = $value;
     }
 
-    return array($value, $valueForSqlWithBoundParameters);
+    return [$value, $valueForSqlWithBoundParameters];
   }
 
   /**
@@ -197,10 +197,10 @@ final class Prepare extends \mysqli_stmt
     $arg = 1;
     foreach ($types as $typeInner) {
       $val =& $args[$arg];
-      $this->_boundParams[] = array(
+      $this->_boundParams[] = [
           'type'  => $typeInner,
           'value' => &$val,
-      );
+      ];
       $arg++;
     }
 
@@ -232,7 +232,7 @@ final class Prepare extends \mysqli_stmt
   {
     if ($this->_use_bound_parameters_interpolated === true) {
       $this->interpolateQuery();
-      \call_user_func_array(array('parent', 'bind_param'), $this->_buildArguments());
+      \call_user_func_array(['parent', 'bind_param'], $this->_buildArguments());
     }
 
     $query_start_time = \microtime(true);
@@ -314,7 +314,7 @@ final class Prepare extends \mysqli_stmt
    * @return bool <p>false on error</p>
    * @since 5.0
    */
-  public function prepare(string $query): bool
+  public function prepare($query)
   {
     $this->_sql = $query;
     $this->_sql_with_bound_parameters = $query;

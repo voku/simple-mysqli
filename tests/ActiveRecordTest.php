@@ -337,7 +337,7 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
   public function testFetchByIds($contact)
   {
     $user = new FoobarUser();
-    $users = $user->fetchByIds(array($contact->user_id, $contact->user_id - 1));
+    $users = $user->fetchByIds([$contact->user_id, $contact->user_id - 1]);
 
     $found = false;
     $userForTesting = null;
@@ -363,7 +363,7 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
   public function testFetchByIdsFail($contact)
   {
     $user = new FoobarUser();
-    $users = $user->fetchByIds(array(-1, -2));
+    $users = $user->fetchByIds([-1, -2]);
 
     $found = false;
     $userForTesting = null;
@@ -384,7 +384,7 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
   public function testFetchByIdsPrimaryKeyAsArrayIndex($contact)
   {
     $user = new FoobarUser();
-    $users = $user->fetchByIdsPrimaryKeyAsArrayIndex(array($contact->user_id, $contact->user_id - 1));
+    $users = $user->fetchByIdsPrimaryKeyAsArrayIndex([$contact->user_id, $contact->user_id - 1]);
 
     $found = false;
     $userForTesting = null;
@@ -460,16 +460,16 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
     $user = new FoobarUser();
     $user->isNotNull('id')->eq('id', 1)->lt('id', 2)->gt('id', 0)->fetch();
     self::assertGreaterThan(0, $user->id);
-    self::assertSame(array(), $user->getDirty());
+    self::assertSame([], $user->getDirty());
     $user->name = 'testname';
-    self::assertSame(array('name' => 'testname'), $user->getDirty());
+    self::assertSame(['name' => 'testname'], $user->getDirty());
     $name = $user->name;
     self::assertSame('testname', $name);
     unset($user->name);
-    self::assertSame(array(), $user->getDirty());
+    self::assertSame([], $user->getDirty());
     $user->reset()->isNotNull('id')->eq('id', 'aaa"')->wrap()->lt('id', 2)->gt('id', 0)->wrap('OR')->fetch();
     self::assertGreaterThan(0, $user->id);
-    $user->reset()->isNotNull('id')->between('id', array(0, 2))->fetch();
+    $user->reset()->isNotNull('id')->between('id', [0, 2])->fetch();
     self::assertGreaterThan(0, $user->id);
   }
 

@@ -12,11 +12,11 @@ use voku\db\exceptions\FetchingException;
  * A simple implement of active record via Arrayy.
  *
  * @method $this select(string $dbProperty)
- * @method $this eq(string $dbProperty, string|int|null $value = null)
+ * @method $this eq(string $dbProperty, string | int | null $value = null)
  * @method $this from(string $table)
  * @method $this where(string $where)
  * @method $this having(string $having)
- * @method $this limit(int $start, int|null $end = null)
+ * @method $this limit(int $start, int | null $end = null)
  *
  * @method $this equal(string $dbProperty, string $value)
  * @method $this notEqual(string $dbProperty, string $value)
@@ -59,7 +59,7 @@ abstract class ActiveRecord extends Arrayy
    *   WHERE user.id IS NOT NULL AND user.id = :ph1
    * </pre>
    */
-  protected static $operators = array(
+  protected static $operators = [
       'equal'              => '=',
       'eq'                 => '=',
       'notequal'           => '<>',
@@ -81,7 +81,7 @@ abstract class ActiveRecord extends Arrayy
       'isnull'             => 'IS NULL',
       'isnotnull'          => 'IS NOT NULL',
       'notnull'            => 'IS NOT NULL',
-  );
+  ];
 
   /**
    * @var array <p>Part of the SQL, mapping the function name and the operator to build SQL Part.</p>
@@ -98,7 +98,7 @@ abstract class ActiveRecord extends Arrayy
    *      ORDER BY id DESC, name ASC LIMIT 2,1
    * </pre>
    */
-  protected $sqlParts = array(
+  protected $sqlParts = [
       'select' => 'SELECT',
       'from'   => 'FROM',
       'set'    => 'SET',
@@ -108,13 +108,13 @@ abstract class ActiveRecord extends Arrayy
       'order'  => 'ORDER BY',
       'limit'  => 'LIMIT',
       'top'    => 'TOP',
-  );
+  ];
 
   /**
    * @var array <p>The default sql expressions values.</p>
    */
-  protected $defaultSqlExpressions = array(
-      'expressions' => array(),
+  protected $defaultSqlExpressions = [
+      'expressions' => [],
       'wrap'        => false,
       'select'      => null,
       'insert'      => null,
@@ -129,12 +129,12 @@ abstract class ActiveRecord extends Arrayy
       'limit'       => null,
       'order'       => null,
       'group'       => null,
-  );
+  ];
 
   /**
    * @var array <p>Stored the Expressions of the SQL.</p>
    */
-  protected $sqlExpressions = array();
+  protected $sqlExpressions = [];
 
   /**
    * @var string <p>The table name in database.</p>
@@ -150,7 +150,7 @@ abstract class ActiveRecord extends Arrayy
    * @var array <p>Stored the dirty data of this object, when call "insert" or "update" function, will write this data
    *      into database.</p>
    */
-  protected $dirty = array();
+  protected $dirty = [];
 
   /**
    * @var bool
@@ -160,12 +160,12 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @var array <p>Stored the params will bind to SQL when call DB->query().</p>
    */
-  protected $params = array();
+  protected $params = [];
 
   /**
    * @var ActiveRecordExpressions[] <p>Stored the configure of the relation, or target of the relation.</p>
    */
-  protected $relations = array();
+  protected $relations = [];
 
   /**
    * @var int <p>The count of bind params, using this count and const "PREFIX" (:ph) to generate place holder in
@@ -240,8 +240,8 @@ abstract class ActiveRecord extends Arrayy
    */
   public function reset()
   {
-    $this->params = array();
-    $this->sqlExpressions = array();
+    $this->params = [];
+    $this->sqlExpressions = [];
 
     return $this;
   }
@@ -253,7 +253,7 @@ abstract class ActiveRecord extends Arrayy
    */
   public function resetDirty()
   {
-    $this->dirty = array();
+    $this->dirty = [];
 
     return $this;
   }
@@ -289,7 +289,7 @@ abstract class ActiveRecord extends Arrayy
 
     return self::query(
         $this->limit(1)->_buildSql(
-            array(
+            [
                 'select',
                 'from',
                 'join',
@@ -298,7 +298,7 @@ abstract class ActiveRecord extends Arrayy
                 'having',
                 'order',
                 'limit',
-            )
+            ]
         ),
         $this->params,
         $this->reset(),
@@ -316,7 +316,7 @@ abstract class ActiveRecord extends Arrayy
     $list = $this->fetchByQuery($query);
 
     if (!$list || empty($list)) {
-      return array();
+      return [];
     }
 
     return $list;
@@ -385,7 +385,7 @@ abstract class ActiveRecord extends Arrayy
   public function fetchByIds(array $ids): array
   {
     if (empty($ids)) {
-      return array();
+      return [];
     }
 
     $list = $this->fetchAll($ids);
@@ -393,7 +393,7 @@ abstract class ActiveRecord extends Arrayy
       return $list;
     }
 
-    return array();
+    return [];
   }
 
   /**
@@ -411,7 +411,7 @@ abstract class ActiveRecord extends Arrayy
 
     if (\is_array($list)) {
       if (\count($list) === 0) {
-        return array();
+        return [];
       }
 
       return $list;
@@ -431,7 +431,7 @@ abstract class ActiveRecord extends Arrayy
   {
     $result = $this->fetchAll($ids);
 
-    $resultNew = array();
+    $resultNew = [];
     foreach ($result as $item) {
       $resultNew[$item->getPrimaryKey()] = $item;
     }
@@ -457,7 +457,7 @@ abstract class ActiveRecord extends Arrayy
 
     return self::query(
         $this->_buildSql(
-            array(
+            [
                 'select',
                 'from',
                 'join',
@@ -466,7 +466,7 @@ abstract class ActiveRecord extends Arrayy
                 'having',
                 'orderBy',
                 'limit',
-            )
+            ]
         ),
         $this->params,
         $this->reset()
@@ -482,11 +482,11 @@ abstract class ActiveRecord extends Arrayy
   {
     $return = self::execute(
         $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
-            array(
+            [
                 'delete',
                 'from',
                 'where',
-            )
+            ]
         ),
         $this->params
     );
@@ -534,11 +534,11 @@ abstract class ActiveRecord extends Arrayy
 
     $result = self::execute(
         $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
-            array(
+            [
                 'update',
                 'set',
                 'where',
-            )
+            ]
         ),
         $this->params
     );
@@ -582,19 +582,19 @@ abstract class ActiveRecord extends Arrayy
 
     $value = $this->_filterParam($this->dirty);
     $this->insert = new ActiveRecordExpressions(
-        array(
+        [
             'operator' => 'INSERT INTO ' . $this->table,
-            'target'   => new ActiveRecordExpressionsWrap(array('target' => \array_keys($this->dirty))),
-        )
+            'target'   => new ActiveRecordExpressionsWrap(['target' => \array_keys($this->dirty)]),
+        ]
     );
     $this->values = new ActiveRecordExpressions(
-        array(
+        [
             'operator' => 'VALUES',
-            'target'   => new ActiveRecordExpressionsWrap(array('target' => $value)),
-        )
+            'target'   => new ActiveRecordExpressionsWrap(['target' => $value]),
+        ]
     );
 
-    $result = self::execute($this->_buildSql(array('insert', 'values')), $this->params);
+    $result = self::execute($this->_buildSql(['insert', 'values']), $this->params);
     if ($result !== false) {
       $this->{$this->primaryKeyName} = $result;
 
@@ -641,7 +641,7 @@ abstract class ActiveRecord extends Arrayy
    *                                      "false" on error
    *                                      </p>
    */
-  public static function execute(string $sql, array $param = array())
+  public static function execute(string $sql, array $param = [])
   {
     if (!self::$db instanceof DB) {
       self::$db = DB::getInstance();
@@ -653,24 +653,24 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to query one record by sql and params.
    *
-   * @param string            $sql    <p>
+   * @param string     $sql           <p>
    *                                  The SQL query to find the record.
    *                                  </p>
-   * @param array             $param  <p>
+   * @param array      $param         <p>
    *                                  The param will be bind to the $sql query.
    *                                  </p>
-   * @param null|\self $obj    <p>
+   * @param null|\self $obj           <p>
    *                                  The object, if find record in database, we will assign the attributes into
    *                                  this object.
    *                                  </p>
-   * @param bool              $single <p>
+   * @param bool       $single        <p>
    *                                  If set to true, we will find record and fetch in current object, otherwise
    *                                  will find all records.
    *                                  </p>
    *
    * @return bool|$this|array
    */
-  public static function query(string $sql, array $param = array(), self $obj = null, bool $single = false)
+  public static function query(string $sql, array $param = [], self $obj = null, bool $single = false)
   {
     $result = self::execute($sql, $param);
 
@@ -729,7 +729,7 @@ abstract class ActiveRecord extends Arrayy
     $this->relations[$name] = $obj;
     if (isset($relation[3]) && \is_array($relation[3])) {
       foreach ((array)$relation[3] as $func => $args) {
-        \call_user_func_array(array($obj, $func), (array)$args);
+        \call_user_func_array([$obj, $func], (array)$args);
       }
     }
 
@@ -826,9 +826,9 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return string
    */
-  protected function _buildSql(array $sqls = array()): string
+  protected function _buildSql(array $sqls = []): string
   {
-    \array_walk($sqls, array($this, '_buildSqlCallback'), $this);
+    \array_walk($sqls, [$this, '_buildSqlCallback'], $this);
 
     // DEBUG
     //echo 'SQL: ', implode(' ', $sqls), "\n", 'PARAMS: ', implode(', ', $this->params), "\n";
@@ -847,7 +847,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @throws ActiveRecordException
    */
-  public function __call(string $name, array $args = array())
+  public function __call(string $name, array $args = [])
   {
     if (!self::$db instanceof DB) {
       self::$db = DB::getInstance();
@@ -867,13 +867,13 @@ abstract class ActiveRecord extends Arrayy
     } elseif (\array_key_exists($nameTmp = \str_replace('by', '', $nameTmp), $this->sqlParts)) {
 
       $this->{$name} = new ActiveRecordExpressions(
-          array(
+          [
               'operator' => $this->sqlParts[$nameTmp],
               'target'   => \implode(', ', $args),
-          )
+          ]
       );
 
-    } elseif (\is_callable($callback = array(self::$db, $name))) {
+    } elseif (\is_callable($callback = [self::$db, $name])) {
 
       return \call_user_func_array($callback, $args);
 
@@ -901,14 +901,14 @@ abstract class ActiveRecord extends Arrayy
       if (\is_array($this->expressions) && \count($this->expressions) > 0) {
         $this->_addCondition(
             new ActiveRecordExpressionsWrap(
-                array(
+                [
                     'delimiter' => ' ',
                     'target'    => $this->expressions,
-                )
+                ]
             ), 'or' === \strtolower($op) ? 'OR' : 'AND'
         );
       }
-      $this->expressions = array();
+      $this->expressions = [];
     } else {
       $this->wrap = true;
     }
@@ -950,16 +950,16 @@ abstract class ActiveRecord extends Arrayy
   {
     $value = $this->_filterParam($value);
     $exp = new ActiveRecordExpressions(
-        array(
+        [
             'source'   => ('where' == $name ? $this->table . '.' : '') . $field,
             'operator' => $operator,
             'target'   => \is_array($value)
                 ? new ActiveRecordExpressionsWrap(
                     'between' === \strtolower($operator)
-                        ? array('target' => $value, 'start' => ' ', 'end' => ' ', 'delimiter' => ' AND ')
-                        : array('target' => $value)
+                        ? ['target' => $value, 'start' => ' ', 'end' => ' ', 'delimiter' => ' AND ']
+                        : ['target' => $value]
                 ) : $value,
-        )
+        ]
     );
     if ($exp) {
       if (!$this->wrap) {
@@ -982,13 +982,13 @@ abstract class ActiveRecord extends Arrayy
   public function join($table, $on, $type = 'LEFT')
   {
     $this->join = new ActiveRecordExpressions(
-        array(
+        [
             'source'   => $this->join ?: '',
             'operator' => $type . ' JOIN',
             'target'   => new ActiveRecordExpressions(
-                array('source' => $table, 'operator' => 'ON', 'target' => $on)
+                ['source' => $table, 'operator' => 'ON', 'target' => $on]
             ),
-        )
+        ]
     );
 
     return $this;
@@ -1007,9 +1007,9 @@ abstract class ActiveRecord extends Arrayy
         ||
         \count($this->expressions) === 0
     ) {
-      $this->expressions = array($exp);
+      $this->expressions = [$exp];
     } else {
-      $this->expressions[] = new ActiveRecordExpressions(array('operator' => $operator, 'target' => $exp));
+      $this->expressions[] = new ActiveRecordExpressions(['operator' => $operator, 'target' => $exp]);
     }
   }
 
@@ -1024,14 +1024,14 @@ abstract class ActiveRecord extends Arrayy
   protected function _addCondition($exp, $operator, $name = 'where')
   {
     if (!$this->{$name}) {
-      $this->{$name} = new ActiveRecordExpressions(array('operator' => \strtoupper($name), 'target' => $exp));
+      $this->{$name} = new ActiveRecordExpressions(['operator' => \strtoupper($name), 'target' => $exp]);
     } else {
       $this->{$name}->target = new ActiveRecordExpressions(
-          array(
+          [
               'source'   => $this->{$name}->target,
               'operator' => $operator,
               'target'   => $exp,
-          )
+          ]
       );
     }
   }

@@ -18,24 +18,24 @@ class FoobarUser extends ActiveRecord
   public $table          = 'user';
   public $primaryKeyName = 'id';
 
-  public $relations      = array(
-      'contacts'              => array(
+  public $relations = [
+      'contacts'              => [
           self::HAS_MANY,
           'tests\FoobarContact',
-          'user_id'
-      ),
-      'contacts_with_backref' => array(
+          'user_id',
+      ],
+      'contacts_with_backref' => [
           self::HAS_MANY,
           'tests\FoobarContact',
           'user_id',
           null,
-          'user'
-      ),
-      'contact'         => array(
+          'user',
+      ],
+      'contact'               => [
           self::HAS_ONE,
           'tests\FoobarContact',
           'user_id',
-          array('where' => '1', 'orderBy' => 'id desc'),
-      ),
-  );
+          ['where' => '1', 'orderBy' => 'id desc'],
+      ],
+  ];
 }

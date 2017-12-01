@@ -130,7 +130,7 @@ class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     $new_page_id = $prepare->execute();
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $new_page_id]);
     $result = $resultSelect->fetchArray();
 
     $expectedSql = 'INSERT INTO test_page 
@@ -154,7 +154,7 @@ class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     $new_page_id = $prepare->execute();
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $new_page_id]);
     $result = $resultSelect->fetchArray();
 
     $expectedSql = 'INSERT INTO test_page 
@@ -178,7 +178,7 @@ class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     $new_page_id = $prepare->execute();
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $new_page_id]);
     $result = $resultSelect->fetchArray();
 
     $expectedSql = 'INSERT INTO test_page 
@@ -195,10 +195,10 @@ class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
   public function testSelectWithBindParamHelper()
   {
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new123123',
         'page_type'     => 'ö\'ä"ü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert[0] = $this->db->insert($this->tableName, $data);
@@ -238,10 +238,10 @@ class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
   public function testSelectWithBindParam()
   {
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new123123',
         'page_type'     => 'ö\'ä"ü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert[0] = $this->db->insert($this->tableName, $data);
@@ -298,7 +298,7 @@ class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     $new_page_id = $prepare->execute();
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $new_page_id]);
     $result = $resultSelect->fetchArray();
 
     $expectedSql = 'INSERT INTO test_page 
@@ -333,7 +333,7 @@ class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     $new_page_id = $prepare->execute();
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $new_page_id]);
     $result = $resultSelect->fetchArray();
 
     self::assertSame($new_page_id, $result['page_id']);
@@ -350,7 +350,7 @@ class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     $new_page_id = $prepare->execute();
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $new_page_id));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $new_page_id]);
     $result = $resultSelect->fetchArray();
 
     self::assertSame($new_page_id, $result['page_id']);
@@ -378,7 +378,7 @@ class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     $affected_rows = $prepare->execute();
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $affected_rows));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $affected_rows]);
     $result = $resultSelect->fetchArray();
 
     $expectedSql = 'UPDATE test_page 
@@ -403,7 +403,7 @@ class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     $affected_rows = $prepare->execute();
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $affected_rows));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $affected_rows]);
     $result = $resultSelect->fetchArray();
 
     $expectedSql = 'UPDATE test_page 

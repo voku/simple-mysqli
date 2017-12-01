@@ -120,8 +120,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     }
 
     // init
-    static $FIELDS_CACHE = array();
-    static $TYPES_CACHE = array();
+    static $FIELDS_CACHE = [];
+    static $TYPES_CACHE = [];
 
     $result_hash = \spl_object_hash($this->_result);
 
@@ -287,7 +287,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function fetchAll(): array
   {
-    $return = array();
+    $return = [];
 
     if ($this->_default_result_type === 'object') {
       $return = $this->fetchAllObject();
@@ -308,7 +308,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function fetchAllArray(): array
   {
     // init
-    $data = array();
+    $data = [];
 
     if (
         $this->_result
@@ -334,7 +334,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function fetchAllArrayy(): Arrayy
   {
     // init
-    $data = array();
+    $data = [];
 
     if (
         $this->_result
@@ -385,11 +385,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   {
 
     if ($this->is_empty()) {
-      return array();
+      return [];
     }
 
     // init
-    $data = array();
+    $data = [];
     $this->reset();
 
     if ($class && \is_object($class)) {
@@ -452,7 +452,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     }
 
     if ($row === null) {
-      return array();
+      return [];
     }
 
     return false;
@@ -481,7 +481,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function fetchArrayPair(string $key, string $value): array
   {
-    $arrayPair = array();
+    $arrayPair = [];
     $data = $this->fetchAllArray();
 
     foreach ($data as $_row) {
@@ -561,7 +561,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     // -- return as array -->
 
-    $columnData = array();
+    $columnData = [];
 
     $data = $this->fetchAllArray();
 
@@ -700,7 +700,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function fetchGroups(string $group, string $column = null): array
   {
     // init
-    $groups = array();
+    $groups = [];
     $pos = $this->current_row;
 
     foreach ($this as $row) {
@@ -737,7 +737,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function fetchPairs(string $key, string $column = null): array
   {
     // init
-    $pairs = array();
+    $pairs = [];
     $pos = $this->current_row;
 
     foreach ($this as $row) {
@@ -774,8 +774,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function fetchTranspose(string $column = null)
   {
     // init
-    $keys = null !== $column ? $this->fetchAllColumn($column) : array();
-    $rows = array();
+    $keys = null !== $column ? $this->fetchAllColumn($column) : [];
+    $rows = [];
     $pos = $this->current_row;
 
     foreach ($this as $row) {
@@ -1086,7 +1086,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function slice(int $offset = 0, int $length = null, bool $preserve_keys = false): array
   {
     // init
-    $slice = array();
+    $slice = [];
 
     if ($offset < 0) {
       if (\abs($offset) > $this->num_rows) {

@@ -16,29 +16,30 @@ class SimpleResultTest extends \PHPUnit\Framework\TestCase
   {
     $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, true);
 
-    $this->db->query('DROP TABLE IF EXISTS `post` ');
+    $this->db->query('DROP TABLE IF EXISTS post ');
 
-    $sql =<<<SQL
-CREATE TABLE `post` (
-    `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-    `title` varchar(255) NOT NULL DEFAULT '',
-    `body` text NOT NULL,
-    `comments_count` int(11) NOT NULL DEFAULT 0,
-    `when` datetime DEFAULT NULL,
-    PRIMARY KEY (`id`)
+    $sql = <<<SQL
+CREATE TABLE post (
+    id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL DEFAULT '',
+    body TEXT NOT NULL,
+    comments_count INT(11) NOT NULL DEFAULT 0,
+    `when` DATETIME DEFAULT NULL,
+    PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 SQL;
     $this->db->query($sql);
 
-    $this->db->query("INSERT INTO `post` (`title`, `body`, `when`) VALUES ('Title #1', 'Body #1', NOW())");
-    $this->db->query("INSERT INTO `post` (`title`, `body`, `when`) VALUES ('Title #2', 'Body #2', NOW())");
-    $this->db->query("INSERT INTO `post` (`title`, `body`, `when`) VALUES ('Title #3', 'Body #3', NOW())");
+    $this->db->query("INSERT INTO post (title, body, `when`) VALUES ('Title #1', 'Body #1', NOW())");
+    $this->db->query("INSERT INTO post (title, body, `when`) VALUES ('Title #2', 'Body #2', NOW())");
+    $this->db->query("INSERT INTO post (title, body, `when`) VALUES ('Title #3', 'Body #3', NOW())");
   }
 
   public function testResult()
   {
-    $result = $this->db->query('SELECT * FROM `post` ORDER BY `id` ASC');
+    $result = $this->db->query('SELECT * FROM post ORDER BY id ASC');
     self::assertTrue($result instanceof Result);
+
     return $result;
   }
 
@@ -54,6 +55,7 @@ SQL;
     $result->seek();
     self::assertEquals(1, $result->fetchCallable(null, 'id'));
   }
+
   /**
    * @depends testResult
    *
@@ -66,7 +68,7 @@ SQL;
 
   public function testSeek3()
   {
-    $result = $this->db->query('SELECT * FROM `post` WHERE id > 100');
+    $result = $this->db->query('SELECT * FROM post WHERE id > 100');
     self::assertFalse($result->seek());
   }
 
@@ -139,7 +141,7 @@ SQL;
     $transposed = $result->fetchTranspose('id');
     foreach ($transposed as $column => $rows) {
       self::assertEquals(3, count($rows));
-      self::assertEquals(array(1,2,3), array_keys($rows));
+      self::assertEquals([1, 2, 3], array_keys($rows));
     }
   }
 
@@ -175,7 +177,7 @@ SQL;
     }
 
     $groups = $result->fetchGroups('id', 'title');
-    self::assertEquals(array(1 => array('Title #1'), 2 => array('Title #2'), 3 => array('Title #3')), $groups);
+    self::assertEquals([1 => ['Title #1'], 2 => ['Title #2'], 3 => ['Title #3']], $groups);
   }
 
   /**
@@ -188,9 +190,10 @@ SQL;
     self::assertTrue(is_array($result->first()));
     self::assertEquals(1, $result->first('id'));
   }
+
   public function testFirst2()
   {
-    $result = $this->db->query('SELECT * FROM `post` WHERE id > 100');
+    $result = $this->db->query('SELECT * FROM post WHERE id > 100');
     self::assertNull($result->first());
   }
 
@@ -204,9 +207,10 @@ SQL;
     self::assertTrue(is_array($result->last()));
     self::assertEquals(3, $result->last('id'));
   }
+
   public function testLast2()
   {
-    $result = $this->db->query('SELECT * FROM `post` WHERE id > 100');
+    $result = $this->db->query('SELECT * FROM post WHERE id > 100');
     self::assertNull($result->last());
   }
 
@@ -332,28 +336,32 @@ SQL;
 
   public function testInvokeV1()
   {
-    $result = $this->db->query('SELECT * FROM `post`');
+    $result = $this->db->query('SELECT * FROM post');
     self::assertTrue($result() instanceof \MySQLi_Result);
-    $ids = array();
-    $result(function ($result) use (&$ids) {
-      while ($row = mysqli_fetch_assoc($result)) {
-        $ids[] = $row['id'];
-      }
-    });
+    $ids = [];
+    $result(
+        function ($result) use (&$ids) {
+          while ($row = mysqli_fetch_assoc($result)) {
+            $ids[] = $row['id'];
+          }
+        }
+    );
     self::assertEquals(3, count($ids));
   }
 
   public function testInvokeV2()
   {
     $db = $this->db;
-    $ids = array();
+    $ids = [];
 
-    $result = $db('SELECT * FROM `post`');
-    $result(function ($result) use (&$ids) {
-      while ($row = mysqli_fetch_assoc($result)) {
-        $ids[] = $row['id'];
-      }
-    });
+    $result = $db('SELECT * FROM post');
+    $result(
+        function ($result) use (&$ids) {
+          while ($row = mysqli_fetch_assoc($result)) {
+            $ids[] = $row['id'];
+          }
+        }
+    );
     self::assertEquals(3, count($ids));
   }
 
@@ -364,9 +372,11 @@ SQL;
     self::assertFalse($row instanceof \stdClass);
     self::assertSame('Title #1', $row['title']);
 
-    $result->map(function ($row) {
-      return (object) $row;
-    });
+    $result->map(
+        function ($row) {
+          return (object)$row;
+        }
+    );
     $row = $result->fetchCallable(0);
     self::assertTrue($row instanceof \stdClass);
     self::assertSame('Title #1', $row->title);

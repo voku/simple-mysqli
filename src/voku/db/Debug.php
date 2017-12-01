@@ -17,7 +17,7 @@ class Debug
   /**
    * @var array
    */
-  private $_errors = array();
+  private $_errors = [];
 
   /**
    * @var bool
@@ -116,7 +116,7 @@ class Debug
    */
   public function clearErrors(): bool
   {
-    $this->_errors = array();
+    $this->_errors = [];
 
     return true;
   }
@@ -137,12 +137,12 @@ class Debug
     $fileInfo = $this->getFileAndLineFromSql();
 
     $this->logger(
-        array(
+        [
             'error',
             '<strong>' . \date(
                 'd. m. Y G:i:s'
             ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . ') (sql-error):</strong> ' . $error . '<br>',
-        )
+        ]
     );
 
     $this->_errors[] = $error;
@@ -195,7 +195,7 @@ class Debug
   private function getFileAndLineFromSql(): array
   {
     // init
-    $return = array();
+    $return = [];
     $file = '';
     $line = '';
 
@@ -307,11 +307,11 @@ class Debug
     $fileInfo = $this->getFileAndLineFromSql();
 
     return $this->logger(
-        array(
+        [
             $logLevel,
             '<strong>' . \date('d. m. Y G:i:s') . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
             'sql',
-        )
+        ]
     );
   }
 
@@ -373,24 +373,24 @@ class Debug
 
       if ($priority === 3) {
         $this->logger(
-            array(
+            [
                 'debug',
                 $subject . ' | ' . $htmlBody,
-            )
+            ]
         );
       } elseif ($priority > 3) {
         $this->logger(
-            array(
+            [
                 'error',
                 $subject . ' | ' . $htmlBody,
-            )
+            ]
         );
       } elseif ($priority < 3) {
         $this->logger(
-            array(
+            [
                 'info',
                 $subject . ' | ' . $htmlBody,
-            )
+            ]
         );
       }
 

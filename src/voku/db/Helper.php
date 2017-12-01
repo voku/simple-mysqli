@@ -17,12 +17,12 @@ class Helper
   /**
    * Optimize tables
    *
-   * @param array   $tables database table names
+   * @param array   $tables       database table names
    * @param DB|null $dbConnection <p>Use <strong>null</strong> to get your first singleton instance.</p>
    *
    * @return int
    */
-  public static function optimizeTables(array $tables = array(), DB $dbConnection = null): int
+  public static function optimizeTables(array $tables = [], DB $dbConnection = null): int
   {
     if ($dbConnection === null) {
       $dbConnection = DB::getInstance();
@@ -45,12 +45,12 @@ class Helper
   /**
    * Repair tables
    *
-   * @param array $tables database table names
+   * @param array   $tables       database table names
    * @param DB|null $dbConnection <p>Use <strong>null</strong> to get your first singleton instance.</p>
    *
    * @return int
    */
-  public static function repairTables(array $tables = array(), DB $dbConnection = null): int
+  public static function repairTables(array $tables = [], DB $dbConnection = null): int
   {
     if ($dbConnection === null) {
       $dbConnection = DB::getInstance();
@@ -144,13 +144,13 @@ class Helper
    * @param string      $searchString
    * @param string      $searchFieldName
    * @param string      $idFieldName
-   * @param string      $language <p>en, de, fr</p>
+   * @param string      $language     <p>en, de, fr</p>
    * @param string      $table
    * @param array       $whereArray
    * @param DB|null     $dbConnection <p>use <strong>null</strong> if you will use the current database-connection</p>
    * @param null|string $databaseName <p>use <strong>null</strong> if you will use the current database</p>
-   * @param bool        $useCache use cache?
-   * @param int         $cacheTTL cache-ttl in seconds
+   * @param bool        $useCache     use cache?
+   * @param int         $cacheTTL     cache-ttl in seconds
    *
    * @return array
    */
@@ -167,7 +167,7 @@ class Helper
       $debug = new Debug($dbConnection);
       $debug->displayError('Invalid table name, table name in empty.', false);
 
-      return array();
+      return [];
     }
 
     if ($idFieldName === null) {
@@ -210,10 +210,10 @@ class Helper
 
     // make sure the row exists
     if ($result->num_rows <= 0) {
-      return array();
+      return [];
     }
 
-    $dataToSearchIn = array();
+    $dataToSearchIn = [];
     /** @noinspection LoopWhichDoesNotLoopInspection */
     /** @noinspection PhpAssignmentInConditionInspection */
     while ($tmpArray = $result->fetchArray()) {
@@ -296,7 +296,7 @@ class Helper
    */
   public static function getDbFields(string $table, bool $useStaticCache = true, DB $dbConnection = null, string $databaseName = null): array
   {
-    static $DB_FIELDS_CACHE = array();
+    static $DB_FIELDS_CACHE = [];
 
     // use the static cache
     if (
@@ -308,7 +308,7 @@ class Helper
     }
 
     // init
-    $dbFields = array();
+    $dbFields = [];
 
     if ($dbConnection === null) {
       $dbConnection = DB::getInstance();
@@ -318,7 +318,7 @@ class Helper
       $debug = new Debug($dbConnection);
       $debug->displayError('Invalid table name, table name in empty.', false);
 
-      return array();
+      return [];
     }
 
     if ($databaseName) {
@@ -343,17 +343,17 @@ class Helper
   /**
    * Copy row within a DB table and making updates to the columns.
    *
-   * @param string  $table
-   * @param array   $whereArray
-   * @param array   $updateArray
-   * @param array   $ignoreArray
-   * @param DB|null $dbConnection <p>Use <strong>null</strong> to get your first singleton instance.</p>
+   * @param string      $table
+   * @param array       $whereArray
+   * @param array       $updateArray
+   * @param array       $ignoreArray
+   * @param DB|null     $dbConnection <p>Use <strong>null</strong> to get your first singleton instance.</p>
    * @param null|string $databaseName <p>use <strong>null</strong> if you will use the current database</p>
    *
    * @return bool|int "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
    *                   "false" on error
    */
-  public static function copyTableRow($table, array $whereArray, array $updateArray = array(), array $ignoreArray = array(), DB $dbConnection = null, $databaseName = null)
+  public static function copyTableRow($table, array $whereArray, array $updateArray = [], array $ignoreArray = [], DB $dbConnection = null, $databaseName = null)
   {
     // init
     $table = trim($table);
@@ -393,7 +393,7 @@ class Helper
       while ($tmpArray = $result->fetchArray()) {
 
         // re-build a new DB query and ignore some field-names
-        $bindings = array();
+        $bindings = [];
         $insert_keys = '';
         $insert_values = '';
 
@@ -421,6 +421,7 @@ class Helper
           VALUES 
           (' . $insert_values . ')
         ';
+
         return $dbConnection->query($new_query, $bindings);
       }
     }

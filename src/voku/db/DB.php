@@ -143,7 +143,7 @@ final class DB
    *                                      'cacert' => 'string (path)'<br>
    *                                      </p>
    */
-  private function __construct(string $hostname, string $username, string $password, string $database, $port, string $charset, bool $exit_on_error, bool $echo_on_error, string $logger_class_name, string $logger_level, array $extra_config = array())
+  private function __construct(string $hostname, string $username, string $password, string $database, $port, string $charset, bool $exit_on_error, bool $echo_on_error, string $logger_class_name, string $logger_level, array $extra_config = [])
   {
     $this->_debug = new Debug($this);
 
@@ -163,7 +163,7 @@ final class DB
 
     $this->connect();
 
-    $this->mysqlDefaultTimeFunctions = array(
+    $this->mysqlDefaultTimeFunctions = [
       // Returns the current date.
       'CURDATE()',
       // CURRENT_DATE	| Synonyms for CURDATE()
@@ -190,7 +190,7 @@ final class DB
       'UTC_TIME()',
       // Returns the current UTC date and time.
       'UTC_TIMESTAMP()',
-    );
+    ];
   }
 
   /**
@@ -227,7 +227,7 @@ final class DB
    *                                      "false" on error
    *                                      </p>
    */
-  public function __invoke(string $sql = null, array $bindings = array())
+  public function __invoke(string $sql = null, array $bindings = [])
   {
     return null !== $sql ? $this->query($sql, $bindings) : $this;
   }
@@ -268,7 +268,7 @@ final class DB
    *
    * @return bool
    */
-  private function _loadConfig(string $hostname, string $username, string $password, string $database, $port, string $charset, bool $exit_on_error, bool $echo_on_error, string $logger_class_name, string $logger_level, array $extra_config = array()): bool
+  private function _loadConfig(string $hostname, string $username, string $password, string $database, $port, string $charset, bool $exit_on_error, bool $echo_on_error, string $logger_class_name, string $logger_level, array $extra_config = []): bool
   {
     $this->hostname = $hostname;
     $this->username = $username;
@@ -448,10 +448,10 @@ final class DB
       $quoteString = $this->quote_string(
           \trim(
               \str_ireplace(
-                  array(
+                  [
                       $_connector,
                       $_glueHelper,
-                  ),
+                  ],
                   '',
                   $_key
               )
@@ -459,7 +459,7 @@ final class DB
       );
 
       if (!\is_array($_value)) {
-        $_value = array($_value);
+        $_value = [$_value];
       }
 
       if (!$_glueHelper) {
@@ -509,7 +509,7 @@ final class DB
    *
    * @return array <p>with the keys -> 'sql', 'params'</p>
    */
-  private function _parseQueryParams(string $sql, array $params = array()): array
+  private function _parseQueryParams(string $sql, array $params = []): array
   {
     // is there anything to parse?
     if (
@@ -517,7 +517,7 @@ final class DB
         ||
         \count($params) === 0
     ) {
-      return array('sql' => $sql, 'params' => $params);
+      return ['sql' => $sql, 'params' => $params];
     }
 
     $parseKey = \md5(\uniqid((string)\mt_rand(), true));
@@ -538,7 +538,7 @@ final class DB
       $k++;
     }
 
-    return array('sql' => $sql, 'params' => $params);
+    return ['sql' => $sql, 'params' => $params];
   }
 
   /**
@@ -793,7 +793,7 @@ final class DB
    *
    * @return array <p>with the keys -> 'sql', 'params'</p>
    */
-  public function _parseQueryParamsByName(string $sql, array $params = array()): array
+  public function _parseQueryParamsByName(string $sql, array $params = []): array
   {
     // is there anything to parse?
     if (
@@ -801,7 +801,7 @@ final class DB
         ||
         \count($params) === 0
     ) {
-      return array('sql' => $sql, 'params' => $params);
+      return ['sql' => $sql, 'params' => $params];
     }
 
     $parseKey = \md5(\uniqid((string)\mt_rand(), true));
@@ -839,7 +839,7 @@ final class DB
       }
     }
 
-    return array('sql' => $sql, 'params' => $params);
+    return ['sql' => $sql, 'params' => $params];
   }
 
   /**
@@ -916,7 +916,7 @@ final class DB
         return null;
       }
 
-      $varCleaned = array();
+      $varCleaned = [];
       foreach ((array)$var as $key => $value) {
 
         $key = $this->escape($key, $stripe_non_utf8, $html_entity_decode);
@@ -1095,12 +1095,12 @@ final class DB
    *
    * @return \voku\db\DB
    */
-  public static function getInstance(string $hostname = '', string $username = '', string $password = '', string $database = '', $port = 3306, string $charset = 'utf8', bool $exit_on_error = true, bool $echo_on_error = true, string $logger_class_name = '', string $logger_level = '', array $extra_config = array()): self
+  public static function getInstance(string $hostname = '', string $username = '', string $password = '', string $database = '', $port = 3306, string $charset = 'utf8', bool $exit_on_error = true, bool $echo_on_error = true, string $logger_class_name = '', string $logger_level = '', array $extra_config = []): self
   {
     /**
      * @var $instance DB[]
      */
-    static $instance = array();
+    static $instance = [];
 
     /**
      * @var $firstInstance DB
@@ -1193,7 +1193,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public function insert(string $table, array $data = array(), string $databaseName = null)
+  public function insert(string $table, array $data = [], string $databaseName = null)
   {
     // init
     $table = \trim($table);
@@ -1284,7 +1284,7 @@ final class DB
     $this->_debug->logQuery($sql, $query_duration, 0);
 
     $returnTheResult = false;
-    $result = array();
+    $result = [];
 
     if ($resultTmp) {
       do {
@@ -1383,10 +1383,10 @@ final class DB
     $query = \array_shift($args);
     $query = \str_replace('?', '%s', $query);
     $args = \array_map(
-        array(
+        [
             $db,
             'escape',
-        ),
+        ],
         $args
     );
     \array_unshift($args, $query);
@@ -1613,7 +1613,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public function replace(string $table, array $data = array(), string $databaseName = null)
+  public function replace(string $table, array $data = [], string $databaseName = null)
   {
     // init
     $table = \trim($table);
@@ -1991,7 +1991,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public function update(string $table, array $data = array(), $where = '1=1', string $databaseName = null)
+  public function update(string $table, array $data = [], $where = '1=1', string $databaseName = null)
   {
     // init
     $table = \trim($table);

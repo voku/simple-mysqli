@@ -35,37 +35,37 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // sql - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => 'tpl_new_中',
         'page_type'     => 'lall',
-    );
+    ];
     $tmpId = $db_1->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
 
     // sql - true v2
-    $pageArray = array(
+    $pageArray = [
         'page_template' => 'this_is_a_new_test',
         'page_type'     => 'fooooo',
-    );
+    ];
     $tmpId = $db_1->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
 
     // update - true (affected_rows === 1)
-    $pageArray = array(
+    $pageArray = [
         'page_template' => 'this_is_a_new_test__update',
-    );
+    ];
     $affected_rows = $this->db->update($this->tableName, $pageArray, 'page_id = ' . (int)$tmpId);
     self::assertSame(1, $affected_rows);
 
     // update - true (affected_rows === 0)
-    $pageArray = array(
+    $pageArray = [
         'page_template' => 'this_is_a_new_test__update',
-    );
+    ];
     $affected_rows = $this->db->update($this->tableName, $pageArray, 'page_id = -1');
     self::assertSame(0, $affected_rows);
 
     // update - false
-    $false = $this->db->update($this->tableName, array(), 'page_id = ' . (int)$tmpId);
+    $false = $this->db->update($this->tableName, [], 'page_id = ' . (int)$tmpId);
     self::assertFalse($false);
 
   }
@@ -76,7 +76,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // insert - false
-    $false = $db_1->insert($this->tableName, array());
+    $false = $db_1->insert($this->tableName, []);
     $this->expectOutputRegex('/(.)*Invalid data for INSERT(.)*/');
     self::assertFalse($false);
   }
@@ -131,10 +131,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // insert - false
-    $pageArray = array(
+    $pageArray = [
         'page_template' => 'tpl_new_中',
         'page_type'     => 'lall',
-    );
+    ];
     $false = $db_1->insert('', $pageArray);
     self::assertFalse($false);
   }
@@ -145,7 +145,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
     // insert - false
-    $false = $db_1->insert($this->tableName, array());
+    $false = $db_1->insert($this->tableName, []);
     self::assertFalse($false);
   }
 
@@ -214,10 +214,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
   public function testInsertOnlyAndSimple()
   {
     // insert - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => '<p>foo</p>',
         'page_type'     => 'lallll',
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
   }
@@ -227,10 +227,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $html = file_get_contents(__DIR__ . '/fixtures/sample-simple-html.txt');
 
     // insert - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => $html,
         'page_type'     => 'lallll',
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
   }
@@ -238,10 +238,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
   public function testInsertBugPregReplace()
   {
     // insert - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
         'page_type'     => 'lall',
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
 
@@ -267,10 +267,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     ';
     $tmpId = $this->db->query(
         $sql,
-        array(
+        [
             '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
             '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
-        )
+        ]
     );
 
     // select - true
@@ -285,10 +285,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
     // insert - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => $html,
         'page_type'     => 'lallll',
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
 
@@ -301,10 +301,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
     // insert - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => $html,
         'page_type'     => 'lallll',
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
 
@@ -318,10 +318,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
     // insert - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => $html,
         'page_type'     => 'lallll',
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
 
@@ -381,10 +381,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $html = UTF8::clean(file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
     // insert - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => $html,
         'page_type'     => 'lall',
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
     self::assertTrue($tmpId > 0);
 
@@ -399,10 +399,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     require_once __DIR__ . '/Foobar.php';
 
     // insert - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => 'tpl_new_中',
         'page_type'     => 'lall',
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
 
     // insert - false
@@ -438,12 +438,12 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     /* @var $tmpPage Foobar */
     $tmpPage = $result->fetchObject(
         'Foobar',
-        array(
-            array(
+        [
+            [
                 'foo' => 1,
                 'bar' => 2,
-            ),
-        )
+            ],
+        ]
     );
 
     self::assertSame(1, $tmpPage->foo);
@@ -464,12 +464,12 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     /* @var $tmpPages Foobar[] */
     $tmpPages = $result->fetchAllObject(
         'Foobar',
-        array(
-            array(
+        [
+            [
                 'foo' => 1,
                 'bar' => 2,
-            ),
-        )
+            ],
+        ]
     );
 
     self::assertSame(1, $tmpPages[0]->foo);
@@ -490,13 +490,13 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('tpl_new_中', $tmpPages[0]->page_template);
 
     // update - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => 'tpl_update',
-    );
+    ];
     $this->db->update($this->tableName, $pageArray, 'page_id = ' . (int)$tmpId);
 
     // update - false
-    $false = $this->db->update($this->tableName, array(), 'page_id = ' . (int)$tmpId);
+    $false = $this->db->update($this->tableName, [], 'page_id = ' . (int)$tmpId);
     self::assertFalse($false);
 
     // update - false
@@ -517,11 +517,11 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('tpl_update', $tmpPage[0]->page_template);
 
     // replace - true
-    $data = array(
+    $data = [
         'page_id'       => 2,
         'page_template' => 'tpl_test',
         'page_type'     => 'öäü123',
-    );
+    ];
     $tmpId = $this->db->replace($this->tableName, $data);
 
     // replace - false
@@ -537,22 +537,22 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('tpl_test', $tmpPage[0]->page_template);
 
     // delete - true
-    $affected_rows = $this->db->delete($this->tableName, array('page_id' => $tmpId));
+    $affected_rows = $this->db->delete($this->tableName, ['page_id' => $tmpId]);
     self::assertSame(1, $affected_rows);
 
     // delete - true (but 0 affected_rows)
-    $affected_rows = $this->db->delete($this->tableName, array('page_id' => -1));
+    $affected_rows = $this->db->delete($this->tableName, ['page_id' => -1]);
     self::assertSame(0, $affected_rows);
 
     // delete - false
-    $false = $this->db->delete('', array('page_id' => $tmpId));
+    $false = $this->db->delete('', ['page_id' => $tmpId]);
     self::assertFalse($false);
 
     // insert - true
-    $pageArray = array(
+    $pageArray = [
         'page_template' => 'tpl_new_中',
         'page_type'     => 'lall',
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
 
     // delete - nothing
@@ -568,11 +568,11 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame(1, $false);
 
     // select - true
-    $result = $this->db->select($this->tableName, array('page_id' => 2));
+    $result = $this->db->select($this->tableName, ['page_id' => 2]);
     self::assertSame(0, $result->num_rows);
 
     $resultArray = $result->fetchArray();
-    self::assertSame(array(), $resultArray);
+    self::assertSame([], $resultArray);
 
     $resultArray = $result->fetchArrayy();
     self::assertEquals(new Arrayy(), $resultArray);
@@ -582,7 +582,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertTrue($result->num_rows > 0);
 
     // select - true (but empty)
-    $result = $this->db->select($this->tableName, array('page_id' => -1));
+    $result = $this->db->select($this->tableName, ['page_id' => -1]);
     self::assertSame(0, $result->num_rows);
 
     // select - false
@@ -590,14 +590,14 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertFalse($false);
 
     // select - false
-    $false = $this->db->select('', array('page_id' => 2));
+    $false = $this->db->select('', ['page_id' => 2]);
     self::assertFalse($false);
 
     // insert - true (float)
-    $pageArray = array(
+    $pageArray = [
         'page_template' => 'tpl_new_中',
         'page_type'     => (float)21.3123,
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
 
     // delete - true
@@ -605,10 +605,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame(1, $delete);
 
     // insert - true (int)
-    $pageArray = array(
+    $pageArray = [
         'page_template' => 'tpl_new_中',
         'page_type'     => (float)213123,
-    );
+    ];
     $tmpId = $this->db->insert($this->tableName, $pageArray);
 
     // delete - true
@@ -688,7 +688,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // ---
 
-    $object = new Arrayy(array('foo', 123, 'öäü'));
+    $object = new Arrayy(['foo', 123, 'öäü']);
 
     self::assertSame('foo,123,öäü', $this->db->escape($object));
 
@@ -702,14 +702,14 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // ---
 
-    $testArray = array(
+    $testArray = [
         'NOW()'                                  => 'NOW()',
         'fooo'                                   => 'fooo',
         123                                      => 123,
         'κόσμε'                                  => 'κόσμε',
         '&lt;abcd&gt;\'$1\'(&quot;&amp;2&quot;)' => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
         '&#246;&#228;&#252;'                     => '&#246;&#228;&#252;',
-    );
+    ];
 
     foreach ($testArray as $before => $after) {
       self::assertSame($after, $this->db->escape($before));
@@ -723,47 +723,47 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('NOW(),fooo,123,κόσμε,<abcd>\\\'$1\\\'(\"&2\"),öäü', $this->db->escape(array_keys($testArray), true, true, true));
 
     self::assertSame(
-        array(
+        [
             0 => 'NOW()',
             1 => 'fooo',
             2 => 123,
             3 => 'κόσμε',
             4 => '<abcd>\\\'$1\\\'(\"&2\")',
             5 => 'öäü',
-        ),
+        ],
         $this->db->escape(array_keys($testArray), false, true, false)
     );
     self::assertSame(
-        array(
+        [
             0 => 'NOW()',
             1 => 'fooo',
             2 => 123,
             3 => 'κόσμε',
             4 => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
             5 => '&#246;&#228;&#252;',
-        ),
+        ],
         $this->db->escape(array_keys($testArray), true, false, false)
     );
     self::assertSame(
-        array(
+        [
             0 => 'NOW()',
             1 => 'fooo',
             2 => 123,
             3 => 'κόσμε',
             4 => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
             5 => '&#246;&#228;&#252;',
-        ),
+        ],
         $this->db->escape(array_keys($testArray), false, false, false)
     );
     self::assertSame(
-        array(
+        [
             0 => 'NOW()',
             1 => 'fooo',
             2 => 123,
             3 => 'κόσμε',
             4 => '<abcd>\\\'$1\\\'(\"&2\")',
             5 => 'öäü',
-        ),
+        ],
         $this->db->escape(array_keys($testArray), true, true, false)
     );
 
@@ -777,10 +777,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     $this->db = DB::getInstance();
 
-    $data = array(
+    $data = [
         'page_template' => "tpl_test_'new2",
         'page_type'     => 1.1,
-    );
+    ];
 
     $newData = (array)$this->db->escape($data);
 
@@ -789,10 +789,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // ---
 
-    $data = array(
+    $data = [
         'page_template' => "tpl_test_'new2",
         'page_type'     => 1.1,
-    );
+    ];
 
     $newData = $this->db->escape($data, true, true, true);
 
@@ -800,10 +800,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // ---
 
-    $data = array(
+    $data = [
         'page_template' => "tpl_test_'new2",
         'page_type'     => '0111',
-    );
+    ];
 
     $newData = $this->db->escape($data, true, false, true);
 
@@ -811,10 +811,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // ---
 
-    $data = array(
+    $data = [
         'page_template' => "tpl_test_'new2",
         'page_type'     => '111',
-    );
+    ];
 
     $newData = $this->db->escape($data, true, false, true);
 
@@ -822,19 +822,19 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // ---
 
-    $data = array();
+    $data = [];
 
     $tested = $this->db->escape($data);
 
-    self::assertSame(array(), $tested);
+    self::assertSame([], $tested);
 
     // ---
 
-    $data = array('foo\'', 'bar"');
+    $data = ['foo\'', 'bar"'];
 
     $tested = $this->db->escape($data);
 
-    self::assertSame(array('foo\\\'', 'bar\"'), $tested);
+    self::assertSame(['foo\\\'', 'bar\"'], $tested);
 
     // ---
 
@@ -862,11 +862,11 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // ---
 
-    $data = array(true, false);
+    $data = [true, false];
 
     $tested = $this->db->escape($data);
 
-    self::assertSame(array(1, 0), $tested);
+    self::assertSame([1, 0], $tested);
 
     // ---
 
@@ -882,96 +882,96 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
   {
     $result = $this->invokeMethod(
         $this->db, '_parseQueryParamsByName',
-        array(
+        [
             'SELECT * FROM post WHERE id = :id',
-            array('id' => 1),
-        )
+            ['id' => 1],
+        ]
     );
     self::assertEquals(
         'SELECT * FROM post WHERE id = 1',
         $result['sql']
     );
     self::assertEquals(
-        array(),
+        [],
         $result['params']
     );
 
     $result = $this->invokeMethod(
         $this->db, '_parseQueryParamsByName',
-        array(
+        [
             'SELECT * FROM post WHERE id=:id',
-            array('id' => 1),
-        )
+            ['id' => 1],
+        ]
     );
     self::assertEquals(
         'SELECT * FROM post WHERE id=1',
         $result['sql']
     );
     self::assertEquals(
-        array(),
+        [],
         $result['params']
     );
 
     $result = $this->invokeMethod(
         $this->db, '_parseQueryParamsByName',
-        array(
+        [
             'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
-            array('id' => 1),
-        )
+            ['id' => 1],
+        ]
     );
     self::assertEquals(
         'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
         $result['sql']
     );
     self::assertEquals(
-        array(),
+        [],
         $result['params']
     );
 
     $result = $this->invokeMethod(
         $this->db, '_parseQueryParamsByName',
-        array(
+        [
             'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
-            array('id' => 1, 'foo' => 'bar'),
-        )
+            ['id' => 1, 'foo' => 'bar'],
+        ]
     );
     self::assertEquals(
         'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
         $result['sql']
     );
     self::assertEquals(
-        array('foo' => 'bar'),
+        ['foo' => 'bar'],
         $result['params']
     );
   }
 
   public function testConnector()
   {
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new',
-    );
-    $where = array(
+    ];
+    $where = [
         'page_id LIKE' => '1',
-    );
+    ];
 
     // will return the number of effected rows
     $resultUpdate = $this->db->update($this->tableName, $data, $where);
     self::assertSame(1, $resultUpdate);
 
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new2',
         'page_type'     => 'öäü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
     self::assertGreaterThan(1, $resultInsert);
 
-    $where = array(
+    $where = [
         'page_type ='        => 'öäü',
         'page_type NOT LIKE' => '%öäü123',
         'page_id ='          => $resultInsert,
-    );
+    ];
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchArray();
@@ -985,7 +985,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $resultSelectArray = $resultSelect->fetchArrayy()->clean()->getArray();
     self::assertSame('öäü', $resultSelectArray['page_type']);
 
-    $where = array(
+    $where = [
         'page_type ='  => 'öäü',
         'page_type <>' => 'öäü123',
         'page_id >'    => 0,
@@ -993,17 +993,17 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
         'page_id <'    => 1000000,
         'page_id <='   => 1000000,
         'page_id ='    => $resultInsert,
-    );
+    ];
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchArrayPair('page_type', 'page_type');
     self::assertSame('öäü', $resultSelectArray['öäü']);
 
-    $where = array(
+    $where = [
         'page_type LIKE'     => 'öäü',
         'page_type NOT LIKE' => 'öäü123',
         'page_id ='          => $resultInsert,
-    );
+    ];
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetch();
@@ -1050,10 +1050,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
   public function testTransactionFalse()
   {
 
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new3',
         'page_type'     => 'öäü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
@@ -1063,30 +1063,30 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $beginTransaction = $this->db->beginTransaction();
     self::assertTrue($beginTransaction);
 
-    $data = array(
+    $data = [
         'page_type' => 'lall',
-    );
-    $where = array(
+    ];
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
     $this->db->update($this->tableName, $data, $where);
 
-    $data = array(
+    $data = [
         'page_type' => 'lall',
         'page_lall' => 'öäü'
         // this will produce a mysql-error and a mysqli-rollback via "db->endTransaction()"
-    );
-    $where = array(
+    ];
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
     $this->db->update($this->tableName, $data, $where);
 
     // end - test a transaction
     $this->db->endTransaction();
 
-    $where = array(
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchAllArray();
@@ -1113,10 +1113,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
   public function testTransactionTrue()
   {
 
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new3',
         'page_type'     => 'öäü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
@@ -1125,29 +1125,29 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     // start - test a transaction
     $this->db->startTransaction();
 
-    $data = array(
+    $data = [
         'page_type' => 'lall',
-    );
-    $where = array(
+    ];
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
     $this->db->update($this->tableName, $data, $where);
 
-    $data = array(
+    $data = [
         'page_type'     => 'lall',
         'page_template' => 'öäü',
-    );
-    $where = array(
+    ];
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
     $this->db->update($this->tableName, $data, $where);
 
     // end - test a transaction
     $this->db->endTransaction();
 
-    $where = array(
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchAllArray();
@@ -1159,39 +1159,39 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     // start - test a transaction
     $this->db->beginTransaction();
 
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new4',
         'page_type'     => 'öäü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
     self::assertGreaterThan(1, $resultInsert);
 
-    $data = array(
+    $data = [
         'page_type' => 'lall',
-    );
-    $where = array(
+    ];
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
     $this->db->update($this->tableName, $data, $where);
 
-    $data = array(
+    $data = [
         'page_type' => 'lall',
         'page_lall' => 'öäü'
         // this will produce a mysql-error and a mysqli-rollback
-    );
-    $where = array(
+    ];
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
     $this->db->update($this->tableName, $data, $where);
 
     // end - test a transaction, with a rollback!
     $this->db->rollback();
 
-    $where = array(
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
     $resultSelect = $this->db->select($this->tableName, $where);
     self::assertSame(0, $resultSelect->num_rows);
   }
@@ -1201,39 +1201,39 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     // start - test a transaction
     $this->db->beginTransaction();
 
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new4',
         'page_type'     => 'öäü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
     self::assertGreaterThan(1, $resultInsert);
 
-    $data = array(
+    $data = [
         'page_type' => 'lall',
-    );
-    $where = array(
+    ];
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
     $this->db->update($this->tableName, $data, $where);
 
-    $data = array(
+    $data = [
         'page_type' => 'lall',
         'page_lall' => 'öäü'
         // this will produce a mysql-error and a mysqli-rollback
-    );
-    $where = array(
+    ];
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
     $this->db->update($this->tableName, $data, $where);
 
     // end - test a transaction, with a commit!
     $this->db->commit();
 
-    $where = array(
+    $where = [
         'page_id' => $resultInsert,
-    );
+    ];
     $resultSelect = $this->db->select($this->tableName, $where);
     self::assertSame(1, $resultSelect->num_rows);
   }
@@ -1254,19 +1254,19 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
   public function testFetchColumn()
   {
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new5',
         'page_type'     => 'öäü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
     self::assertGreaterThan(1, $resultInsert);
 
-    $dataV2 = array(
+    $dataV2 = [
         'page_template' => 'tpl_test_new5V2',
         'page_type'     => 'öäüV2',
-    );
+    ];
 
     // will return the auto-increment value of the new row (v2)
     $resultInsertV2 = $this->db->insert($this->tableName, $dataV2);
@@ -1274,7 +1274,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // ---
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $resultInsert]);
 
     $columnResult = $resultSelect->fetchColumn('page_template');
     self::assertSame('tpl_test_new5', $columnResult);
@@ -1283,10 +1283,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('', $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template', true, true);
-    self::assertSame(array('tpl_test_new5'), $columnResult);
+    self::assertSame(['tpl_test_new5'], $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template', false, true);
-    self::assertSame(array('tpl_test_new5'), $columnResult);
+    self::assertSame(['tpl_test_new5'], $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template_foo');
     self::assertSame('', $columnResult);
@@ -1295,14 +1295,14 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('', $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template_foo', true, true);
-    self::assertSame(array(), $columnResult);
+    self::assertSame([], $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template_foo', false, true);
-    self::assertSame(array(), $columnResult);
+    self::assertSame([], $columnResult);
 
     // ---
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id AND' => array($resultInsert, $resultInsert)));
+    $resultSelect = $this->db->select($this->tableName, ['page_id AND' => [$resultInsert, $resultInsert]]);
 
     $columnResult = $resultSelect->fetchColumn('page_template');
     self::assertSame('tpl_test_new5', $columnResult);
@@ -1311,17 +1311,17 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('', $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template', true, true);
-    self::assertSame(array('tpl_test_new5'), $columnResult);
+    self::assertSame(['tpl_test_new5'], $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template', false, true);
-    self::assertSame(array('tpl_test_new5'), $columnResult);
+    self::assertSame(['tpl_test_new5'], $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template', true, false);
     self::assertSame('tpl_test_new5', $columnResult);
 
     // ---
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id OR' => array($resultInsert, $resultInsertV2)));
+    $resultSelect = $this->db->select($this->tableName, ['page_id OR' => [$resultInsert, $resultInsertV2]]);
 
     $columnResult = $resultSelect->fetchColumn('page_template');
     self::assertSame('tpl_test_new5V2', $columnResult);
@@ -1330,13 +1330,13 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('', $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template', true, true);
-    self::assertSame(array('tpl_test_new5', 'tpl_test_new5V2'), $columnResult);
+    self::assertSame(['tpl_test_new5', 'tpl_test_new5V2'], $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template', true, false);
     self::assertSame('tpl_test_new5V2', $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template', false, true);
-    self::assertSame(array('tpl_test_new5', 'tpl_test_new5V2'), $columnResult);
+    self::assertSame(['tpl_test_new5', 'tpl_test_new5V2'], $columnResult);
 
     // ---
 
@@ -1347,10 +1347,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('', $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template_foo', true, true);
-    self::assertSame(array(), $columnResult);
+    self::assertSame([], $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template_foo', false, true);
-    self::assertSame(array(), $columnResult);
+    self::assertSame([], $columnResult);
 
     $columnResult = $resultSelect->fetchColumn('page_template_foo', true, false);
     self::assertSame('', $columnResult);
@@ -1358,45 +1358,45 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     // ---
 
     $columnResult = $resultSelect->fetchAllColumn('page_template', false);
-    self::assertSame(array('tpl_test_new5', 'tpl_test_new5V2'), $columnResult);
+    self::assertSame(['tpl_test_new5', 'tpl_test_new5V2'], $columnResult);
 
     $columnResult = $resultSelect->fetchAllColumn('page_template', true);
-    self::assertSame(array('tpl_test_new5', 'tpl_test_new5V2'), $columnResult);
+    self::assertSame(['tpl_test_new5', 'tpl_test_new5V2'], $columnResult);
 
     $columnResult = $resultSelect->fetchAllColumn('page_template', true);
-    self::assertSame(array('tpl_test_new5', 'tpl_test_new5V2'), $columnResult);
+    self::assertSame(['tpl_test_new5', 'tpl_test_new5V2'], $columnResult);
   }
 
   public function testIsEmpty()
   {
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new5',
         'page_type'     => 'öäü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
     self::assertGreaterThan(1, $resultInsert);
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $resultInsert]);
     self::assertFalse($resultSelect->is_empty());
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => 999999));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => 999999]);
     self::assertTrue($resultSelect->is_empty());
   }
 
   public function testJson()
   {
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new6',
         'page_type'     => 'öäü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
     self::assertGreaterThan(1, $resultInsert);
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $resultInsert]);
     $columnResult = $resultSelect->json();
     $columnResultDecode = json_decode($columnResult, true);
     self::assertSame('tpl_test_new6', $columnResultDecode[0]['page_template']);
@@ -1404,32 +1404,32 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
   public function testFetchObject()
   {
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new7',
         'page_type'     => 'öäü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
     self::assertGreaterThan(1, $resultInsert);
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $resultInsert]);
     $columnResult = $resultSelect->fetchObject();
     self::assertSame('tpl_test_new7', $columnResult->page_template);
   }
 
   public function testDefaultResultType()
   {
-    $data = array(
+    $data = [
         'page_template' => 'tpl_test_new8',
         'page_type'     => 'öäü',
-    );
+    ];
 
     // will return the auto-increment value of the new row
     $resultInsert = $this->db->insert($this->tableName, $data);
     self::assertGreaterThan(1, $resultInsert);
 
-    $resultSelect = $this->db->select($this->tableName, array('page_id' => $resultInsert));
+    $resultSelect = $this->db->select($this->tableName, ['page_id' => $resultInsert]);
 
     // array
     $resultSelect->setDefaultResultType('array');
@@ -1548,20 +1548,20 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame(0, $this->db->escape(false, false));
     self::assertSame('NOW()', $this->db->escape('NOW()'));
     self::assertSame(
-        array(
+        [
             \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
             1,
             'NULL',
-        ),
-        $this->db->escape(array("O'Toole", true, null))
+        ],
+        $this->db->escape(["O'Toole", true, null])
     );
     self::assertSame(
-        array(
+        [
             \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
             1,
             'NULL',
-        ),
-        $this->db->escape(array("O'Toole", true, null), false)
+        ],
+        $this->db->escape(["O'Toole", true, null], false)
     );
   }
 
@@ -1575,38 +1575,38 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
   public function testConnector2()
   {
     // select - true
-    $where = array(
+    $where = [
         'page_type ='         => 'öäü',
         'page_type NOT LIKE'  => '%öäü123',
         'page_id >='          => 0,
-        'page_id NOT BETWEEN' => array(
+        'page_id NOT BETWEEN' => [
             '99997',
             '99999',
-        ),
-        'page_id NOT IN'      => array(
+        ],
+        'page_id NOT IN'      => [
             'test',
             'test123',
-        ),
-        'page_type IN'        => array(
+        ],
+        'page_type IN'        => [
             'öäü',
             '123',
             'abc',
-        ),
-        'page_type OR'        => array(
+        ],
+        'page_type OR'        => [
             'öäü',
             '123',
             'abc',
-        ),
-    );
+        ],
+    ];
     $resultSelect = $this->db->select($this->tableName, $where);
     self::assertNotEquals(false, $resultSelect, 'tested: ' . print_r($where, true));
     self::assertTrue($resultSelect->num_rows > 0);
 
     // select - false
-    $where = array(
+    $where = [
         'page_type IS NOT' => 'lall',
         'page_type IS'     => 'öäü',
-    );
+    ];
     $resultSelect = $this->db->select($this->tableName, $where);
     self::assertFalse($resultSelect);
   }
@@ -1653,7 +1653,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // --- object: Arrayy
 
-    $object = new Arrayy(array('foo', 123, 'öäü'));
+    $object = new Arrayy(['foo', 123, 'öäü']);
 
     self::assertSame('\'foo,123,öäü\'', $this->db->secure($object));
 
@@ -1680,14 +1680,14 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // --- array
 
-    $testArray = array(
+    $testArray = [
         'NOW()'                                  => 'NOW()',
         'fooo'                                   => '\'fooo\'',
         123                                      => 123,
         'κόσμε'                                  => '\'κόσμε\'',
         '&lt;abcd&gt;\'$1\'(&quot;&amp;2&quot;)' => '\'&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)\'',
         '&#246;&#228;&#252;'                     => '\'&#246;&#228;&#252;\'',
-    );
+    ];
 
     foreach ($testArray as $before => $after) {
       self::assertSame($after, $this->db->secure($before));
@@ -1725,10 +1725,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     ';
     $return = $this->db->query(
         $sql,
-        array(
+        [
             1.1,
             1,
-        )
+        ]
     );
     self::assertTrue($return > 1, print_r($return, true));
 
@@ -1742,10 +1742,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     ';
     $return = $this->db->query(
         $sql,
-        array(
+        [
             'page_template' => 1.1,
             'page_type'     => 1,
-        )
+        ]
     );
     self::assertTrue($return > 1, print_r($return, true));
 
@@ -1759,7 +1759,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     ";
     $return = $this->db->query(
         $sql,
-        array()
+        []
     );
     self::assertTrue($return > 1);
 
@@ -1774,10 +1774,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $tmpDate = new DateTime();
     $tmpId = $this->db->query(
         $sql,
-        array(
+        [
             'dateTest',
             $tmpDate,
-        )
+        ]
     );
     self::assertTrue($tmpId > 1);
     //
@@ -1799,10 +1799,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $tmpDate = new DateTime();
     $tmpId = $this->db->query(
         $sql,
-        array(
+        [
             'page_template' => 'dateTest',
             'page_type'     => $tmpDate,
-        )
+        ]
     );
     self::assertTrue($tmpId > 1);
     //
@@ -1824,10 +1824,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $tmpDate = new DateTime();
     $tmpId = $this->db->query(
         $sql,
-        array(
+        [
             0           => 'dateTest',
             'page_type' => $tmpDate,
-        )
+        ]
     );
     self::assertTrue($tmpId > 1);
     //
@@ -1849,10 +1849,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $tmpDate = new DateTime();
     $tmpId = $this->db->query(
         $sql,
-        array(
+        [
             'page_template' => ':page_type',
             'page_type'     => $tmpDate,
-        )
+        ]
     );
     self::assertTrue($tmpId > 1);
     //
@@ -1873,10 +1873,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     ';
     $tmpId = $this->db->query(
         $sql,
-        array(
+        [
             'http://foo.com/?foo=1',
             'foo\'bar',
-        )
+        ]
     );
     self::assertTrue($tmpId > 1);
     // select - true
@@ -1895,10 +1895,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     ';
     $tmpId = $this->db->query(
         $sql,
-        array(
+        [
             'page_template' => 'http://foo.com/?foo=1',
             'page_type'     => 'foo\'bar',
-        )
+        ]
     );
     self::assertTrue($tmpId > 1);
     // select - true
@@ -1917,10 +1917,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     ';
     $return = $this->db->query(
         $sql,
-        array(
+        [
             true,
-            array('test'),
-        )
+            ['test'],
+        ]
     );
     // array('test') => null
     self::assertFalse($return);
@@ -1935,10 +1935,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     ';
     $return = $this->db->query(
         $sql,
-        array(
+        [
             'tpl_test_new15',
             1,
-        )
+        ]
     );
     self::assertFalse($return);
 
@@ -1947,10 +1947,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     //
     $return = $this->db->query(
         '',
-        array(
+        [
             'tpl_test_new15',
             1,
-        )
+        ]
     );
     self::assertFalse($return);
   }
@@ -2001,11 +2001,11 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertFalse($this->db->isReady());
     $this->invokeMethod(
         $this->db, 'queryErrorHandling',
-        array(
+        [
             'DB server has gone away',
             2006,
             'SELECT * FROM ' . $this->tableName . ' WHERE page_id = 1',
-        )
+        ]
     );
     self::assertTrue($this->db->isReady());
   }
@@ -2028,7 +2028,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
   public function testQuoteString()
   {
-    $testArray = array(
+    $testArray = [
         'NOW()'                                  => '`NOW()`',
         'fooo'                                   => '`fooo`',
         '`fooo'                                  => '`fooo`',
@@ -2043,7 +2043,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
         'κόσμε'                                  => '`κόσμε`',
         '&lt;abcd&gt;\'$1\'(&quot;&amp;2&quot;)' => '`&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)`',
         '&#246;&#228;&#252;'                     => '`&#246;&#228;&#252;`',
-    );
+    ];
 
     foreach ($testArray as $before => $after) {
       self::assertSame($after, $this->db->quote_string($before));
@@ -2059,7 +2059,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
    *
    * @return mixed Method return.
    */
-  public function invokeMethod(&$object, $methodName, array $parameters = array())
+  public function invokeMethod(&$object, $methodName, array $parameters = [])
   {
     $reflection = new \ReflectionClass(get_class($object));
     $method = $reflection->getMethod($methodName);
@@ -2084,10 +2084,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
             function (DB $db) use ($tableName) {
               return $db->insert(
                   $tableName,
-                  array(
+                  [
                       'page_template' => '',
                       'page_type'     => 'foo!',
-                  )
+                  ]
               );
             }
         )
@@ -2100,10 +2100,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
             function (DB $db) use ($tableName) {
               return $db->insert(
                   $tableName,
-                  array(
+                  [
                       'page_template' => 'page' . mt_rand(),
                       'page_type'     => 'foo!',
-                  )
+                  ]
               );
             }
         )
@@ -2139,10 +2139,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
             function (DB $db) use ($tableName) {
               return $db->insert(
                   $tableName,
-                  array(
+                  [
                       'page_template_noop' => 'page' . mt_rand(),
                       'page_type'          => 'foo!',
-                  )
+                  ]
               );
             }
         )

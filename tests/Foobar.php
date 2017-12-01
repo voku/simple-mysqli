@@ -10,7 +10,7 @@ class Foobar extends stdClass
   /**
    * @var array
    */
-  protected $data = array();
+  protected $data = [];
 
   /**
    * @var bool
@@ -20,7 +20,7 @@ class Foobar extends stdClass
   /**
    * @param array $attributes
    */
-  public function __construct(array $attributes = array())
+  public function __construct(array $attributes = [])
   {
     foreach ($attributes as $name => $value) {
       $this->{$name} = $value;

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+6.0.1 (2017-12-01)
+- [+]: fix declaration of voku\db\Prepare::prepare (mysqli_stmt::prepare)
+- [+]: micro optimization
+- [*]: update phpunit-config
+
 6.0.0 (2017-11-13)
 - [!]: "php": ">=7.0" 
   * drop support for PHP < 7.0

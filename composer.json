@@ -27,7 +27,7 @@
   "require": {
     "php": ">=7.0",
     "voku/arrayy": "~4.0",
-    "voku/simple-cache": "~2.3",
+    "voku/simple-cache": "~3.0",
     "voku/portable-utf8": "~4.0",
     "voku/phonetic-algorithms": "~3.0",
     "symfony/property-access": "~2.8|~3.3"

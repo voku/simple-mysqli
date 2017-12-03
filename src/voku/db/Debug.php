@@ -272,9 +272,9 @@ class Debug
    * @param int    $results field_count | insert_id | affected_rows
    * @param bool   $sql_error
    *
-   * @return bool
+   * @return mixed <p>Will return false, if no logging was used.</p>
    */
-  public function logQuery($sql, $duration, $results, $sql_error = false): bool
+  public function logQuery($sql, $duration, $results, $sql_error = false)
   {
     $logLevelUse = \strtolower($this->logger_level);
 
@@ -326,9 +326,9 @@ class Debug
    *
    * @param string[] $log [method, text, type]<br />e.g.: array('error', 'this is a error', 'sql')
    *
-   * @return bool
+   * @return mixed <p>Will return false, if no logging was used.</p>
    */
-  public function logger(array $log): bool
+  public function logger(array $log)
   {
     $logMethod = '';
     $logText = '';

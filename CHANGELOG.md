@@ -1,6 +1,10 @@
 Changelog
 =========
 
+6.0.3 (2017-12-03)
+
+- [+]: fix logging + PHP 7.0
+
 6.0.2 (2017-12-03)
 
 - [+]: update "voku/simple-cache"

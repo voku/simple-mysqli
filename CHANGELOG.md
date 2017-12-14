@@ -1,6 +1,10 @@
 Changelog
 =========
 
+6.1.0 (2017-12-14)
+
+- [+]: add "DB->setConfigExtra()"
+
 6.0.3 (2017-12-03)
 
 - [+]: fix logging + PHP 7.0

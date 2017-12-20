@@ -1,6 +1,10 @@
 Changelog
 =========
 
+5.4.8 (2017-12-20)
+
+- [+]: add "setConfigExtra()"
+
 5.4.7 (2017-10-15)
 
 - [+]: improve "DB->close()" + tests

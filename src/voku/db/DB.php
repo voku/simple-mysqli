@@ -310,36 +310,53 @@ final class DB
 
     if (is_array($extra_config) === true) {
 
-      if (isset($extra_config['session_to_db'])) {
-        $this->session_to_db = (boolean)$extra_config['session_to_db'];
-      }
-
-      if (isset($extra_config['socket'])) {
-        $this->socket = $extra_config['socket'];
-      }
-
-      if (isset($extra_config['ssl'])) {
-        $this->_ssl = $extra_config['ssl'];
-      }
-
-      if (isset($extra_config['clientkey'])) {
-        $this->_clientkey = $extra_config['clientkey'];
-      }
-
-      if (isset($extra_config['clientcert'])) {
-        $this->_clientcert = $extra_config['clientcert'];
-      }
-
-      if (isset($extra_config['cacert'])) {
-        $this->_cacert = $extra_config['cacert'];
-      }
+      $this->setConfigExtra($extra_config);
 
     } else {
+
       // only for backward compatibility
       $this->session_to_db = (boolean)$extra_config;
+
     }
 
     return $this->showConfigError();
+  }
+
+  /**
+   * @param array $extra_config           <p>
+   *                                      'session_to_db' => false|true<br>
+   *                                      'socket' => 'string (path)'<br>
+   *                                      'ssl' => 'bool'<br>
+   *                                      'clientkey' => 'string (path)'<br>
+   *                                      'clientcert' => 'string (path)'<br>
+   *                                      'cacert' => 'string (path)'<br>
+   *                                      </p>
+   */
+  public function setConfigExtra(array $extra_config)
+  {
+    if (isset($extra_config['session_to_db'])) {
+      $this->session_to_db = (boolean)$extra_config['session_to_db'];
+    }
+
+    if (isset($extra_config['socket'])) {
+      $this->socket = $extra_config['socket'];
+    }
+
+    if (isset($extra_config['ssl'])) {
+      $this->_ssl = $extra_config['ssl'];
+    }
+
+    if (isset($extra_config['clientkey'])) {
+      $this->_clientkey = $extra_config['clientkey'];
+    }
+
+    if (isset($extra_config['clientcert'])) {
+      $this->_clientcert = $extra_config['clientcert'];
+    }
+
+    if (isset($extra_config['cacert'])) {
+      $this->_cacert = $extra_config['cacert'];
+    }
   }
 
   /**

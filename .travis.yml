@@ -12,13 +12,9 @@ matrix:
   fast_finish: true
   include:
     - php: 7.0
-      env: DB=mysql
-    - php: 7.1
-      env: DB=mysql
-    - php: 7.2
-      env: DB=mysql
-    - php: 7.0
-      env: DB=mysql
+      env: DB=mariadb
+      addons:
+        mariadb: 5.5
     - php: 7.1
       env: DB=mariadb
       addons:

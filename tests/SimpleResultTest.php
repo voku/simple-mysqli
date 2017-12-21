@@ -330,7 +330,7 @@ SQL;
 
   public function testFree()
   {
-    $result = $this->db->query('SELECT * FROM `post`');
+    $result = $this->db->query('SELECT * FROM post');
     self::assertTrue($result->free());
   }
 
@@ -367,7 +367,7 @@ SQL;
 
   public function testMap()
   {
-    $result = $this->db->query('SELECT * FROM `post`');
+    $result = $this->db->query('SELECT * FROM post');
     $row = $result->fetchCallable(0);
     self::assertFalse($row instanceof \stdClass);
     self::assertSame('Title #1', $row['title']);

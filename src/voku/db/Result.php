@@ -887,7 +887,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return Arrayy
    */
-  public function getArrayy(): \Arrayy\Arrayy
+  public function getArrayy(): Arrayy
   {
     return $this->fetchAllArrayy();
   }

@@ -471,9 +471,7 @@ final class DB
           )
       );
 
-      if (!\is_array($_value)) {
-        $_value = [$_value];
-      }
+      $_value = (array)$_value;
 
       if (!$_glueHelper) {
         $_glueHelper = $glue;

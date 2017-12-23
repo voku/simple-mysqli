@@ -1,31 +1,45 @@
 Changelog
 =========
 
+7.0.0 (2017-12-23)
+
+- update "Portable UTF8" from v4 -> v5
+
+-> this is a breaking change without API-changes - but the requirement from 
+   "Portable UTF8" has been changed (it no longer requires all polyfills from Symfony)
+
+
 6.1.1 (2017-12-21)
 
 - "DB" -> simplify -> !is_array(val) { \[val\] } to val = (array)val
+
 
 6.1.0 (2017-12-14)
 
 - add "DB->setConfigExtra()"
 
+
 6.0.3 (2017-12-03)
 
 - fix logging + PHP 7.0
 
+
 6.0.2 (2017-12-03)
 
 - update "voku/simple-cache"
+
 
 6.0.1 (2017-12-01)
 - fix declaration of voku\db\Prepare::prepare (mysqli_stmt::prepare)
 - micro optimization
 - update phpunit-config
 
+
 6.0.0 (2017-11-13)
 - "php": ">=7.0" 
   * drop support for PHP < 7.0
   * use "strict_types"
+
 
 5.4.8 (2017-12-20)
 

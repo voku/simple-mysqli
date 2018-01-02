@@ -1731,7 +1731,7 @@ final class DB
   public function secure($var)
   {
     if ($var === '') {
-      return '';
+      return "''";
     }
 
     if ($var === "''") {
@@ -1739,9 +1739,7 @@ final class DB
     }
 
     if ($var === null) {
-      if (
-          $this->_convert_null_to_empty_string === true
-      ) {
+      if ($this->_convert_null_to_empty_string === true) {
         return "''";
       }
 

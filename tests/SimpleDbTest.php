@@ -1664,7 +1664,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // --- empty string
 
-    self::assertSame('', $this->db->secure(''));
+    self::assertSame("''", $this->db->secure(''));
 
     // --- '' string
 

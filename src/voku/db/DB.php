@@ -531,13 +531,17 @@ final class DB
       return ['sql' => $sql, 'params' => $params];
     }
 
-    $parseKey = \md5(\uniqid((string)\mt_rand(), true));
-    $sql = \str_replace('?', $parseKey, $sql);
+    static $PARSE_KEY_CACHE = null;
+    if ($PARSE_KEY_CACHE === null) {
+      $PARSE_KEY_CACHE = \md5(\uniqid((string)\mt_rand(), true));
+    }
+
+    $sql = \str_replace('?', $PARSE_KEY_CACHE, $sql);
 
     $k = 0;
-    while (\strpos($sql, $parseKey) !== false) {
+    while (\strpos($sql, $PARSE_KEY_CACHE) !== false) {
       $sql = UTF8::str_replace_first(
-          $parseKey,
+          $PARSE_KEY_CACHE,
           (string)(isset($params[$k]) ? $this->secure($params[$k]) : ''),
           $sql
       );
@@ -629,7 +633,7 @@ final class DB
       return false;
     }
 
-    $return = mysqli_commit($this->link);
+    $return = \mysqli_commit($this->link);
     \mysqli_autocommit($this->link, true);
     $this->_in_transaction = false;
 
@@ -707,7 +711,7 @@ final class DB
     }
     \mysqli_report(MYSQLI_REPORT_OFF);
 
-    $errno = mysqli_connect_errno();
+    $errno = \mysqli_connect_errno();
     if (!$this->connected || $errno) {
       $error = 'Error connecting to mysql server: ' . \mysqli_connect_error() . ' (' . $errno . ')';
       $this->_debug->displayError($error, true);
@@ -815,7 +819,10 @@ final class DB
       return ['sql' => $sql, 'params' => $params];
     }
 
-    $parseKey = \md5(\uniqid((string)\mt_rand(), true));
+    static $PARSE_KEY_CACHE = null;
+    if ($PARSE_KEY_CACHE === null) {
+      $PARSE_KEY_CACHE = \md5(\uniqid((string)\mt_rand(), true));
+    }
 
     foreach ($params as $name => $value) {
       $nameTmp = $name;
@@ -823,7 +830,7 @@ final class DB
         $nameTmp = \substr($name, 1);
       }
 
-      $parseKeyInner = $nameTmp . '-' . $parseKey;
+      $parseKeyInner = $nameTmp . '-' . $PARSE_KEY_CACHE;
       $sql = \str_replace(':' . $nameTmp, $parseKeyInner, $sql);
     }
 
@@ -833,7 +840,7 @@ final class DB
         $nameTmp = \substr($name, 1);
       }
 
-      $parseKeyInner = $nameTmp . '-' . $parseKey;
+      $parseKeyInner = $nameTmp . '-' . $PARSE_KEY_CACHE;
       $sqlBefore = $sql;
       $secureParamValue = $this->secure($params[$name]);
 
@@ -953,7 +960,7 @@ final class DB
         (
             \is_object($var)
             &&
-            method_exists($var, '__toString')
+            \method_exists($var, '__toString')
         )
     ) {
       $var = (string)$var;
@@ -967,7 +974,7 @@ final class DB
         $var = UTF8::html_entity_decode($var);
       }
 
-      $var = get_magic_quotes_gpc() ? stripslashes($var) : $var;
+      $var = \get_magic_quotes_gpc() ? \stripslashes($var) : $var;
 
       $var = \mysqli_real_escape_string($this->getLink(), $var);
 

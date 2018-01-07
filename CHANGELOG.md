@@ -1,6 +1,11 @@
 Changelog
 =========
 
+7.0.2 (2018-01-07)
+
+- use static cache for the temporary parse-key
+
+
 7.0.1 (2018-01-02)
 
 - fix for "DB->query()" + '?' (old sql-style)

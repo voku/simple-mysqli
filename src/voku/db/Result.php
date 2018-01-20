@@ -16,6 +16,10 @@ use voku\helper\UTF8;
 final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 {
 
+  const RESULT_TYPE_ARRAY  = 'array';
+  const RESULT_TYPE_ARRAYY = 'Arrayy';
+  const RESULT_TYPE_OBJECT = 'object';
+
   /**
    * @var int
    */
@@ -44,7 +48,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   /**
    * @var string
    */
-  private $_default_result_type = 'object';
+  private $_default_result_type = self::RESULT_TYPE_OBJECT;
 
   /**
    * Result constructor.
@@ -263,11 +267,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   {
     $return = false;
 
-    if ($this->_default_result_type === 'object') {
+    if ($this->_default_result_type === self::RESULT_TYPE_OBJECT) {
       $return = $this->fetchObject('', null, $reset);
-    } elseif ($this->_default_result_type === 'array') {
+    } elseif ($this->_default_result_type === self::RESULT_TYPE_ARRAY) {
       $return = $this->fetchArray($reset);
-    } elseif ($this->_default_result_type === 'Arrayy') {
+    } elseif ($this->_default_result_type === self::RESULT_TYPE_ARRAYY) {
       $return = $this->fetchArrayy($reset);
     }
 
@@ -289,12 +293,12 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   {
     $return = [];
 
-    if ($this->_default_result_type === 'object') {
+    if ($this->_default_result_type === self::RESULT_TYPE_OBJECT) {
       $return = $this->fetchAllObject();
-    } elseif ($this->_default_result_type === 'array') {
+    } elseif ($this->_default_result_type === self::RESULT_TYPE_ARRAY) {
       $return = $this->fetchAllArray();
-    } elseif ($this->_default_result_type === 'Arrayy') {
-      $return = $this->fetchAllArray();
+    } elseif ($this->_default_result_type === self::RESULT_TYPE_ARRAYY) {
+      $return = $this->fetchAllArrayy();
     }
 
     return $return;
@@ -525,6 +529,34 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   }
 
   /**
+   * Fetches a row or a single column within a row. Returns null if there are
+   * no more rows in the result.
+   *
+   * @param int    $row    The row number (optional)
+   * @param string $column The column name (optional)
+   *
+   * @return mixed An associative array or a scalar value
+   */
+  public function fetchCallable(int $row = null, string $column = null)
+  {
+    if (!$this->num_rows) {
+      return null;
+    }
+
+    if (null !== $row) {
+      $this->seek($row);
+    }
+
+    $rows = \mysqli_fetch_assoc($this->_result);
+
+    if ($column) {
+      return \is_array($rows) && isset($rows[$column]) ? $rows[$column] : null;
+    }
+
+    return \is_callable($this->_mapper) ? \call_user_func($this->_mapper, $rows) : $rows;
+  }
+
+  /**
    * Fetch a single column as string (or as 1-dimension array).
    *
    * @param string $column
@@ -584,90 +616,6 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   }
 
   /**
-   * Fetch as object.
-   *
-   * @param object|string $class  <p>
-   *                              <strong>string</strong>: create a new object (with optional constructor
-   *                              parameter)<br>
-   *                              <strong>object</strong>: use a object and fill the the data into
-   *                              </p>
-   * @param null|array    $params optional
-   *                              <p>
-   *                              An array of parameters to pass to the constructor, used if $class is a
-   *                              string.
-   *                              </p>
-   * @param bool          $reset  optional <p>Reset the \mysqli_result counter.</p>
-   *
-   * @return object|false <p><strong>false</strong> on error</p>
-   */
-  public function fetchObject($class = '', array $params = null, bool $reset = false)
-  {
-    if ($reset === true) {
-      $this->reset();
-    }
-
-    if ($class && \is_object($class)) {
-      $row = \mysqli_fetch_assoc($this->_result);
-      $row = $row ? $this->cast($row) : false;
-
-      if (!$row) {
-        return false;
-      }
-
-      $propertyAccessor = PropertyAccess::createPropertyAccessor();
-      foreach ($row as $key => $value) {
-        $propertyAccessor->setValue($class, $key, $value);
-      }
-
-      return $class;
-    }
-
-    if ($class && $params) {
-      $row = \mysqli_fetch_object($this->_result, $class, $params);
-
-      return $row ? $this->cast($row) : false;
-    }
-
-    if ($class) {
-      $row = \mysqli_fetch_object($this->_result, $class);
-
-      return $row ? $this->cast($row) : false;
-    }
-
-    $row = \mysqli_fetch_object($this->_result);
-
-    return $row ? $this->cast($row) : false;
-  }
-
-  /**
-   * Fetches a row or a single column within a row. Returns null if there are
-   * no more rows in the result.
-   *
-   * @param int    $row    The row number (optional)
-   * @param string $column The column name (optional)
-   *
-   * @return mixed An associative array or a scalar value
-   */
-  public function fetchCallable(int $row = null, string $column = null)
-  {
-    if (!$this->num_rows) {
-      return null;
-    }
-
-    if (null !== $row) {
-      $this->seek($row);
-    }
-
-    $rows = \mysqli_fetch_assoc($this->_result);
-
-    if ($column) {
-      return \is_array($rows) && isset($rows[$column]) ? $rows[$column] : null;
-    }
-
-    return \is_callable($this->_mapper) ? \call_user_func($this->_mapper, $rows) : $rows;
-  }
-
-  /**
    * Return rows of field information in a result set. This function is a
    * basically a wrapper on the native mysqli_fetch_fields function.
    *
@@ -724,6 +672,62 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $this->rewind($pos);
 
     return $groups;
+  }
+
+  /**
+   * Fetch as object.
+   *
+   * @param object|string $class  <p>
+   *                              <strong>string</strong>: create a new object (with optional constructor
+   *                              parameter)<br>
+   *                              <strong>object</strong>: use a object and fill the the data into
+   *                              </p>
+   * @param null|array    $params optional
+   *                              <p>
+   *                              An array of parameters to pass to the constructor, used if $class is a
+   *                              string.
+   *                              </p>
+   * @param bool          $reset  optional <p>Reset the \mysqli_result counter.</p>
+   *
+   * @return object|false <p><strong>false</strong> on error</p>
+   */
+  public function fetchObject($class = '', array $params = null, bool $reset = false)
+  {
+    if ($reset === true) {
+      $this->reset();
+    }
+
+    if ($class && \is_object($class)) {
+      $row = \mysqli_fetch_assoc($this->_result);
+      $row = $row ? $this->cast($row) : false;
+
+      if (!$row) {
+        return false;
+      }
+
+      $propertyAccessor = PropertyAccess::createPropertyAccessor();
+      foreach ($row as $key => $value) {
+        $propertyAccessor->setValue($class, $key, $value);
+      }
+
+      return $class;
+    }
+
+    if ($class && $params) {
+      $row = \mysqli_fetch_object($this->_result, $class, $params);
+
+      return $row ? $this->cast($row) : false;
+    }
+
+    if ($class) {
+      $row = \mysqli_fetch_object($this->_result, $class);
+
+      return $row ? $this->cast($row) : false;
+    }
+
+    $row = \mysqli_fetch_object($this->_result);
+
+    return $row ? $this->cast($row) : false;
   }
 
   /**
@@ -1057,20 +1061,20 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   }
 
   /**
-   * You can set the default result-type to 'object', 'array' or 'Arrayy'.
+   * You can set the default result-type to Result::RESULT_TYPE_*.
    *
    * INFO: used for "fetch()" and "fetchAll()"
    *
    * @param string $default_result_type
    */
-  public function setDefaultResultType(string $default_result_type = 'object')
+  public function setDefaultResultType(string $default_result_type = self::RESULT_TYPE_OBJECT)
   {
     if (
-        $default_result_type === 'object'
+        $default_result_type === self::RESULT_TYPE_OBJECT
         ||
-        $default_result_type === 'array'
+        $default_result_type === self::RESULT_TYPE_ARRAY
         ||
-        $default_result_type === 'Arrayy'
+        $default_result_type === self::RESULT_TYPE_ARRAYY
     ) {
       $this->_default_result_type = $default_result_type;
     }

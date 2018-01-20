@@ -1009,6 +1009,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $resultSelectArray = $resultSelect->fetch();
     $getDefaultResultType = $resultSelect->getDefaultResultType();
     self::assertSame('object', $getDefaultResultType);
+    self::assertSame(Result::RESULT_TYPE_OBJECT, $getDefaultResultType);
     self::assertSame('öäü', $resultSelectArray->page_type);
 
     $resultSelect = $this->db->select($this->tableName, $where);
@@ -1016,6 +1017,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $resultSelectArray = $resultSelect->fetch();
     $getDefaultResultType = $resultSelect->getDefaultResultType();
     self::assertSame('array', $getDefaultResultType);
+    self::assertSame(Result::RESULT_TYPE_ARRAY, $getDefaultResultType);
     /** @noinspection OffsetOperationsInspection */
     self::assertSame('öäü', $resultSelectArray['page_type']);
 

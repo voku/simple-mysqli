@@ -19,6 +19,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   const RESULT_TYPE_ARRAY  = 'array';
   const RESULT_TYPE_ARRAYY = 'Arrayy';
   const RESULT_TYPE_OBJECT = 'object';
+  const RESULT_TYPE_YIELD  = 'yield';
 
   /**
    * @var int
@@ -227,9 +228,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   /**
    * Moves the internal pointer to the specified row position.
    *
-   * @param int $row Row position; zero-based and set to 0 by default
+   * @param int $row <p>Row position; zero-based and set to 0 by default</p>
    *
-   * @return bool Boolean true on success, false otherwise
+   * @return bool <p>true on success, false otherwise</p>
    */
   public function seek($row = 0): bool
   {
@@ -243,7 +244,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   /**
    * Iterator interface implementation.
    *
-   * @return bool Boolean true if the current index is valid, false otherwise
+   * @return bool <p>true if the current index is valid, false otherwise</p>
    */
   public function valid(): bool
   {
@@ -273,6 +274,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       $return = $this->fetchArray($reset);
     } elseif ($this->_default_result_type === self::RESULT_TYPE_ARRAYY) {
       $return = $this->fetchArrayy($reset);
+    } elseif ($this->_default_result_type === self::RESULT_TYPE_YIELD) {
+      $return = $this->fetchYield($reset);
     }
 
     return $return;
@@ -299,6 +302,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       $return = $this->fetchAllArray();
     } elseif ($this->_default_result_type === self::RESULT_TYPE_ARRAYY) {
       $return = $this->fetchAllArrayy();
+    } elseif ($this->_default_result_type === self::RESULT_TYPE_YIELD) {
+      $return = $this->fetchAllYield();
     }
 
     return $return;
@@ -311,20 +316,16 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function fetchAllArray(): array
   {
-    // init
+    if ($this->is_empty()) {
+      return [];
+    }
+
+    $this->reset();
+
     $data = [];
-
-    if (
-        $this->_result
-        &&
-        !$this->is_empty()
-    ) {
-      $this->reset();
-
-      /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = \mysqli_fetch_assoc($this->_result)) {
-        $data[] = $this->cast($row);
-      }
+    /** @noinspection PhpAssignmentInConditionInspection */
+    while ($row = \mysqli_fetch_assoc($this->_result)) {
+      $data[] = $this->cast($row);
     }
 
     return $data;
@@ -337,20 +338,16 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function fetchAllArrayy(): Arrayy
   {
-    // init
+    if ($this->is_empty()) {
+      return Arrayy::create([]);
+    }
+
+    $this->reset();
+
     $data = [];
-
-    if (
-        $this->_result
-        &&
-        !$this->is_empty()
-    ) {
-      $this->reset();
-
-      /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = \mysqli_fetch_assoc($this->_result)) {
-        $data[] = $this->cast($row);
-      }
+    /** @noinspection PhpAssignmentInConditionInspection */
+    while ($row = \mysqli_fetch_assoc($this->_result)) {
+      $data[] = $this->cast($row);
     }
 
     return Arrayy::create($data);
@@ -387,7 +384,6 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function fetchAllObject($class = '', array $params = null): array
   {
-
     if ($this->is_empty()) {
       return [];
     }
@@ -435,6 +431,70 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     }
 
     return $data;
+  }
+
+  /**
+   * Fetch all results as "\Generator" via yield.
+   *
+   * @param object|string $class  <p>
+   *                              <strong>string</strong>: create a new object (with optional constructor
+   *                              parameter)<br>
+   *                              <strong>object</strong>: use a object and fill the the data into
+   *                              </p>
+   * @param null|array    $params optional
+   *                              <p>
+   *                              An array of parameters to pass to the constructor, used if $class is a
+   *                              string.
+   *                              </p>
+   *
+   * @return \Generator
+   */
+  public function fetchAllYield($class = '', array $params = null): \Generator
+  {
+    if ($this->is_empty()) {
+      return;
+    }
+
+    // init
+    $this->reset();
+
+    if ($class && \is_object($class)) {
+      $propertyAccessor = PropertyAccess::createPropertyAccessor();
+      /** @noinspection PhpAssignmentInConditionInspection */
+      while ($row = \mysqli_fetch_assoc($this->_result)) {
+        $classTmp = clone $class;
+        $row = $this->cast($row);
+        foreach ($row as $key => $value) {
+          $propertyAccessor->setValue($classTmp, $key, $value);
+        }
+        yield $classTmp;
+      }
+
+      return;
+    }
+
+    if ($class && $params) {
+      /** @noinspection PhpAssignmentInConditionInspection */
+      while ($row = \mysqli_fetch_object($this->_result, $class, $params)) {
+        yield $this->cast($row);
+      }
+
+      return;
+    }
+
+    if ($class) {
+      /** @noinspection PhpAssignmentInConditionInspection */
+      while ($row = \mysqli_fetch_object($this->_result, $class)) {
+        yield $this->cast($row);
+      }
+
+      return;
+    }
+
+    /** @noinspection PhpAssignmentInConditionInspection */
+    while ($row = \mysqli_fetch_object($this->_result)) {
+      yield $this->cast($row);
+    }
   }
 
   /**
@@ -802,6 +862,68 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   }
 
   /**
+   * Fetch as "\Generator" via yield.
+   *
+   * @param object|string $class  <p>
+   *                              <strong>string</strong>: create a new object (with optional constructor
+   *                              parameter)<br>
+   *                              <strong>object</strong>: use a object and fill the the data into
+   *                              </p>
+   * @param null|array    $params optional
+   *                              <p>
+   *                              An array of parameters to pass to the constructor, used if $class is a
+   *                              string.
+   *                              </p>
+   * @param bool          $reset  optional <p>Reset the \mysqli_result counter.</p>
+   *
+   * @return \Generator
+   */
+  public function fetchYield($class = '', array $params = null, bool $reset = false): \Generator
+  {
+    if ($reset === true) {
+      $this->reset();
+    }
+
+    if ($class && \is_object($class)) {
+      $row = \mysqli_fetch_assoc($this->_result);
+      $row = $row ? $this->cast($row) : false;
+
+      if (!$row) {
+        return;
+      }
+
+      $propertyAccessor = PropertyAccess::createPropertyAccessor();
+      foreach ($row as $key => $value) {
+        $propertyAccessor->setValue($class, $key, $value);
+      }
+
+      yield $class;
+
+      return;
+    }
+
+    if ($class && $params) {
+      $row = \mysqli_fetch_object($this->_result, $class, $params);
+
+      yield $row ? $this->cast($row) : false;
+
+      return;
+    }
+
+    if ($class) {
+      $row = \mysqli_fetch_object($this->_result, $class);
+
+      yield $row ? $this->cast($row) : false;
+
+      return;
+    }
+
+    $row = \mysqli_fetch_object($this->_result);
+
+    yield $row ? $this->cast($row) : false;
+  }
+
+  /**
    * Returns the first row element from the result.
    *
    * @param string $column The column name to use as value (optional)
@@ -894,6 +1016,20 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function getArrayy(): Arrayy
   {
     return $this->fetchAllArrayy();
+  }
+
+  /**
+   * alias for "Result->fetchAllYield()"
+   *
+   * @see Result::fetchAllYield()
+   *
+   * @param bool $asArray
+   *
+   * @return \Generator
+   */
+  public function getYield($asArray = false): \Generator
+  {
+    yield $this->fetchAllYield($asArray);
   }
 
   /**
@@ -998,9 +1134,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   /**
    * ArrayAccess interface implementation.
    *
-   * @param int $offset Offset number
+   * @param int $offset <p>Offset number</p>
    *
-   * @return bool Boolean true if offset exists, false otherwise
+   * @return bool <p>true if offset exists, false otherwise</p>
    */
   public function offsetExists($offset): bool
   {
@@ -1075,6 +1211,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         $default_result_type === self::RESULT_TYPE_ARRAY
         ||
         $default_result_type === self::RESULT_TYPE_ARRAYY
+        ||
+        $default_result_type === self::RESULT_TYPE_YIELD
     ) {
       $this->_default_result_type = $default_result_type;
     }

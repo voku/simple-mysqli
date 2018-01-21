@@ -289,20 +289,25 @@ there are different ways of accessing this data, check the examples bellow:
   $result = $db->query("SELECT * FROM users");
   $allUsers = $result->fetchAll();
 ```
-Fetching all data works as `object`, `array` or `Arrayy` the `fetchAll()` method will return the default based on the `$_default_result_type` config.
+Fetching all data works as Result::RESULT_TYPE_* the `fetchAll()` and `fetch()` method will return the default based on the `$_default_result_type` config.
 Other methods are:
 
 ```php
   $row = $result->fetch();        // fetch an single result row as defined by the config (array, object or Arrayy)
   $row = $result->fetchArray();   // fetch an single result row as array
+  $row = $result->fetchArrayy();  // fetch an single result row as Arrayy object
   $row = $result->fetchObject();  // fetch an single result row as object
+  $row = $result->fetchYield();   // fetch an single result row as Generator
   
   $data = $result->fetchAll();        // fetch all result data as defined by the config (array, object or Arrayy)
   $data = $result->fetchAllArray();   // fetch all result data as array
+  $data = $result->fetchAllArrayy();  // fetch all result data as Array object
   $data = $result->fetchAllObject();  // fetch all result data as object
+  $data = $result->fetchAllYield();   // fetch all result data as Generator
   
   $data = $result->fetchColumn(string $column, bool $skipNullValues);    // fetch a single column as string
   $data = $result->fetchAllColumn(string $column, bool $skipNullValues); // fetch a single column as an 1-dimension array
+  
   $data = $result->fetchArrayPair(string $key, string $value);           // fetch data as a key/value pair array
 ```
 
@@ -458,6 +463,7 @@ object. Set the mapper callback function to null to disable it.
   $db->getObject()            // alias for $db->fetchAllObject();
   $db->getArray()             // alias for $db->fetchAllArray();
   $db->getArrayy()            // alias for $db->fetchAllArrayy();
+  $db->getYield()             // alias for $db->fetchAllYield();
   $db->getColumn($key)        // alias for $db->fetchColumn($key);
 ```
 
@@ -473,19 +479,25 @@ To iterate a result-set you can use any fetch() method listed above.
     echo $row->email;
   }
 
-  // using foreach (v1)
-  foreach($result->fetchAll() as $row) {
+  // using foreach (via "fetchAllObject()")
+  foreach($result->fetchAllObject() as $row) {
     echo $row->name;
     echo $row->email;
   }
   
-  // using foreach (v2)
+  // using foreach (via "Result"-object)
   foreach($result as $row) {
     echo $row->name;
     echo $row->email;
   }
   
-  // INFO: "while + fetch()" will use less memory that "foreach + "fetchAll()", because we will fetch each result entry seperatly
+  // using foreach (via "Generator"-object)
+  foreach($result->fetchAllYield() as $row) {
+    echo $row->name;
+    echo $row->email;
+  }
+  
+  // INFO: "while + fetch()" and "fetchAllYield()" will use less memory that "foreach + "fetchAllObject()", because we will fetch each result entry seperatly
 ```
 
 ## Using the "Prepare"-Class
@@ -622,7 +634,7 @@ If insert was successful, it will return the new id, otherwise it will return fa
 ```
 
 #### fetch(integer  $id = null) : boolean|\ActiveRecord
-This function can fetch one record and assign in to current object, otherwise it will return "false".
+This function can fetch one record and assign in to current object.
 If you call this function with the $id parameter, it will fetch records by using the current primary-key-name.
 
 ```php

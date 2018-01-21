@@ -396,8 +396,6 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
   public function testBasics()
   {
-    require_once __DIR__ . '/Foobar.php';
-
     // insert - true
     $pageArray = [
         'page_template' => 'tpl_new_中',
@@ -453,11 +451,12 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('tpl_new_中', $tmpPage->page_template);
 
     $tmpFooBar = new Foobar();
+    $tmpFooBar->test = null;
     $tmpPage = $result->fetchObject($tmpFooBar, null, true);
 
     self::assertSame(null, $tmpPage->foo);
     self::assertSame(null, $tmpPage->bar);
-    self::assertTrue($tmpPage->test);
+    self::assertSame(null, $tmpPage->test);
     self::assertNull($tmpPage->nothing);
     self::assertSame('tpl_new_中', $tmpPage->page_template);
 
@@ -978,6 +977,11 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('öäü', $resultSelectArray['page_type']);
 
     $resultSelect = $this->db->select($this->tableName, $where);
+    foreach ($resultSelect->fetchYield() as $resultSelectArray) {
+      self::assertSame('öäü', $resultSelectArray->page_type);
+    }
+
+    $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchArrayy();
     self::assertSame('öäü', $resultSelectArray['page_type']);
 
@@ -1097,6 +1101,16 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchAllArrayy()->filterBy('page_type', 'öäü')->first();
     self::assertSame('öäü', $resultSelectArray['page_type']);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    foreach ($resultSelect->fetchAllYield('Foobar') as $tmpResult) {
+      self::assertSame('öäü', $tmpResult->page_type);
+    }
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    foreach ($resultSelect->fetchAllYield() as $tmpResult) {
+      self::assertSame('öäü', $tmpResult->page_type);
+    }
   }
 
   public function testGetErrors()

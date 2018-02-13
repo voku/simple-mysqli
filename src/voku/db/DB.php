@@ -135,12 +135,12 @@ final class DB
    * @param string $logger_class_name
    * @param string $logger_level          <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
    * @param array  $extra_config          <p>
-   *                                      'session_to_db' => false|true<br>
-   *                                      'socket' => 'string (path)'<br>
-   *                                      'ssl' => 'bool'<br>
-   *                                      'clientkey' => 'string (path)'<br>
-   *                                      'clientcert' => 'string (path)'<br>
-   *                                      'cacert' => 'string (path)'<br>
+   *                                      'session_to_db' => bool<br>
+   *                                      'socket'        => 'string (path)'<br>
+   *                                      'ssl'           => bool<br>
+   *                                      'clientkey'     => 'string (path)'<br>
+   *                                      'clientcert'    => 'string (path)'<br>
+   *                                      'cacert'        => 'string (path)'<br>
    *                                      </p>
    */
   private function __construct(string $hostname, string $username, string $password, string $database, $port, string $charset, bool $exit_on_error, bool $echo_on_error, string $logger_class_name, string $logger_level, array $extra_config = [])
@@ -315,7 +315,6 @@ final class DB
 
     return $this->showConfigError();
   }
-
 
   /**
    * @param array $extra_config           <p>
@@ -757,7 +756,7 @@ final class DB
       $databaseName = $this->quote_string(\trim($databaseName)) . '.';
     }
 
-    $sql = 'DELETE FROM ' . $databaseName . $this->quote_string($table) . " WHERE ($WHERE);";
+    $sql = 'DELETE FROM ' . $databaseName . $this->quote_string($table) . " WHERE ($WHERE)";
 
     return $this->query($sql);
   }
@@ -916,7 +915,7 @@ final class DB
             &&
             $var[0] != '0'
             &&
-            "$varInt" == $var
+            (string)$varInt == $var
         )
     ) {
       return (int)$var;
@@ -993,10 +992,10 @@ final class DB
   /**
    * Execute select/insert/update/delete sql-queries.
    *
-   * @param string $query    <p>sql-query</p>
-   * @param bool   $useCache <p>use cache?</p>
-   * @param int    $cacheTTL <p>cache-ttl in seconds</p>
-   * @param DB     $db       optional <p>the database connection</p>
+   * @param string    $query    <p>sql-query</p>
+   * @param bool      $useCache <p>use cache?</p>
+   * @param int       $cacheTTL <p>cache-ttl in seconds</p>
+   * @param self|null $db       optional <p>the database connection</p>
    *
    * @return mixed "array" by "<b>SELECT</b>"-queries<br />
    *               "int" (insert_id) by "<b>INSERT</b>"-queries<br />
@@ -1103,25 +1102,26 @@ final class DB
    * @param string $logger_class_name
    * @param string $logger_level         <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
    * @param array  $extra_config         <p>
-   *                                     'session_to_db' => false|true<br>
-   *                                     'socket' => 'string (path)'<br>
-   *                                     'ssl' => 'bool'<br>
-   *                                     'clientkey' => 'string (path)'<br>
-   *                                     'clientcert' => 'string (path)'<br>
-   *                                     'cacert' => 'string (path)'<br>
+   *                                     're_connect'    => bool<br>
+   *                                     'session_to_db' => bool<br>
+   *                                     'socket'        => 'string (path)'<br>
+   *                                     'ssl'           => bool<br>
+   *                                     'clientkey'     => 'string (path)'<br>
+   *                                     'clientcert'    => 'string (path)'<br>
+   *                                     'cacert'        => 'string (path)'<br>
    *                                     </p>
    *
-   * @return \voku\db\DB
+   * @return self
    */
   public static function getInstance(string $hostname = '', string $username = '', string $password = '', string $database = '', $port = 3306, string $charset = 'utf8', bool $exit_on_error = true, bool $echo_on_error = true, string $logger_class_name = '', string $logger_level = '', array $extra_config = []): self
   {
     /**
-     * @var $instance DB[]
+     * @var $instance self[]
      */
     static $instance = [];
 
     /**
-     * @var $firstInstance DB
+     * @var $firstInstance self
      */
     static $firstInstance = null;
 
@@ -1130,6 +1130,10 @@ final class DB
         &&
         null !== $firstInstance
     ) {
+      if (isset($extra_config['re_connect']) && $extra_config['re_connect'] === true) {
+        $firstInstance->reconnect(true);
+      }
+
       return $firstInstance;
     }
 
@@ -1165,6 +1169,10 @@ final class DB
       if (null === $firstInstance) {
         $firstInstance = $instance[$connection];
       }
+    }
+
+    if (isset($extra_config['re_connect']) && $extra_config['re_connect'] === true) {
+      $instance[$connection]->reconnect(true);
     }
 
     return $instance[$connection];
@@ -1234,7 +1242,7 @@ final class DB
       $databaseName = $this->quote_string(\trim($databaseName)) . '.';
     }
 
-    $sql = 'INSERT INTO ' . $databaseName . $this->quote_string($table) . " SET $SET;";
+    $sql = 'INSERT INTO ' . $databaseName . $this->quote_string($table) . " SET $SET";
 
     return $this->query($sql);
   }
@@ -1668,7 +1676,7 @@ final class DB
       $databaseName = $this->quote_string(\trim($databaseName)) . '.';
     }
 
-    $sql = 'REPLACE INTO ' . $databaseName . $this->quote_string($table) . " ($columns) VALUES ($values);";
+    $sql = 'REPLACE INTO ' . $databaseName . $this->quote_string($table) . " ($columns) VALUES ($values)";
 
     return $this->query($sql);
   }
@@ -1804,7 +1812,7 @@ final class DB
       $databaseName = $this->quote_string(\trim($databaseName)) . '.';
     }
 
-    $sql = 'SELECT * FROM ' . $databaseName . $this->quote_string($table) . " WHERE ($WHERE);";
+    $sql = 'SELECT * FROM ' . $databaseName . $this->quote_string($table) . " WHERE ($WHERE)";
 
     return $this->query($sql);
   }
@@ -2038,7 +2046,7 @@ final class DB
       $databaseName = $this->quote_string(\trim($databaseName)) . '.';
     }
 
-    $sql = 'UPDATE ' . $databaseName . $this->quote_string($table) . " SET $SET WHERE ($WHERE);";
+    $sql = 'UPDATE ' . $databaseName . $this->quote_string($table) . " SET $SET WHERE ($WHERE)";
 
     return $this->query($sql);
   }

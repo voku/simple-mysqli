@@ -157,7 +157,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     if (\is_array($data) === true) {
       foreach ($TYPES_CACHE[$result_hash] as $type_name => $type) {
         if (isset($data[$type_name])) {
-          settype($data[$type_name], $type);
+          \settype($data[$type_name], $type);
         }
       }
     } elseif (\is_object($data)) {
@@ -548,7 +548,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $arrayPair = [];
     $data = $this->fetchAllArray();
 
-    foreach ($data as $_row) {
+    foreach ($data as &$_row) {
       if (
           \array_key_exists($key, $_row) === true
           &&

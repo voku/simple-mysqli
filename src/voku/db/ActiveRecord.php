@@ -653,17 +653,17 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to query one record by sql and params.
    *
-   * @param string     $sql           <p>
+   * @param string    $sql            <p>
    *                                  The SQL query to find the record.
    *                                  </p>
-   * @param array      $param         <p>
+   * @param array     $param          <p>
    *                                  The param will be bind to the $sql query.
    *                                  </p>
-   * @param null|\self $obj           <p>
+   * @param null|self $obj            <p>
    *                                  The object, if find record in database, we will assign the attributes into
    *                                  this object.
    *                                  </p>
-   * @param bool       $single        <p>
+   * @param bool      $single         <p>
    *                                  If set to true, we will find record and fetch in current object, otherwise
    *                                  will find all records.
    *                                  </p>
@@ -782,39 +782,39 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to build SQL with sql parts.
    *
-   * @param string       $n <p>The SQL part will be build.</p>
-   * @param int          $i <p>The index of $n in $sql array.</p>
-   * @param ActiveRecord $o <p>The reference to $this.</p>
+   * @param string $sql_string_part <p>The SQL part will be build.</p>
+   * @param int    $index           <p>The index of $n in $sql array.</p>
+   * @param self   $active_record   <p>The reference to $this.</p>
    */
-  private function _buildSqlCallback(string &$n, $i, self $o)
+  private function _buildSqlCallback(string &$sql_string_part, $index, self $active_record)
   {
     if (
-        'select' === $n
+        'select' === $sql_string_part
         &&
-        null === $o->{$n}
+        null === $active_record->{$sql_string_part}
     ) {
 
-      $n = \strtoupper($n) . ' ' . $o->table . '.*';
+      $sql_string_part = \strtoupper($sql_string_part) . ' ' . $active_record->table . '.*';
 
     } elseif (
         (
-            'update' === $n
+            'update' === $sql_string_part
             ||
-            'from' === $n
+            'from' === $sql_string_part
         )
         &&
-        null === $o->{$n}
+        null === $active_record->{$sql_string_part}
     ) {
 
-      $n = \strtoupper($n) . ' ' . $o->table;
+      $sql_string_part = \strtoupper($sql_string_part) . ' ' . $active_record->table;
 
-    } elseif ('delete' === $n) {
+    } elseif ('delete' === $sql_string_part) {
 
-      $n = \strtoupper($n) . ' ';
+      $sql_string_part = \strtoupper($sql_string_part) . ' ';
 
     } else {
 
-      $n = (null !== $o->{$n}) ? $o->{$n} . ' ' : '';
+      $sql_string_part = (null !== $active_record->{$sql_string_part}) ? $active_record->{$sql_string_part} . ' ' : '';
 
     }
   }
@@ -822,18 +822,18 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to build SQL with sql parts.
    *
-   * @param string[] $sqls <p>The SQL part will be build.</p>
+   * @param string[] $sql_array <p>The SQL part will be build.</p>
    *
    * @return string
    */
-  protected function _buildSql(array $sqls = []): string
+  protected function _buildSql(array $sql_array = []): string
   {
-    \array_walk($sqls, [$this, '_buildSqlCallback'], $this);
+    \array_walk($sql_array, [$this, '_buildSqlCallback'], $this);
 
     // DEBUG
     //echo 'SQL: ', implode(' ', $sqls), "\n", 'PARAMS: ', implode(', ', $this->params), "\n";
 
-    return \implode(' ', $sqls);
+    return \implode(' ', $sql_array);
   }
 
   /**
@@ -905,7 +905,8 @@ abstract class ActiveRecord extends Arrayy
                     'delimiter' => ' ',
                     'target'    => $this->expressions,
                 ]
-            ), 'or' === \strtolower($op) ? 'OR' : 'AND'
+            ),
+            'or' === \strtolower($op) ? 'OR' : 'AND'
         );
       }
       $this->expressions = [];
@@ -940,18 +941,18 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Helper function to add condition into WHERE.
    *
-   * @param string $field <p>The field name, the source of Expressions</p>
-   * @param string $operator
-   * @param mixed  $value <p>The target of the Expressions.</p>
-   * @param string $op    <p>The operator to concat this Expressions into WHERE or SET statement.</p>
-   * @param string $name  <p>The Expression will contact to.</p>
+   * @param string $field           <p>The field name, the source of Expressions</p>
+   * @param string $operator        <p>The operator for this condition.</p>
+   * @param mixed  $value           <p>The target of the Expressions.</p>
+   * @param string $operator_concat <p>The operator to concat this Expressions into WHERE or SET statement.</p>
+   * @param string $name            <p>The Expression will contact to.</p>
    */
-  public function addCondition($field, $operator, $value, $op = 'AND', $name = 'where')
+  public function addCondition($field, $operator, $value, $operator_concat = 'AND', $name = 'where')
   {
     $value = $this->_filterParam($value);
-    $exp = new ActiveRecordExpressions(
+    $expression = new ActiveRecordExpressions(
         [
-            'source'   => ('where' == $name ? $this->table . '.' : '') . $field,
+            'source'   => ('where' === strtolower($name) ? $this->table . '.' : '') . $field,
             'operator' => $operator,
             'target'   => \is_array($value)
                 ? new ActiveRecordExpressionsWrap(
@@ -961,11 +962,12 @@ abstract class ActiveRecord extends Arrayy
                 ) : $value,
         ]
     );
-    if ($exp) {
+
+    if ($expression) {
       if (!$this->wrap) {
-        $this->_addCondition($exp, $op, $name);
+        $this->_addCondition($expression, $operator_concat, $name);
       } else {
-        $this->_addExpression($exp, $op);
+        $this->_addExpression($expression, $operator_concat);
       }
     }
   }
@@ -1016,23 +1018,32 @@ abstract class ActiveRecord extends Arrayy
   /**
    * helper function to add condition into WHERE.
    *
-   * @param ActiveRecordExpressions $exp      <p>The expression will be concat into WHERE or SET statement.</p>
-   * @param string                  $operator <p>The operator to concat this Expressions into WHERE or SET
-   *                                          statement.</p>
-   * @param string                  $name     <p>The Expression will contact to.</p>
+   * @param ActiveRecordExpressions $expression <p>The expression will be concat into WHERE or SET statement.</p>
+   * @param string                  $operator   <p>The operator to concat this Expressions into WHERE or SET
+   *                                            statement.</p>
+   * @param string                  $name       <p>The Expression will contact to.</p>
    */
-  protected function _addCondition($exp, $operator, $name = 'where')
+  protected function _addCondition($expression, $operator, $name = 'where')
   {
     if (!$this->{$name}) {
-      $this->{$name} = new ActiveRecordExpressions(['operator' => \strtoupper($name), 'target' => $exp]);
+
+      $this->{$name} = new ActiveRecordExpressions(
+          [
+              'operator' => \strtoupper($name),
+              'target'   => $expression,
+          ]
+      );
+
     } else {
+
       $this->{$name}->target = new ActiveRecordExpressions(
           [
               'source'   => $this->{$name}->target,
               'operator' => $operator,
-              'target'   => $exp,
+              'target'   => $expression,
           ]
       );
+
     }
   }
 

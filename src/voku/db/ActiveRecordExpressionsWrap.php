@@ -18,12 +18,31 @@ class ActiveRecordExpressionsWrap extends ActiveRecordExpressions
    */
   public function __toString()
   {
-    $delimiter = (string)($this->delimiter ?: ',');
+    // init
+    $str = '';
 
-    if ($this->start) {
-      return $this->start . implode($delimiter, $this->target->getArray()) . ($this->end ?: ')');
+    if ($this->delimiter) {
+      $delimiter = (string)($this->delimiter);
+    } else {
+      $delimiter = ',';
     }
 
-    return '(' . implode($delimiter, $this->target->getArray()) . ($this->end ?: ')');
+    // build the string
+
+    if ($this->start) {
+      $str .= $this->start;
+    } else {
+      $str .= '(';
+    }
+
+    $str .= \implode($delimiter, $this->target->getArray());
+
+    if ($this->end) {
+      $str .= $this->end;
+    } else {
+      $str .= (')');
+    }
+
+    return $str;
   }
 }

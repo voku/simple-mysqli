@@ -1,6 +1,10 @@
 Changelog
 =========
 
+7.1.1 (2018-02-13)
+
+- "DB" -> implement "re_connect" for "DB::getInstance()"
+
 7.1.0 (2018-01-21)
 
 - "define constants for default_result_type"

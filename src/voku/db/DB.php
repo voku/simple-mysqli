@@ -268,7 +268,19 @@ final class DB
    *
    * @return bool
    */
-  private function _loadConfig(string $hostname, string $username, string $password, string $database, $port, string $charset, bool $exit_on_error, bool $echo_on_error, string $logger_class_name, string $logger_level, array $extra_config = []): bool
+  private function _loadConfig(
+      string $hostname,
+      string $username,
+      string $password,
+      string $database,
+      $port,
+      string $charset,
+      bool $exit_on_error,
+      bool $echo_on_error,
+      string $logger_class_name,
+      string $logger_level,
+      array $extra_config = []
+  ): bool
   {
     $this->hostname = $hostname;
     $this->username = $username;
@@ -521,35 +533,29 @@ final class DB
    */
   private function _parseQueryParams(string $sql, array $params = []): array
   {
+    $offset = \strpos($sql, '?');
+
     // is there anything to parse?
     if (
-        \strpos($sql, '?') === false
+        $offset === false
         ||
         \count($params) === 0
     ) {
       return ['sql' => $sql, 'params' => $params];
     }
 
-    static $PARSE_KEY_CACHE = null;
-    if ($PARSE_KEY_CACHE === null) {
-      $PARSE_KEY_CACHE = \md5(\uniqid((string)\mt_rand(), true));
-    }
+    foreach ($params as $key => $param) {
 
-    $sql = \str_replace('?', $PARSE_KEY_CACHE, $sql);
-
-    $k = 0;
-    while (\strpos($sql, $PARSE_KEY_CACHE) !== false) {
-      $sql = UTF8::str_replace_first(
-          $PARSE_KEY_CACHE,
-          (string)(isset($params[$k]) ? $this->secure($params[$k]) : ''),
-          $sql
-      );
-
-      if (isset($params[$k])) {
-        unset($params[$k]);
+      if ($offset === false) {
+        continue;
       }
 
-      $k++;
+      $replacement = $this->secure($param);
+
+      unset($params[$key]);
+
+      $sql = \substr_replace($sql, $replacement, $offset, 1);
+      $offset = \strpos($sql, '?', $offset + \strlen((string)$replacement));
     }
 
     return ['sql' => $sql, 'params' => $params];
@@ -818,42 +824,32 @@ final class DB
       return ['sql' => $sql, 'params' => $params];
     }
 
-    static $PARSE_KEY_CACHE = null;
-    if ($PARSE_KEY_CACHE === null) {
-      $PARSE_KEY_CACHE = \md5(\uniqid((string)\mt_rand(), true));
-    }
+    $offset = null;
+    $replacement = null;
+    foreach ($params as $name => $param) {
 
-    foreach ($params as $name => $value) {
-      $nameTmp = $name;
-      if (\strpos($name, ':') === 0) {
-        $nameTmp = \substr($name, 1);
+      // add ":" if needed
+      if (\strpos($name, ':') !== 0) {
+        $nameTmp = ':' . $name;
+      } else {
+        $nameTmp = $name;
       }
 
-      $parseKeyInner = $nameTmp . '-' . $PARSE_KEY_CACHE;
-      $sql = \str_replace(':' . $nameTmp, $parseKeyInner, $sql);
-    }
-
-    foreach ($params as $name => $value) {
-      $nameTmp = $name;
-      if (\strpos($name, ':') === 0) {
-        $nameTmp = \substr($name, 1);
+      if ($offset === null) {
+        $offset = \strpos($sql, $nameTmp);
+      } else {
+        $offset = \strpos($sql, $nameTmp, $offset + \strlen((string)$replacement));
       }
 
-      $parseKeyInner = $nameTmp . '-' . $PARSE_KEY_CACHE;
-      $sqlBefore = $sql;
-      $secureParamValue = $this->secure($params[$name]);
-
-      while (\strpos($sql, $parseKeyInner) !== false) {
-        $sql = UTF8::str_replace_first(
-            $parseKeyInner,
-            (string)$secureParamValue,
-            $sql
-        );
+      if ($offset === false) {
+        continue;
       }
 
-      if ($sqlBefore !== $sql) {
-        unset($params[$name]);
-      }
+      $replacement = $this->secure($param);
+
+      unset($params[$name]);
+
+      $sql = \substr_replace($sql, $replacement, $offset, \strlen($nameTmp));
     }
 
     return ['sql' => $sql, 'params' => $params];
@@ -969,7 +965,6 @@ final class DB
       }
 
       if ($html_entity_decode === true) {
-        // use no-html-entity for db
         $var = UTF8::html_entity_decode($var);
       }
 
@@ -992,10 +987,10 @@ final class DB
   /**
    * Execute select/insert/update/delete sql-queries.
    *
-   * @param string    $query    <p>sql-query</p>
-   * @param bool      $useCache <p>use cache?</p>
-   * @param int       $cacheTTL <p>cache-ttl in seconds</p>
-   * @param self|null $db       optional <p>the database connection</p>
+   * @param string  $query    <p>sql-query</p>
+   * @param bool    $useCache optional <p>use cache?</p>
+   * @param int     $cacheTTL optional <p>cache-ttl in seconds</p>
+   * @param DB|null $db       optional <p>the database connection</p>
    *
    * @return mixed "array" by "<b>SELECT</b>"-queries<br />
    *               "int" (insert_id) by "<b>INSERT</b>"-queries<br />
@@ -1005,7 +1000,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public static function execSQL(string $query, bool $useCache = false, int $cacheTTL = 3600, self $db = null)
+  public static function execSQL(string $query, bool $useCache = false, int $cacheTTL = 3600, DB $db = null)
   {
     // init
     $cacheKey = null;
@@ -1113,7 +1108,19 @@ final class DB
    *
    * @return self
    */
-  public static function getInstance(string $hostname = '', string $username = '', string $password = '', string $database = '', $port = 3306, string $charset = 'utf8', bool $exit_on_error = true, bool $echo_on_error = true, string $logger_class_name = '', string $logger_level = '', array $extra_config = []): self
+  public static function getInstance(
+      string $hostname = '',
+      string $username = '',
+      string $password = '',
+      string $database = '',
+      $port = 3306,
+      string $charset = 'utf8',
+      bool $exit_on_error = true,
+      bool $echo_on_error = true,
+      string $logger_class_name = '',
+      string $logger_level = '',
+      array $extra_config = []
+  ): self
   {
     /**
      * @var $instance self[]
@@ -1868,11 +1875,11 @@ final class DB
    *
    * @deprecated It's not recommended to convert NULL into an empty string!
    *
-   * @param $bool
+   * @param bool $bool
    *
-   * @return $this
+   * @return self
    */
-  public function set_convert_null_to_empty_string(bool $bool)
+  public function set_convert_null_to_empty_string(bool $bool): self
   {
     $this->_convert_null_to_empty_string = $bool;
 

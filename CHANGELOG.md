@@ -1,6 +1,10 @@
 Changelog
 =========
 
+7.1.2 (2018-04-27)
+
+- optimize performance for the query builder
+
 7.1.1 (2018-02-13)
 
 - "DB" -> implement "re_connect" for "DB::getInstance()"

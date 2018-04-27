@@ -1717,11 +1717,10 @@ final class DB
    * <p>
    * <strong>string:</strong><br />
    * 1. check if the string isn't a default mysql-time-function e.g. 'CURDATE()'<br />
-   * 2. \trim whitespace<br />
-   * 3. \trim '<br />
-   * 4. escape the string (and remove non utf-8 chars)<br />
-   * 5. \trim ' again (because we maybe removed some chars)<br />
-   * 6. add ' around the new string<br />
+   * 2. trim '<br />
+   * 3. escape the string (and remove non utf-8 chars)<br />
+   * 4. trim ' again (because we maybe removed some chars)<br />
+   * 5. add ' around the new string<br />
    * </p><br />
    *
    * <p>
@@ -1766,7 +1765,7 @@ final class DB
     }
 
     if (\is_string($var)) {
-      $var = \trim(\trim($var), "'");
+      $var = \trim($var, "'");
     }
 
     $var = $this->escape($var, false, false, null);

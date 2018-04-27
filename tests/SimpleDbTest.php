@@ -328,7 +328,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     // select - true
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchArray();
-    self::assertSame('<li><a href="/">鼦վͼ</a></li>', $tmpPage['page_template']);
+    self::assertSame('<li><a href="/">鼦վͼ</a></li>' . "\n", $tmpPage['page_template']);
   }
 
   /**
@@ -391,7 +391,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     // select - true
     $result = $this->db->select($this->tableName, 'page_id = ' . (int)$tmpId);
     $tmpPage = $result->fetchObject();
-    self::assertSame('<li><a href="/">鼦վͼ</a></li>', $tmpPage->page_template);
+    self::assertSame('<li><a href="/">鼦վͼ</a></li>' . "\n", $tmpPage->page_template);
   }
 
   public function testBasics()
@@ -683,7 +683,13 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $object = new stdClass();
     $object->bar = 'foo';
 
-    self::assertFalse($this->db->escape($object));
+    $errorCatch = false;
+    try {
+      $this->db->secure($object);
+    } catch (InvalidArgumentException $e) {
+      $errorCatch = true;
+    }
+    self::assertTrue($errorCatch);
 
     // ---
 
@@ -766,10 +772,10 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
         $this->db->escape(array_keys($testArray), true, true, false)
     );
 
-    self::assertNull($this->db->escape(array_keys($testArray), false, true, null));
-    self::assertNull($this->db->escape(array_keys($testArray), true, false, null));
-    self::assertNull($this->db->escape(array_keys($testArray), false, false, null));
-    self::assertNull($this->db->escape(array_keys($testArray), true, true, null));
+    self::assertSame('NULL', $this->db->escape(array_keys($testArray), false, true, null));
+    self::assertSame('NULL', $this->db->escape(array_keys($testArray), true, false, null));
+    self::assertSame('NULL', $this->db->escape(array_keys($testArray), false, false, null));
+    self::assertSame('NULL', $this->db->escape(array_keys($testArray), true, true, null));
 
 
     // ---
@@ -1665,7 +1671,13 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $object = new stdClass();
     $object->bar = 'foo';
 
-    self::assertFalse($this->db->secure($object));
+    $errorCatch = false;
+    try {
+      $this->db->secure($object);
+    } catch (InvalidArgumentException $e) {
+      $errorCatch = true;
+    }
+    self::assertTrue($errorCatch);
 
     // --- object: Arrayy
 
@@ -1709,7 +1721,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
       self::assertSame($after, $this->db->secure($before));
     }
 
-    self::assertNull($this->db->secure(array_keys($testArray)));
+    self::assertSame('\'NULL\'', $this->db->secure(array_keys($testArray)));
   }
 
   public function testUtf8Query()
@@ -1743,6 +1755,23 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
         $sql,
         [
             1.1,
+            1,
+        ]
+    );
+    self::assertTrue($return > 1, print_r($return, true));
+
+    //
+    // query - true
+    //
+    $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = :foo,
+        page_type = ?
+    ';
+    $return = $this->db->query(
+        $sql,
+        [
+            'foo' => 1.1,
             1,
         ]
     );
@@ -1942,7 +1971,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame('foo\'bar', $tmpPage->page_type);
 
     //
-    // query - false
+    // query - ok
     //
     $sql = 'INSERT INTO ' . $this->tableName . '
       SET
@@ -1956,8 +1985,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
             ['test'],
         ]
     );
-    // array('test') => null
-    self::assertFalse($return);
+    self::assertTrue($return > 0);
 
     //
     // query - false

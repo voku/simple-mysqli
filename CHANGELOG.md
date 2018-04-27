@@ -1,6 +1,11 @@
 Changelog
 =========
 
+7.1.3 (2018-04-27)
+
+- optimize the "escape" function
+- do not trim the input string
+
 7.1.2 (2018-04-27)
 
 - optimize performance for the query builder

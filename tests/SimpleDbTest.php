@@ -1765,6 +1765,24 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     );
     self::assertTrue($return > 1, print_r($return, true));
 
+
+    //
+    // query + UTF-8 - true
+    //
+    $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = :page_template,
+        page_type = :page_type
+    ';
+    $return = $this->db->query(
+        $sql,
+        [
+            'page_template' => "Iñtërnâtiôn\xE9àlizætiøn",
+            'page_type'     => '中文空白-ÖÄÜ-中文空白',
+        ]
+    );
+    self::assertTrue($return > 1, print_r($return, true));
+
     //
     // query - true (with empty array)
     //

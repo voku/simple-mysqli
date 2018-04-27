@@ -546,6 +546,11 @@ final class DB
 
     foreach ($params as $key => $param) {
 
+      // use this only for not named parameters
+      if (!is_int($key)) {
+        continue;
+      }
+
       if ($offset === false) {
         continue;
       }
@@ -828,6 +833,11 @@ final class DB
     $replacement = null;
     foreach ($params as $name => $param) {
 
+      // use this only for named parameters
+      if (is_int($name)) {
+        continue;
+      }
+
       // add ":" if needed
       if (\strpos($name, ':') !== 0) {
         $nameTmp = ':' . $name;
@@ -884,104 +894,87 @@ final class DB
       return "''";
     }
 
-    // NULL
-    if ($var === null) {
-      if (
-          $this->_convert_null_to_empty_string === true
-      ) {
-        return "''";
+    // check the type
+    $type = gettype($var);
+
+    if ($type === 'object') {
+      if ($var instanceof \DateTime) {
+        $var = $var->format('Y-m-d H:i:s');
+        $type = 'string';
+      } elseif (\method_exists($var, '__toString')) {
+        $var = (string)$var;
+        $type = 'string';
       }
-
-      return 'NULL';
     }
 
-    // save the current value as int (for later usage)
-    if (!\is_object($var)) {
-      $varInt = (int)$var;
+    switch ($type) {
+      case 'boolean':
+        $var = (int)$var;
+        break;
+
+      case 'double':
+      case 'integer':
+        break;
+
+      case 'string':
+        if ($stripe_non_utf8 === true) {
+          $var = UTF8::cleanup($var);
+        }
+
+        if ($html_entity_decode === true) {
+          $var = UTF8::html_entity_decode($var);
+        }
+
+        $var = \get_magic_quotes_gpc() ? \stripslashes($var) : $var;
+        $var = \mysqli_real_escape_string($this->getLink(), $var);
+        break;
+
+      case 'array':
+        if ($convert_array === null) {
+
+          if ($this->_convert_null_to_empty_string === true) {
+            $var = "''";
+          } else {
+            $var = 'NULL';
+          }
+
+        } else {
+
+          $varCleaned = [];
+          foreach ((array)$var as $key => $value) {
+
+            $key = $this->escape($key, $stripe_non_utf8, $html_entity_decode);
+            $value = $this->escape($value, $stripe_non_utf8, $html_entity_decode);
+
+            /** @noinspection OffsetOperationsInspection */
+            $varCleaned[$key] = $value;
+          }
+
+          if ($convert_array === true) {
+            $varCleaned = \implode(',', $varCleaned);
+
+            $var = $varCleaned;
+          } else {
+            $var = $varCleaned;
+          }
+
+        }
+        break;
+
+      case 'NULL':
+        if ($this->_convert_null_to_empty_string === true) {
+          $var = "''";
+        } else {
+          $var = 'NULL';
+        }
+        break;
+
+      default:
+        throw new \InvalidArgumentException(sprintf('Not supported value "%s" of type %s.', print_r($var, true), $type));
+        break;
     }
 
-    // "int" || int || bool
-    if (
-        \is_int($var)
-        ||
-        \is_bool($var)
-        ||
-        (
-            isset($varInt, $var[0])
-            &&
-            $var[0] != '0'
-            &&
-            (string)$varInt == $var
-        )
-    ) {
-      return (int)$var;
-    }
-
-    // float
-    if (\is_float($var)) {
-      return $var;
-    }
-
-    // array
-    if (\is_array($var)) {
-
-      if ($convert_array === null) {
-        return null;
-      }
-
-      $varCleaned = [];
-      foreach ((array)$var as $key => $value) {
-
-        $key = $this->escape($key, $stripe_non_utf8, $html_entity_decode);
-        $value = $this->escape($value, $stripe_non_utf8, $html_entity_decode);
-
-        /** @noinspection OffsetOperationsInspection */
-        $varCleaned[$key] = $value;
-      }
-
-      if ($convert_array === true) {
-        $varCleaned = \implode(',', $varCleaned);
-
-        return $varCleaned;
-      }
-
-      return $varCleaned;
-    }
-
-    // "string"
-    if (
-        \is_string($var)
-        ||
-        (
-            \is_object($var)
-            &&
-            \method_exists($var, '__toString')
-        )
-    ) {
-      $var = (string)$var;
-
-      if ($stripe_non_utf8 === true) {
-        $var = UTF8::cleanup($var);
-      }
-
-      if ($html_entity_decode === true) {
-        $var = UTF8::html_entity_decode($var);
-      }
-
-      $var = \get_magic_quotes_gpc() ? \stripslashes($var) : $var;
-
-      $var = \mysqli_real_escape_string($this->getLink(), $var);
-
-      return (string)$var;
-
-    }
-
-    // "DateTime"-object
-    if ($var instanceof \DateTime) {
-      return $this->escape($var->format('Y-m-d H:i:s'), false);
-    }
-
-    return false;
+    return $var;
   }
 
   /**

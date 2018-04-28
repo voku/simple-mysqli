@@ -818,7 +818,7 @@ final class DB
    *
    * @return array <p>with the keys -> 'sql', 'params'</p>
    */
-  public function _parseQueryParamsByName(string $sql, array $params = []): array
+  private function _parseQueryParamsByName(string $sql, array $params = []): array
   {
     // is there anything to parse?
     if (

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+7.1.4 (2018-04-28)
+
+- DB->_parseQueryParamsByName() is private now (only internal usage)
+
 7.1.3 (2018-04-27)
 
 - optimize the "escape" function

@@ -1806,7 +1806,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $return = $this->db->query(
         $sql,
         [
-            'page_template' => "Iñtërnâtiônàlizætiøn",
+            'page_template' => 'Iñtërnâtiônàlizætiøn',
             'page_type'     => '中文空白-ÖÄÜ-中文空白',
         ]
     );

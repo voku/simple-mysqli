@@ -639,10 +639,13 @@ final class DB
     $this->connected = false;
 
     if ($this->_doctrine_connection) {
+
+      $connectedBefore = $this->_doctrine_connection->isConnected();
+
       $this->_doctrine_connection->close();
       $this->link = null;
 
-      return !$this->_doctrine_connection->isConnected();
+      return ($connectedBefore === true ? !$this->_doctrine_connection->isConnected() : false);
     }
 
     if (
@@ -704,12 +707,13 @@ final class DB
 
           $this->connected = $this->_doctrine_connection->isConnected();
 
-          $errno = $this->_doctrine_connection->errorCode();
-          if (!$this->connected || $errno) {
-            $error = 'Error connecting to mysql server: ' . $this->_doctrine_connection->errorInfo() . ' (' . $errno . ')';
+          if (!$this->connected) {
+            $error = 'Error connecting to mysql server: ' . $this->_doctrine_connection->errorInfo();
             $this->_debug->displayError($error, false);
             throw new DBConnectException($error, 101);
           }
+
+          $this->set_charset($this->charset);
 
           return $this->isReady();
         }
@@ -925,11 +929,7 @@ final class DB
 
         $var = \get_magic_quotes_gpc() ? \stripslashes($var) : $var;
 
-        if ($this->link) {
-          $var = \mysqli_real_escape_string($this->link, $var);
-        } else {
-          $var = '';
-        }
+        $var = \mysqli_real_escape_string($this->link, $var);
 
         break;
 
@@ -1137,6 +1137,11 @@ final class DB
      * @var $firstInstance self
      */
     static $firstInstance = null;
+
+    // fallback
+    if (!$charset) {
+      $charset = 'utf8';
+    }
 
     if (
         $hostname . $username . $password . $database . $port . $charset == '3306utf8'
@@ -1525,6 +1530,7 @@ final class DB
     // echo $sql . "\n";
 
     $query_start_time = microtime(true);
+    $queryException = null;
 
     if ($this->_doctrine_connection) {
 
@@ -1533,7 +1539,10 @@ final class DB
         $query_result = $query_result_doctrine->execute();
         $mysqli_field_count = $query_result_doctrine->columnCount();
       } catch (\Exception $e) {
-        $this->_debug->displayError($e->getMessage(), true);
+        $query_result = false;
+        $mysqli_field_count = null;
+
+        $queryException = $e;
       }
 
     } else {
@@ -1615,6 +1624,10 @@ final class DB
 
     // log the error query
     $this->_debug->logQuery($sql, $query_duration, 0, true);
+
+    if ($queryException) {
+      return $this->queryErrorHandling($queryException->getMessage(), $queryException->getCode(), $sql, $params);
+    }
 
     return $this->queryErrorHandling(\mysqli_error($this->link), \mysqli_errno($this->link), $sql, $params);
   }
@@ -1708,7 +1721,6 @@ final class DB
   public function reconnect(bool $checkViaPing = false): bool
   {
     $ping = false;
-
     if ($checkViaPing === true) {
       $ping = $this->ping();
     }

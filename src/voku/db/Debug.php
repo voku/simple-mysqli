@@ -293,9 +293,14 @@ class Debug
     }
 
     // get extra info
-    $infoExtra = \mysqli_info($this->_db->getLink());
-    if ($infoExtra) {
-      $infoExtra = ' | info => ' . $infoExtra;
+    $infoExtra = '';
+    $tmpLink = $this->_db->getLink();
+    if ($tmpLink && $tmpLink instanceof \mysqli) {
+      /** @noinspection PhpUsageOfSilenceOperatorInspection */
+      $infoExtra = @\mysqli_info($tmpLink);
+      if ($infoExtra) {
+        $infoExtra = ' | info => ' . $infoExtra;
+      }
     }
 
     //

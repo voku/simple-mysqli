@@ -188,7 +188,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   private function cast(&$data)
   {
     if (
-        !$this->doctrinePdoStmt // pdo only have limited support for types by default
+        !$this->doctrinePdoStmt // pdo only have limited support for types, so we try to improve it
         &&
         Helper::isMysqlndIsUsed() === true
     ) {
@@ -641,7 +641,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       return $this->cast($row);
     }
 
-    if ($row === null) {
+    if ($row === null || $row === false) {
       return [];
     }
 
@@ -707,7 +707,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       return Arrayy::create($this->cast($row));
     }
 
-    if ($row === null) {
+    if ($row === null || $row === false) {
       return Arrayy::create();
     }
 

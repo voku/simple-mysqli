@@ -997,7 +997,7 @@ final class DB
    *
    * @throws QueryException
    */
-  public static function execSQL(string $query, bool $useCache = false, int $cacheTTL = 3600, DB $db = null)
+  public static function execSQL(string $query, bool $useCache = false, int $cacheTTL = 3600, self $db = null)
   {
     // init
     $cacheKey = null;

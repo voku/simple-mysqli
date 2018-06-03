@@ -120,6 +120,11 @@ final class DB
   private $_debug;
 
   /**
+   * @var null|\Doctrine\DBAL\Connection
+   */
+  private $_doctrine_connection;
+
+  /**
    * __construct()
    *
    * @param string $hostname
@@ -204,7 +209,6 @@ final class DB
 
   /**
    * __destruct
-   *
    */
   public function __destruct()
   {
@@ -326,43 +330,6 @@ final class DB
     }
 
     return $this->showConfigError();
-  }
-
-  /**
-   * @param array $extra_config           <p>
-   *                                      'session_to_db' => false|true<br>
-   *                                      'socket' => 'string (path)'<br>
-   *                                      'ssl' => 'bool'<br>
-   *                                      'clientkey' => 'string (path)'<br>
-   *                                      'clientcert' => 'string (path)'<br>
-   *                                      'cacert' => 'string (path)'<br>
-   *                                      </p>
-   */
-  public function setConfigExtra(array $extra_config)
-  {
-    if (isset($extra_config['session_to_db'])) {
-      $this->session_to_db = (boolean)$extra_config['session_to_db'];
-    }
-
-    if (isset($extra_config['socket'])) {
-      $this->socket = $extra_config['socket'];
-    }
-
-    if (isset($extra_config['ssl'])) {
-      $this->_ssl = $extra_config['ssl'];
-    }
-
-    if (isset($extra_config['clientkey'])) {
-      $this->_clientkey = $extra_config['clientkey'];
-    }
-
-    if (isset($extra_config['clientcert'])) {
-      $this->_clientcert = $extra_config['clientcert'];
-    }
-
-    if (isset($extra_config['cacert'])) {
-      $this->_cacert = $extra_config['cacert'];
-    }
   }
 
   /**
@@ -567,6 +534,61 @@ final class DB
   }
 
   /**
+   * Returns the SQL by replacing :placeholders with SQL-escaped values.
+   *
+   * @param mixed $sql    <p>The SQL string.</p>
+   * @param array $params <p>An array of key-value bindings.</p>
+   *
+   * @return array <p>with the keys -> 'sql', 'params'</p>
+   */
+  private function _parseQueryParamsByName(string $sql, array $params = []): array
+  {
+    // is there anything to parse?
+    if (
+        \strpos($sql, ':') === false
+        ||
+        \count($params) === 0
+    ) {
+      return ['sql' => $sql, 'params' => $params];
+    }
+
+    $offset = null;
+    $replacement = null;
+    foreach ($params as $name => $param) {
+
+      // use this only for named parameters
+      if (is_int($name)) {
+        continue;
+      }
+
+      // add ":" if needed
+      if (\strpos($name, ':') !== 0) {
+        $nameTmp = ':' . $name;
+      } else {
+        $nameTmp = $name;
+      }
+
+      if ($offset === null) {
+        $offset = \strpos($sql, $nameTmp);
+      } else {
+        $offset = \strpos($sql, $nameTmp, $offset + \strlen((string)$replacement));
+      }
+
+      if ($offset === false) {
+        continue;
+      }
+
+      $replacement = $this->secure($param);
+
+      unset($params[$name]);
+
+      $sql = \substr_replace($sql, $replacement, $offset, \strlen($nameTmp));
+    }
+
+    return ['sql' => $sql, 'params' => $params];
+  }
+
+  /**
    * Gets the number of affected rows in a previous MySQL operation.
    *
    * @return int
@@ -616,6 +638,13 @@ final class DB
   {
     $this->connected = false;
 
+    if ($this->_doctrine_connection) {
+      $this->_doctrine_connection->close();
+      $this->link = null;
+
+      return !$this->_doctrine_connection->isConnected();
+    }
+
     if (
         $this->link
         &&
@@ -626,6 +655,8 @@ final class DB
 
       return $result;
     }
+
+    $this->link = null;
 
     return false;
   }
@@ -661,6 +692,28 @@ final class DB
   {
     if ($this->isReady()) {
       return true;
+    }
+
+    if ($this->_doctrine_connection) {
+      $this->_doctrine_connection->connect();
+
+      if (method_exists($this->_doctrine_connection, 'getWrappedConnection')) {
+        $doctrineMySQLi = $this->_doctrine_connection->getWrappedConnection();
+        if ($doctrineMySQLi instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliConnection) {
+          $this->link = $doctrineMySQLi->getWrappedResourceHandle();
+
+          $this->connected = $this->_doctrine_connection->isConnected();
+
+          $errno = $this->_doctrine_connection->errorCode();
+          if (!$this->connected || $errno) {
+            $error = 'Error connecting to mysql server: ' . $this->_doctrine_connection->errorInfo() . ' (' . $errno . ')';
+            $this->_debug->displayError($error, false);
+            throw new DBConnectException($error, 101);
+          }
+
+          return $this->isReady();
+        }
+      }
     }
 
     $flags = null;
@@ -716,7 +769,7 @@ final class DB
 
     } catch (\Exception $e) {
       $error = 'Error connecting to mysql server: ' . $e->getMessage();
-      $this->_debug->displayError($error, true);
+      $this->_debug->displayError($error, false);
       throw new DBConnectException($error, 100, $e);
     }
     \mysqli_report(MYSQLI_REPORT_OFF);
@@ -724,7 +777,7 @@ final class DB
     $errno = \mysqli_connect_errno();
     if (!$this->connected || $errno) {
       $error = 'Error connecting to mysql server: ' . \mysqli_connect_error() . ' (' . $errno . ')';
-      $this->_debug->displayError($error, true);
+      $this->_debug->displayError($error, false);
       throw new DBConnectException($error, 101);
     }
 
@@ -742,7 +795,7 @@ final class DB
    *
    * @return false|int <p>false on error</p>
    *
-   *    * @throws QueryException
+   * @throws QueryException
    */
   public function delete(string $table, $where, string $databaseName = null)
   {
@@ -811,61 +864,6 @@ final class DB
   }
 
   /**
-   * Returns the SQL by replacing :placeholders with SQL-escaped values.
-   *
-   * @param mixed $sql    <p>The SQL string.</p>
-   * @param array $params <p>An array of key-value bindings.</p>
-   *
-   * @return array <p>with the keys -> 'sql', 'params'</p>
-   */
-  private function _parseQueryParamsByName(string $sql, array $params = []): array
-  {
-    // is there anything to parse?
-    if (
-        \strpos($sql, ':') === false
-        ||
-        \count($params) === 0
-    ) {
-      return ['sql' => $sql, 'params' => $params];
-    }
-
-    $offset = null;
-    $replacement = null;
-    foreach ($params as $name => $param) {
-
-      // use this only for named parameters
-      if (is_int($name)) {
-        continue;
-      }
-
-      // add ":" if needed
-      if (\strpos($name, ':') !== 0) {
-        $nameTmp = ':' . $name;
-      } else {
-        $nameTmp = $name;
-      }
-
-      if ($offset === null) {
-        $offset = \strpos($sql, $nameTmp);
-      } else {
-        $offset = \strpos($sql, $nameTmp, $offset + \strlen((string)$replacement));
-      }
-
-      if ($offset === false) {
-        continue;
-      }
-
-      $replacement = $this->secure($param);
-
-      unset($params[$name]);
-
-      $sql = \substr_replace($sql, $replacement, $offset, \strlen($nameTmp));
-    }
-
-    return ['sql' => $sql, 'params' => $params];
-  }
-
-  /**
    * Escape: Use "mysqli_real_escape_string" and clean non UTF-8 chars + some extra optional stuff.
    *
    * @param mixed     $var           boolean: convert into "integer"<br />
@@ -926,7 +924,13 @@ final class DB
         }
 
         $var = \get_magic_quotes_gpc() ? \stripslashes($var) : $var;
-        $var = \mysqli_real_escape_string($this->getLink(), $var);
+
+        if ($this->link) {
+          $var = \mysqli_real_escape_string($this->link, $var);
+        } else {
+          $var = '';
+        }
+
         break;
 
       case 'array':
@@ -1065,6 +1069,14 @@ final class DB
   }
 
   /**
+   * @return \Doctrine\DBAL\Connection|null
+   */
+  public function getDoctrineConnection()
+  {
+    return $this->_doctrine_connection;
+  }
+
+  /**
    * Get errors from "$this->_errors".
    *
    * @return array
@@ -1092,6 +1104,7 @@ final class DB
    * @param array  $extra_config         <p>
    *                                     're_connect'    => bool<br>
    *                                     'session_to_db' => bool<br>
+   *                                     'doctrine'      => \Doctrine\DBAL\Connection<br>
    *                                     'socket'        => 'string (path)'<br>
    *                                     'ssl'           => bool<br>
    *                                     'clientkey'     => 'string (path)'<br>
@@ -1140,7 +1153,12 @@ final class DB
     $extra_config_string = '';
     if (\is_array($extra_config) === true) {
       foreach ($extra_config as $extra_config_key => $extra_config_value) {
-        $extra_config_string .= $extra_config_key . (string)$extra_config_value;
+        if (\is_object($extra_config_value)) {
+          $extra_config_value_tmp = \spl_object_hash($extra_config_value);
+        } else {
+          $extra_config_value_tmp = (string)$extra_config_value;
+        }
+        $extra_config_string .= $extra_config_key . $extra_config_value_tmp;
       }
     } else {
       // only for backward compatibility
@@ -1360,6 +1378,28 @@ final class DB
   }
 
   /**
+   * Count number of rows found matching a specific query.
+   *
+   * @param string $query
+   *
+   * @return int
+   */
+  public function num_rows(string $query): int
+  {
+    $check = $this->query($query);
+
+    if (
+        $check === false
+        ||
+        !$check instanceof Result
+    ) {
+      return 0;
+    }
+
+    return $check->num_rows;
+  }
+
+  /**
    * Pings a server connection, or tries to reconnect
    * if the connection has gone down.
    *
@@ -1367,6 +1407,16 @@ final class DB
    */
   public function ping(): bool
   {
+    if ($this->_doctrine_connection) {
+
+      // this check is needed, but I don't know why "ping" isn't working?
+      if (!$this->_doctrine_connection->isConnected()) {
+        return false;
+      }
+
+      return $this->_doctrine_connection->ping();
+    }
+
     if (
         $this->link
         &&
@@ -1475,16 +1525,59 @@ final class DB
     // echo $sql . "\n";
 
     $query_start_time = microtime(true);
-    $query_result = \mysqli_real_query($this->link, $sql);
+
+    if ($this->_doctrine_connection) {
+
+      try {
+        $query_result_doctrine = $this->_doctrine_connection->prepare($sql);
+        $query_result = $query_result_doctrine->execute();
+        $mysqli_field_count = $query_result_doctrine->columnCount();
+      } catch (\Exception $e) {
+        $this->_debug->displayError($e->getMessage(), true);
+      }
+
+    } else {
+
+      $query_result = \mysqli_real_query($this->link, $sql);
+      $mysqli_field_count = \mysqli_field_count($this->link);
+
+    }
+
     $query_duration = microtime(true) - $query_start_time;
 
     $this->query_count++;
 
-    $mysqli_field_count = \mysqli_field_count($this->link);
     if ($mysqli_field_count) {
-      $result = \mysqli_store_result($this->link);
+
+      if ($this->_doctrine_connection) {
+
+        $result = false;
+        if ($query_result_doctrine) {
+          if ($query_result_doctrine instanceof \Doctrine\DBAL\Statement) {
+            $result = $query_result_doctrine;
+          }
+        }
+
+      } else {
+
+        $result = \mysqli_store_result($this->link);
+
+      }
     } else {
       $result = $query_result;
+    }
+
+    if (
+        $result instanceof \Doctrine\DBAL\Statement
+        &&
+        $result->columnCount() > 0
+    ) {
+
+      // log the select query
+      $this->_debug->logQuery($sql, $query_duration, $mysqli_field_count);
+
+      // return query result object
+      return new Result($sql, $result);
     }
 
     if ($result instanceof \mysqli_result) {
@@ -1535,10 +1628,10 @@ final class DB
    * @param array|bool $sqlParams <p>false if there wasn't any parameter</p>
    * @param bool       $sqlMultiQuery
    *
+   * @return mixed|false
+   *
    * @throws QueryException
    * @throws DBGoneAwayException
-   *
-   * @return mixed|false
    */
   private function queryErrorHandling(string $errorMessage, int $errorNumber, string $sql, $sqlParams = false, bool $sqlMultiQuery = false)
   {
@@ -1833,6 +1926,51 @@ final class DB
   }
 
   /**
+   * @param array $extra_config           <p>
+   *                                      'session_to_db' => false|true<br>
+   *                                      'socket' => 'string (path)'<br>
+   *                                      'ssl' => 'bool'<br>
+   *                                      'clientkey' => 'string (path)'<br>
+   *                                      'clientcert' => 'string (path)'<br>
+   *                                      'cacert' => 'string (path)'<br>
+   *                                      </p>
+   */
+  public function setConfigExtra(array $extra_config)
+  {
+    if (isset($extra_config['session_to_db'])) {
+      $this->session_to_db = (boolean)$extra_config['session_to_db'];
+    }
+
+    if (
+        isset($extra_config['doctrine'])
+        &&
+        $extra_config['doctrine'] instanceof \Doctrine\DBAL\Connection
+    ) {
+      $this->_doctrine_connection = $extra_config['doctrine'];
+    }
+
+    if (isset($extra_config['socket'])) {
+      $this->socket = $extra_config['socket'];
+    }
+
+    if (isset($extra_config['ssl'])) {
+      $this->_ssl = $extra_config['ssl'];
+    }
+
+    if (isset($extra_config['clientkey'])) {
+      $this->_clientkey = $extra_config['clientkey'];
+    }
+
+    if (isset($extra_config['clientcert'])) {
+      $this->_clientcert = $extra_config['clientcert'];
+    }
+
+    if (isset($extra_config['cacert'])) {
+      $this->_cacert = $extra_config['cacert'];
+    }
+  }
+
+  /**
    * Set the current charset.
    *
    * @param string $charset
@@ -1932,6 +2070,14 @@ final class DB
    */
   public function showConfigError(): bool
   {
+    // check if a doctrine connection is already open
+    if (
+        $this->_doctrine_connection
+        &&
+        $this->_doctrine_connection->isConnected()
+    ) {
+      return true;
+    }
 
     if (
         !$this->hostname
@@ -1965,6 +2111,24 @@ final class DB
   public function startTransaction(): bool
   {
     return $this->beginTransaction();
+  }
+
+  /**
+   * Determine if database table exists
+   *
+   * @param string $table
+   *
+   * @return bool
+   */
+  public function table_exists(string $table): bool
+  {
+    $check = $this->query('SELECT 1 FROM ' . $this->quote_string($table));
+
+    return $check !== false
+           &&
+           $check instanceof Result
+           &&
+           $check->num_rows > 0;
   }
 
   /**
@@ -2050,43 +2214,4 @@ final class DB
     return $this->query($sql);
   }
 
-  /**
-   * Determine if database table exists
-   *
-   * @param string $table
-   *
-   * @return bool
-   */
-  public function table_exists(string $table): bool
-  {
-    $check = $this->query('SELECT 1 FROM ' . $this->quote_string($table));
-
-    return $check !== false
-           &&
-           $check instanceof Result
-           &&
-           $check->num_rows > 0;
-  }
-
-  /**
-   * Count number of rows found matching a specific query.
-   *
-   * @param string $query
-   *
-   * @return int
-   */
-  public function num_rows(string $query): int
-  {
-    $check = $this->query($query);
-
-    if (
-        $check === false
-        ||
-        !$check instanceof Result
-    ) {
-      return 0;
-    }
-
-    return $check->num_rows;
-  }
 }

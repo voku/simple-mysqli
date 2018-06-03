@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace voku\db;
 
 use Arrayy\Arrayy;
+use Doctrine\DBAL\FetchMode;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use voku\helper\UTF8;
 
@@ -15,6 +16,35 @@ use voku\helper\UTF8;
  */
 final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 {
+
+  const MYSQL_TYPE_BIT         = 16;
+  const MYSQL_TYPE_BLOB        = 252;
+  const MYSQL_TYPE_DATE        = 10;
+  const MYSQL_TYPE_DATETIME    = 12;
+  const MYSQL_TYPE_DECIMAL     = 0;
+  const MYSQL_TYPE_DOUBLE      = 5;
+  const MYSQL_TYPE_ENUM        = 247;
+  const MYSQL_TYPE_FLOAT       = 4;
+  const MYSQL_TYPE_GEOMETRY    = 255;
+  const MYSQL_TYPE_INT24       = 9;
+  const MYSQL_TYPE_JSON        = 245;
+  const MYSQL_TYPE_LONG        = 3;
+  const MYSQL_TYPE_LONGLONG    = 8;
+  const MYSQL_TYPE_LONG_BLOB   = 251;
+  const MYSQL_TYPE_MEDIUM_BLOB = 250;
+  const MYSQL_TYPE_NEWDATE     = 14;
+  const MYSQL_TYPE_NEWDECIMAL  = 246;
+  const MYSQL_TYPE_NULL        = 6;
+  const MYSQL_TYPE_SET         = 248;
+  const MYSQL_TYPE_SHORT       = 2;
+  const MYSQL_TYPE_STRING      = 254;
+  const MYSQL_TYPE_TIME        = 11;
+  const MYSQL_TYPE_TIMESTAMP   = 7;
+  const MYSQL_TYPE_TINY        = 1;
+  const MYSQL_TYPE_TINY_BLOB   = 249;
+  const MYSQL_TYPE_VARCHAR     = 15;
+  const MYSQL_TYPE_VAR_STRING  = 253;
+  const MYSQL_TYPE_YEAR        = 13;
 
   const RESULT_TYPE_ARRAY  = 'array';
   const RESULT_TYPE_ARRAYY = 'Arrayy';
@@ -32,7 +62,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public $sql;
 
   /**
-   * @var \mysqli_result
+   * @var \mysqli_result|\Doctrine\DBAL\Statement
    */
   private $_result;
 
@@ -52,20 +82,57 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   private $_default_result_type = self::RESULT_TYPE_OBJECT;
 
   /**
+   * @var \mysqli_stmt|null
+   */
+  private $doctrineMySQLiStmt;
+
+  /**
+   * @var \Doctrine\DBAL\Driver\PDOStatement|null
+   */
+  private $doctrinePdoStmt;
+
+  /**
    * Result constructor.
    *
    * @param string         $sql
    * @param \mysqli_result $result
    * @param \Closure       $mapper Optional callback mapper for the "fetchCallable()" method
    */
-  public function __construct(string $sql = '', \mysqli_result $result, \Closure $mapper = null)
+  public function __construct(string $sql, $result, \Closure $mapper = null)
   {
     $this->sql = $sql;
 
+    if (
+        !$result instanceof \mysqli_result
+        &&
+        !$result instanceof \Doctrine\DBAL\Statement
+    ) {
+      throw new \InvalidArgumentException('$result must be ' . \mysqli_result::class . ' or ' . \Doctrine\DBAL\Statement::class . ' !');
+    }
+
     $this->_result = $result;
 
+    if ($this->_result instanceof \Doctrine\DBAL\Statement) {
+
+      $doctrineDriver = $this->_result->getWrappedStatement();
+
+      if ($doctrineDriver instanceof \Doctrine\DBAL\Driver\PDOStatement) {
+        $this->doctrinePdoStmt = $doctrineDriver;
+      } // try to get the mysqli driver from doctrine
+      else if ($doctrineDriver instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliStatement) {
+        $reflectionTmp = new \ReflectionClass($doctrineDriver);
+        $propertyTmp = $reflectionTmp->getProperty('_stmt');
+        $propertyTmp->setAccessible(true);
+        $this->doctrineMySQLiStmt = $propertyTmp->getValue($doctrineDriver);
+      }
+
+      $this->num_rows = $this->_result->rowCount();
+    } else {
+      $this->num_rows = (int)$this->_result->num_rows;
+    }
+
     $this->current_row = 0;
-    $this->num_rows = (int)$this->_result->num_rows;
+
 
     $this->_mapper = $mapper;
   }
@@ -85,7 +152,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @param callable $callback User-provided callback (optional)
    *
-   * @return mixed|\mysqli_result
+   * @return mixed|\Doctrine\DBAL\Statement|\mysqli_result
    */
   public function __invoke(callable $callback = null)
   {
@@ -120,7 +187,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   private function cast(&$data)
   {
-    if (Helper::isMysqlndIsUsed() === true) {
+    if (
+        !$this->doctrinePdoStmt // pdo only have limited support for types by default
+        &&
+        Helper::isMysqlndIsUsed() === true
+    ) {
       return $data;
     }
 
@@ -131,20 +202,34 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $result_hash = \spl_object_hash($this->_result);
 
     if (!isset($FIELDS_CACHE[$result_hash])) {
-      $FIELDS_CACHE[$result_hash] = \mysqli_fetch_fields($this->_result);
+      $FIELDS_CACHE[$result_hash] = $this->fetch_fields();
     }
 
-    if ($FIELDS_CACHE[$result_hash] === false) {
+    if (
+        !isset($FIELDS_CACHE[$result_hash])
+        ||
+        $FIELDS_CACHE[$result_hash] === false
+    ) {
       return false;
     }
 
     if (!isset($TYPES_CACHE[$result_hash])) {
       foreach ($FIELDS_CACHE[$result_hash] as $field) {
         switch ($field->type) {
-          case 3:
-            $TYPES_CACHE[$result_hash][$field->name] = 'int';
+          case self::MYSQL_TYPE_BIT:
+            $TYPES_CACHE[$result_hash][$field->name] = 'boolean';
             break;
-          case 4:
+          case self::MYSQL_TYPE_TINY:
+          case self::MYSQL_TYPE_SHORT:
+          case self::MYSQL_TYPE_LONG:
+          case self::MYSQL_TYPE_LONGLONG:
+          case self::MYSQL_TYPE_INT24:
+            $TYPES_CACHE[$result_hash][$field->name] = 'integer';
+            break;
+          case self::MYSQL_TYPE_DOUBLE:
+          case self::MYSQL_TYPE_DECIMAL:
+          case self::MYSQL_TYPE_NEWDECIMAL:
+          case self::MYSQL_TYPE_FLOAT:
             $TYPES_CACHE[$result_hash][$field->name] = 'float';
             break;
           default:
@@ -235,6 +320,17 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function seek($row = 0): bool
   {
     if (\is_int($row) && $row >= 0 && $row < $this->num_rows) {
+
+      if ($this->doctrineMySQLiStmt) {
+        $this->doctrineMySQLiStmt->data_seek($row);
+
+        return true;
+      }
+
+      if ($this->doctrinePdoStmt) {
+        return (bool)$this->doctrinePdoStmt->fetch(FetchMode::ASSOCIATIVE, \PDO::FETCH_ORI_NEXT, $row);
+      }
+
       return \mysqli_data_seek($this->_result, $row);
     }
 
@@ -324,7 +420,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     $data = [];
     /** @noinspection PhpAssignmentInConditionInspection */
-    while ($row = \mysqli_fetch_assoc($this->_result)) {
+    while ($row = $this->fetch_assoc()) {
       $data[] = $this->cast($row);
     }
 
@@ -346,7 +442,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     $data = [];
     /** @noinspection PhpAssignmentInConditionInspection */
-    while ($row = \mysqli_fetch_assoc($this->_result)) {
+    while ($row = $this->fetch_assoc()) {
       $data[] = $this->cast($row);
     }
 
@@ -388,14 +484,20 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       return [];
     }
 
+    // fallback
+    if (!$class || $class === 'stdClass') {
+      $class = '\stdClass';
+    }
+
     // init
     $data = [];
     $this->reset();
+    $propertyAccessor = PropertyAccess::createPropertyAccessor();
 
-    if ($class && \is_object($class)) {
-      $propertyAccessor = PropertyAccess::createPropertyAccessor();
+    if (\is_object($class)) {
+
       /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = \mysqli_fetch_assoc($this->_result)) {
+      while ($row = $this->fetch_assoc()) {
         $classTmp = clone $class;
         $row = $this->cast($row);
         foreach ($row as $key => $value) {
@@ -404,30 +506,38 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         $data[] = $classTmp;
       }
 
-      return $data;
-    }
+    } else if ($class && $params) {
 
-    if ($class && $params) {
       /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = \mysqli_fetch_object($this->_result, $class, $params)) {
-        $data[] = $this->cast($row);
+      while ($row = $this->fetch_assoc()) {
+        $reflectorTmp = new \ReflectionClass($class);
+        $classTmp = $reflectorTmp->newInstanceArgs($params);
+        $row = $this->cast($row);
+        foreach ($row as $key => $value) {
+          if ($class === '\stdClass') {
+            $classTmp->{$key} = $value;
+          } else {
+            $propertyAccessor->setValue($classTmp, $key, $value);
+          }
+        }
+        $data[] = $classTmp;
       }
 
-      return $data;
-    }
+    } else {
 
-    if ($class) {
       /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = \mysqli_fetch_object($this->_result, $class)) {
-        $data[] = $this->cast($row);
+      while ($row = $this->fetch_assoc()) {
+        $classTmp = new $class;
+        $row = $this->cast($row);
+        foreach ($row as $key => $value) {
+          if ($class === '\stdClass') {
+            $classTmp->{$key} = $value;
+          } else {
+            $propertyAccessor->setValue($classTmp, $key, $value);
+          }
+        }
+        $data[] = $classTmp;
       }
-
-      return $data;
-    }
-
-    /** @noinspection PhpAssignmentInConditionInspection */
-    while ($row = \mysqli_fetch_object($this->_result)) {
-      $data[] = $this->cast($row);
     }
 
     return $data;
@@ -458,10 +568,16 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     // init
     $this->reset();
 
-    if ($class && \is_object($class)) {
-      $propertyAccessor = PropertyAccess::createPropertyAccessor();
+    // fallback
+    if (!$class || $class === 'stdClass') {
+      $class = '\stdClass';
+    }
+
+    $propertyAccessor = PropertyAccess::createPropertyAccessor();
+
+    if (\is_object($class)) {
       /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = \mysqli_fetch_assoc($this->_result)) {
+      while ($row = $this->fetch_assoc()) {
         $classTmp = clone $class;
         $row = $this->cast($row);
         foreach ($row as $key => $value) {
@@ -475,25 +591,35 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     if ($class && $params) {
       /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = \mysqli_fetch_object($this->_result, $class, $params)) {
-        yield $this->cast($row);
-      }
-
-      return;
-    }
-
-    if ($class) {
-      /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = \mysqli_fetch_object($this->_result, $class)) {
-        yield $this->cast($row);
+      while ($row = $this->fetch_assoc()) {
+        $reflectorTmp = new \ReflectionClass($class);
+        $classTmp = $reflectorTmp->newInstanceArgs($params);
+        $row = $this->cast($row);
+        foreach ($row as $key => $value) {
+          if ($class === '\stdClass') {
+            $classTmp->{$key} = $value;
+          } else {
+            $propertyAccessor->setValue($classTmp, $key, $value);
+          }
+        }
+        yield $classTmp;
       }
 
       return;
     }
 
     /** @noinspection PhpAssignmentInConditionInspection */
-    while ($row = \mysqli_fetch_object($this->_result)) {
-      yield $this->cast($row);
+    while ($row = $this->fetch_assoc()) {
+      $classTmp = new $class;
+      $row = $this->cast($row);
+      foreach ($row as $key => $value) {
+        if ($class === '\stdClass') {
+          $classTmp->{$key} = $value;
+        } else {
+          $propertyAccessor->setValue($classTmp, $key, $value);
+        }
+      }
+      yield $classTmp;
     }
   }
 
@@ -510,7 +636,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       $this->reset();
     }
 
-    $row = \mysqli_fetch_assoc($this->_result);
+    $row = $this->fetch_assoc();
     if ($row) {
       return $this->cast($row);
     }
@@ -576,7 +702,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       $this->reset();
     }
 
-    $row = \mysqli_fetch_assoc($this->_result);
+    $row = $this->fetch_assoc();
     if ($row) {
       return Arrayy::create($this->cast($row));
     }
@@ -607,7 +733,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       $this->seek($row);
     }
 
-    $rows = \mysqli_fetch_assoc($this->_result);
+    $rows = $this->fetch_assoc();
 
     if ($column) {
       return \is_array($rows) && isset($rows[$column]) ? $rows[$column] : null;
@@ -676,8 +802,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   }
 
   /**
-   * Return rows of field information in a result set. This function is a
-   * basically a wrapper on the native mysqli_fetch_fields function.
+   * Return rows of field information in a result set.
    *
    * @param bool $as_array Return each field info as array; defaults to false
    *
@@ -690,11 +815,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
           function ($object) {
             return (array)$object;
           },
-          \mysqli_fetch_fields($this->_result)
+          $this->fetch_fields()
       );
     }
 
-    return \mysqli_fetch_fields($this->_result);
+    return $this->fetch_fields();
   }
 
   /**
@@ -757,37 +882,43 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       $this->reset();
     }
 
-    if ($class && \is_object($class)) {
-      $row = \mysqli_fetch_assoc($this->_result);
-      $row = $row ? $this->cast($row) : false;
+    // fallback
+    if (!$class || $class === 'stdClass') {
+      $class = '\stdClass';
+    }
 
-      if (!$row) {
-        return false;
+    $row = $this->fetch_assoc();
+    $row = $row ? $this->cast($row) : false;
+
+    if (!$row) {
+      return false;
+    }
+
+    $propertyAccessor = PropertyAccess::createPropertyAccessor();
+
+    if (\is_object($class)) {
+      $classTmp = $class;
+
+    } else if ($class && $params) {
+
+      $reflectorTmp = new \ReflectionClass($class);
+      $classTmp = $reflectorTmp->newInstanceArgs($params);
+
+    } else {
+
+      $classTmp = new $class;
+
+    }
+
+    foreach ($row as $key => $value) {
+      if ($class === '\stdClass') {
+        $classTmp->{$key} = $value;
+      } else {
+        $propertyAccessor->setValue($classTmp, $key, $value);
       }
-
-      $propertyAccessor = PropertyAccess::createPropertyAccessor();
-      foreach ($row as $key => $value) {
-        $propertyAccessor->setValue($class, $key, $value);
-      }
-
-      return $class;
     }
 
-    if ($class && $params) {
-      $row = \mysqli_fetch_object($this->_result, $class, $params);
-
-      return $row ? $this->cast($row) : false;
-    }
-
-    if ($class) {
-      $row = \mysqli_fetch_object($this->_result, $class);
-
-      return $row ? $this->cast($row) : false;
-    }
-
-    $row = \mysqli_fetch_object($this->_result);
-
-    return $row ? $this->cast($row) : false;
+    return $classTmp;
   }
 
   /**
@@ -884,43 +1015,108 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       $this->reset();
     }
 
-    if ($class && \is_object($class)) {
-      $row = \mysqli_fetch_assoc($this->_result);
+    // fallback
+    if (!$class || $class === 'stdClass') {
+      $class = '\stdClass';
+    }
+
+    $propertyAccessor = PropertyAccess::createPropertyAccessor();
+
+    if (\is_object($class)) {
+      $classTmp = $class;
+
+    } else if ($class && $params) {
+
+      $reflectorTmp = new \ReflectionClass($class);
+      $classTmp = $reflectorTmp->newInstanceArgs($params);
+
+    } else {
+
+      $classTmp = new $class;
+
+    }
+
+    if (\is_object($class)) {
+      $row = $this->fetch_assoc();
       $row = $row ? $this->cast($row) : false;
 
       if (!$row) {
         return;
       }
 
-      $propertyAccessor = PropertyAccess::createPropertyAccessor();
       foreach ($row as $key => $value) {
-        $propertyAccessor->setValue($class, $key, $value);
+        if ($class === '\stdClass') {
+          $classTmp->{$key} = $value;
+        } else {
+          $propertyAccessor->setValue($classTmp, $key, $value);
+        }
       }
 
-      yield $class;
+      yield $classTmp;
+    }
+  }
 
-      return;
+  /**
+   * @return mixed
+   */
+  private function fetch_assoc()
+  {
+    if ($this->_result instanceof \Doctrine\DBAL\Statement) {
+      $this->_result->setFetchMode(FetchMode::ASSOCIATIVE);
+      $object = $this->_result->fetch();
+
+      return $object;
     }
 
-    if ($class && $params) {
-      $row = \mysqli_fetch_object($this->_result, $class, $params);
+    return mysqli_fetch_assoc($this->_result);
+  }
 
-      yield $row ? $this->cast($row) : false;
-
-      return;
+  /**
+   * @return array|bool
+   */
+  private function fetch_fields()
+  {
+    if ($this->_result instanceof \mysqli_result) {
+      return \mysqli_fetch_fields($this->_result);
     }
 
-    if ($class) {
-      $row = \mysqli_fetch_object($this->_result, $class);
+    if ($this->doctrineMySQLiStmt) {
+      $metadataTmp = $this->doctrineMySQLiStmt->result_metadata();
 
-      yield $row ? $this->cast($row) : false;
-
-      return;
+      return $metadataTmp->fetch_fields();
     }
 
-    $row = \mysqli_fetch_object($this->_result);
+    if ($this->doctrinePdoStmt) {
+      $fields = [];
 
-    yield $row ? $this->cast($row) : false;
+      static $THIS_CLASS_TMP = null;
+      if ($THIS_CLASS_TMP === null) {
+        $THIS_CLASS_TMP = new \ReflectionClass(__CLASS__);
+      }
+
+      $totalColumnsTmp = $this->doctrinePdoStmt->columnCount();
+      for ($counterTmp = 0; $counterTmp < $totalColumnsTmp; $counterTmp++) {
+        $metadataTmp = $this->doctrinePdoStmt->getColumnMeta($counterTmp);
+        $fieldTmp = new \stdClass();
+        foreach ($metadataTmp as $metadataTmpKey => $metadataTmpValue) {
+          $fieldTmp->{$metadataTmpKey} = $metadataTmpValue;
+        }
+
+        $typeNativeTmp = 'MYSQL_TYPE_' . $metadataTmp['native_type'];
+        $typeTmp = $THIS_CLASS_TMP->getConstant($typeNativeTmp);
+        if ($typeTmp) {
+          $fieldTmp->type = $typeTmp;
+        } else {
+          $fieldTmp->type = '';
+        }
+
+        $fields[] = $fieldTmp;
+      }
+
+      return $fields;
+    }
+
+    return false;
   }
 
   /**
@@ -944,13 +1140,15 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function free()
   {
-    if (!empty($this->_result)) {
+    if ($this->_result instanceof \mysqli_result) {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
       @\mysqli_free_result($this->_result);
       $this->_result = null;
 
       return true;
     }
+
+    $this->_result = null;
 
     return false;
   }
@@ -1019,20 +1217,6 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   }
 
   /**
-   * alias for "Result->fetchAllYield()"
-   *
-   * @see Result::fetchAllYield()
-   *
-   * @param bool $asArray
-   *
-   * @return \Generator
-   */
-  public function getYield($asArray = false): \Generator
-  {
-    yield $this->fetchAllYield($asArray);
-  }
-
-  /**
    * alias for "Result->fetchColumn()"
    *
    * @see Result::fetchColumn()
@@ -1067,6 +1251,20 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function getObject(): array
   {
     return $this->fetchAllObject();
+  }
+
+  /**
+   * alias for "Result->fetchAllYield()"
+   *
+   * @see Result::fetchAllYield()
+   *
+   * @param bool $asArray
+   *
+   * @return \Generator
+   */
+  public function getYield($asArray = false): \Generator
+  {
+    yield $this->fetchAllYield($asArray);
   }
 
   /**
@@ -1190,7 +1388,14 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function reset(): self
   {
     if (!$this->is_empty()) {
-      \mysqli_data_seek($this->_result, 0);
+
+      if ($this->doctrineMySQLiStmt) {
+        $this->doctrineMySQLiStmt->data_seek(0);
+      }
+
+      if ($this->_result instanceof \mysqli_result) {
+        \mysqli_data_seek($this->_result, 0);
+      }
     }
 
     return $this;

@@ -114,9 +114,9 @@ You can use ```DB::getInstance()``` without any parameters and you will get your
   require_once 'composer/autoload.php';
   
   $connectionParams = [
-      'dbname'   => 'mysql_test',
+      'dbname'   => 'yourDbName',
       'user'     => 'yourDbUser',
-      'password' => '',
+      'password' => 'yourDbPassword',
       'host'     => 'yourDbHost',
       'driver'   => 'mysqli', // 'pdo_mysql' is also working, but you need to add password etc. again into the DB class
       'charset'  => 'utf8mb4',

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace voku\db;
 
 use Arrayy\Arrayy;
-use Doctrine\DBAL\FetchMode;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use voku\helper\UTF8;
 
@@ -328,7 +327,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       }
 
       if ($this->doctrinePdoStmt) {
-        return (bool)$this->doctrinePdoStmt->fetch(FetchMode::ASSOCIATIVE, \PDO::FETCH_ORI_NEXT, $row);
+        return (bool)$this->doctrinePdoStmt->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT, $row);
       }
 
       return \mysqli_data_seek($this->_result, $row);
@@ -1062,7 +1061,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   private function fetch_assoc()
   {
     if ($this->_result instanceof \Doctrine\DBAL\Statement) {
-      $this->_result->setFetchMode(FetchMode::ASSOCIATIVE);
+      $this->_result->setFetchMode(\PDO::FETCH_ASSOC);
       $object = $this->_result->fetch();
 
       return $object;

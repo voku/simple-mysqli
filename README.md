@@ -107,6 +107,35 @@ You can download it from here, or require it using [composer](https://packagist.
 
 You can use ```DB::getInstance()``` without any parameters and you will get your (as "singleton") first initialized connection. Or you can change the parameter and you will create an new "multiton"-instance which works like an singleton, but you need to use the same parameters again, otherwise (without the same parameter) you will get an new instance. 
 
+## Doctrine/DBAL as parent driver
+```php
+  use voku\db\DB;
+
+  require_once 'composer/autoload.php';
+  
+  $connectionParams = [
+      'dbname'   => 'mysql_test',
+      'user'     => 'yourDbUser',
+      'password' => '',
+      'host'     => 'yourDbHost',
+      'driver'   => 'mysqli', // 'pdo_mysql' is also working, but you need to add password etc. again into the DB class
+      'charset'  => 'utf8mb4',
+  ];
+  $config = new \Doctrine\DBAL\Configuration();
+  $doctrineConnection = \Doctrine\DBAL\DriverManager::getConnection(
+      $connectionParams,
+      $config
+  );
+  $doctrineConnection->connect();
+
+  // no need to add password etc. again. because we use 'mysqli' from doctrine in this example
+  $db = DB::getInstance('', '', '', '', '', '', true, true, '', '',
+      [
+          'doctrine' => $doctrineConnection
+      ]
+  );
+```
+
 ## Using the "DB"-Class
 
 There are numerous ways of using this library, here are some examples of the most common methods.

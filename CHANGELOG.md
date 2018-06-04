@@ -1,6 +1,10 @@
 Changelog
 =========
 
+7.2.0 (2018-06-04)
+
+- add support for Doctrine/DBAL as parent driver
+
 7.1.4 (2018-04-28)
 
 - DB->_parseQueryParamsByName() is private now (only internal usage)

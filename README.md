@@ -38,6 +38,7 @@ You can download it from here, or require it using [composer](https://packagist.
 
 * [Starting the driver](#starting-the-driver)
 * [Multiton && Singleton](#multiton--singleton)
+* [Doctrine/DBAL as parent driver](#doctrinedbal-as-parent-driver)
 * [Using the "DB"-Class](#using-the-db-class)
   * [Selecting and retrieving data from a table](#selecting-and-retrieving-data-from-a-table)
   * [Inserting data on a table](#inserting-data-on-a-table)

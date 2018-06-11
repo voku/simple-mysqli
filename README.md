@@ -3,7 +3,8 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/voku/simple-mysqli/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/voku/simple-mysqli/?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/797ba3ba657d4e0e86f0bade6923fdec)](https://www.codacy.com/app/voku/simple-mysqli)
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/f1ad7660-6b85-4e1e-a7a3-8489b96b64f8/mini.png)](https://insight.sensiolabs.com/projects/f1ad7660-6b85-4e1e-a7a3-8489b96b64f8)
-[![Latest Stable Version](https://poser.pugx.org/voku/simple-mysqli/v/stable)](https://packagist.org/packages/voku/simple-mysqli) 
+[![Latest Stable Version](https://poser.pugx.org/voku/simple-mysqli/v/stable)](https://packagist.org/packages/voku/simple-mysqli) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli?ref=badge_shield)
+
 [![Total Downloads](https://poser.pugx.org/voku/simple-mysqli/downloads)](https://packagist.org/packages/voku/simple-mysqli) 
 [![Latest Unstable Version](https://poser.pugx.org/voku/simple-mysqli/v/unstable)](https://packagist.org/packages/voku/simple-mysqli) 
 [![License](https://poser.pugx.org/voku/simple-mysqli/license)](https://packagist.org/packages/voku/simple-mysqli)
@@ -1041,3 +1042,7 @@ But the easiest way for debugging is to configure "DB"-Class via "DB::getInstanc
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli?ref=badge_large)

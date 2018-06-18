@@ -118,7 +118,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       if ($doctrineDriver instanceof \Doctrine\DBAL\Driver\PDOStatement) {
         $this->doctrinePdoStmt = $doctrineDriver;
       } // try to get the mysqli driver from doctrine
-      else if ($doctrineDriver instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliStatement) {
+      elseif ($doctrineDriver instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliStatement) {
         $reflectionTmp = new \ReflectionClass($doctrineDriver);
         $propertyTmp = $reflectionTmp->getProperty('_stmt');
         $propertyTmp->setAccessible(true);
@@ -497,7 +497,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
       $classTmpOrig = new $class;
 
-    } else if ($class && $params) {
+    } elseif ($class && $params) {
 
       $reflectorTmp = new \ReflectionClass($class);
       $classTmpOrig = $reflectorTmp->newInstanceArgs($params);
@@ -864,7 +864,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
       $classTmp = $class;
 
-    } else if ($class && $params) {
+    } elseif ($class && $params) {
 
       $reflectorTmp = new \ReflectionClass($class);
       $classTmp = $reflectorTmp->newInstanceArgs($params);
@@ -991,7 +991,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
       $classTmp = $class;
 
-    } else if ($class && $params) {
+    } elseif ($class && $params) {
 
       $reflectorTmp = new \ReflectionClass($class);
       $classTmp = $reflectorTmp->newInstanceArgs($params);

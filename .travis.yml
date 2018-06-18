@@ -3,23 +3,19 @@ language: php
 
 sudo: false
 
-php:
-  - 7.0
-  - 7.1
-  - 7.2
+git:
+  depth: 2
+
+cache:
+  directories:
+    - $HOME/.composer/cache
 
 matrix:
   fast_finish: true
+  allow_failures:
+    - php: nightly
   include:
     - php: 7.0
-      env: DB=mariadb
-      addons:
-        mariadb: 5.5
-    - php: 7.1
-      env: DB=mariadb
-      addons:
-        mariadb: 5.5
-    - php: 7.2
       env: DB=mariadb
       addons:
         mariadb: 5.5
@@ -30,8 +26,24 @@ matrix:
     - php: 7.1
       env: DB=mariadb
       addons:
+        mariadb: 5.5
+    - php: 7.1
+      env: DB=mariadb
+      addons:
         mariadb: 10.2
     - php: 7.2
+      env: DB=mariadb
+      addons:
+        mariadb: 5.5
+    - php: 7.2
+      env: DB=mariadb
+      addons:
+        mariadb: 10.3
+    - php: nightly
+      env: DB=mariadb
+      addons:
+        mariadb: 5.5
+    - php: nightly
       env: DB=mariadb
       addons:
         mariadb: 10.3
@@ -40,9 +52,10 @@ services:
   - mysql
 
 before_script:
-  - wget https://scrutinizer-ci.com/ocular.phar
-  - mysql -e 'CREATE DATABASE mysql_test;'
-  - mysql -e 'USE mysql_test; CREATE TABLE test_page ( page_id int(16) NOT NULL auto_increment, page_template varchar(255), page_type varchar(255), PRIMARY KEY (page_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
+  - php --version
+  - travis_retry wget https://scrutinizer-ci.com/ocular.phar
+  - travis_retry mysql -e 'CREATE DATABASE mysql_test;'
+  - travis_retry mysql -e 'USE mysql_test; CREATE TABLE test_page ( page_id int(16) NOT NULL auto_increment, page_template varchar(255), page_type varchar(255), PRIMARY KEY (page_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
   - travis_retry composer self-update
   - travis_retry composer require satooshi/php-coveralls:1.0.0
   - travis_retry composer install --no-interaction --prefer-source

@@ -160,11 +160,11 @@ But you can also use a method for select-queries:
 
 Example: SELECT
 ```php
-  $where = array(
+  $where = [
       'page_type ='         => 'article',
       'page_type NOT LIKE'  => '%öäü123',
       'page_id >='          => 2,
-  );
+  ];
   $articles = $db->select('page', $where);
   
   echo 'There are ' . count($articles) . ' article(s):' . PHP_EOL;
@@ -182,13 +182,13 @@ INFO: use an array as $value for "[NOT] IN" and "[NOT] BETWEEN"
 
 Example: SELECT with "NOT IN"
 ```php
-  $where = array(
-      'page_type NOT IN'     => array(
+  $where = [
+      'page_type NOT IN' => [
           'foo',
           'bar'
-      ),
-      'page_id >'            => 2,
-  );
+      ],
+      'page_id >'        => 2,
+  ];
   $resultSelect = $db->select('page', $where);
 ```
 
@@ -217,7 +217,7 @@ The correct approach if to always check if they executed as success is always re
 
 Example: DELETE
 ```php
-  $deleteArray = array('user_id' => 9);
+  $deleteArray = ['user_id' => 9];
   $ok = $db->delete('users', $deleteArray);
   if ($ok) {
     echo "user deleted!";
@@ -230,12 +230,12 @@ Example: DELETE
 
 Example: INSERT
 ```php
-  $insertArray = array(
+  $insertArray = [
     'name'   => "John",
     'email'  => "johnsmith@email.com",
     'group'  => 1,
     'active' => true,
-  );
+  ];
   $newUserId = $db->insert('users', $insertArray);
   if ($newUserId) {
     echo "new user inserted with the id $new_user_id";
@@ -244,11 +244,11 @@ Example: INSERT
 
 Example: REPLACE
 ```php
-  $replaceArray = array(
+  $replaceArray = [
       'name'   => 'lars',
       'email'  => 'lars@moelleken.org',
       'group'  => 0
-  );
+  ];
   $tmpId = $db->replace('users', $replaceArray);
 ```
 
@@ -262,7 +262,7 @@ Binding parameters is a good way of preventing mysql injections as the parameter
     AND active = :active
     LIMIT 1
   ";
-  $result = $db->query($sql, array('id_user' => 11, 'active' => 1));
+  $result = $db->query($sql, ['id_user' => 11, 'active' => 1]);
   if ($result) {
     $user = $result->fetchArray();
     print_r($user);
@@ -280,11 +280,11 @@ $db->beginTransaction();
 
 $db->query(
     'UPDATE `users` SET `foo` = :foo WHERE id = :id',
-    array('foo' => 100, 'id' => 1)
+    ['foo' => 100, 'id' => 1]
 );
 $db->query(
     'UPDATE `users_noop` SET `foo` = :foo WHERE id = :id',
-    array('foo' => 100, 'id' => 2)
+    ['foo' => 100, 'id' => 2]
 );
 
 $db->endTransaction();
@@ -299,11 +299,11 @@ to the above:
 $db->transact(function($db) {
     $db->query(
         'UPDATE `users` SET `foo` = :foo WHERE id = :id',
-        array('foo' => 100, 'id' => 1)
+        ['foo' => 100, 'id' => 1]
     );
     $db->query(
         'UPDATE `users_noop` SET `foo` = :foo WHERE id = :id',
-        array('foo' => 100, 'id' => 2)
+        ['foo' => 100, 'id' => 2]
     );
 });
 ```
@@ -382,12 +382,12 @@ will be numeric starting from zero.
 
 e.g.:
 ```php
-$transposedExample = array(
-  'title' => array(
+$transposedExample = [
+  'title' => [
     1 => 'Title #1',
     2 => 'Title #2',
     3 => 'Title #3',
-  )
+  ],
 );
 ```
 
@@ -407,11 +407,11 @@ value in each pair:
 $countries = $result->fetchPairs('id', 'name');
 
 /*
-array(
+[
   1 => 'Title #1',
   2 => 'Title #2',
   3 => 'Title #3',
-)
+]
 */
 ```
 
@@ -595,10 +595,10 @@ INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you 
   // -------------
   // insert some dummy-data, first
   
-  $data = array(
+  $data = [
       'page_template' => 'tpl_test_new123123',
       'page_type'     => 'ö\'ä"ü',
-  );
+  ];
 
   // will return the auto-increment value of the new row
   $resultInsert[1] = $db->insert($this->tableName, $data);
@@ -655,7 +655,7 @@ If insert was successful, it will return the new id, otherwise it will return fa
 ```php
   $user = new User();
   $user->name = 'demo';
-  $user->password = password_hash('demo', PASSWORD_BCRYPT, array("cost"=>15));
+  $user->password = password_hash('demo', PASSWORD_BCRYPT, ["cost" => 15]);
   $user_id = $user->insert();
   
   var_dump($user_id); // the new id 
@@ -698,11 +698,11 @@ This function can fetch all records in the database and will return an array of 
   
   // OR //
   
-  $users = $user->fetchByIds(array(1));
+  $users = $user->fetchByIds([1]);
   
   // OR //
   
-  $users = $user->fetchByIdsPrimaryKeyAsArrayIndex(array(1));
+  $users = $user->fetchByIdsPrimaryKeyAsArrayIndex([1]);
     
   var_dump($users[0]->id) // (int) 1
   var_dump($users[0]->getPrimaryKey()); // (int) 1
@@ -835,14 +835,14 @@ This function can set the "limit" conditions.
 
 ```php
   $user = new User();
-  $user->in('id', array(1, 2))->fetch();
+  $user->in('id', [1, 2])->fetch();
 ```
 
 #### notIn()
 
 ```php
   $user = new User();
-  $user->notin('id', array(1,3))->fetch();
+  $user->notin('id', [1, 3])->fetch();
 ```
 
 #### isNull()
@@ -880,62 +880,79 @@ namespace demo;
 
 use voku\db\ActiveRecord;
 
+/**
+ * @property int       $id
+ * @property string    $name
+ * @property string    $password
+ * @property Contact[] $contacts
+ * @property Contact   $contact
+ */
 class User extends ActiveRecord {
   public $table = 'user';
   public $primaryKey = 'id';
   
-  public $relations = array(
-    // format is array($relation_type, $child_namespaced_classname, $foreign_key_of_child)
-    'contacts' => array(
+  public $relations = [
+    // format is [$relation_type, $child_namespaced_classname, $foreign_key_of_child]
+    'contacts' => [
       self::HAS_MANY, 
-      'Contact', 
+      'demo\Contact', 
       'user_id'
-    ),
-    // format may be array($relation_type, $child_namespaced_classname, $foreign_key_of_child, $array_of_sql_part_functions)
-    'contact' => array(
+    ],
+    'contacts_with_backref' => [
+        self::HAS_MANY,
+        'demo\Contact',
+        'user_id',
+        null,
+        'user',
+    ],
+    // format may be [$relation_type, $child_namespaced_classname, $foreign_key_of_child, $array_of_sql_part_functions]
+    'contact' => [
       self::HAS_ONE, 
-      'Contact', 
+      'demo\Contact', 
       'user_id', 
-      array(
+      [
         'where' => '1', 
-        'order' => 
-        'id desc')
-      ),
-  );
+        'order' => 'id desc',
+      ],
+    ],
+  ];
 }
 
-class Contact extends ActiveRecord{
+/**
+ * @property int    $id
+ * @property int    $user_id
+ * @property string $email
+ * @property string $address
+ * @property User   $user
+ */
+class Contact extends ActiveRecord {
   public $table = 'contact';
   public $primaryKey = 'id';
   
-  public $relations = array(
-    // format is array($relation_type, $parent_namespaced_classname, $foreign_key_in_current_table)
-    'user' => array(
+  public $relations = [
+    // format is [$relation_type, $parent_namespaced_classname, $foreign_key_in_current_table]
+    'user' => [
       self::BELONGS_TO, 
-      'User', 
+      'demo\User', 
       'user_id'
-    ),
-  );
+    ],
+  ];
 }
 ```
 
 #### Init data (for testing - use migrations for this step, please)
-```php
-ActiveRecord::execute("
-  CREATE TABLE IF NOT EXISTS user (
-    id INTEGER PRIMARY KEY, 
-    name TEXT, 
-    password TEXT 
-  );"
+```sql
+CREATE TABLE IF NOT EXISTS user (
+  id INTEGER PRIMARY KEY, 
+  name TEXT, 
+  password TEXT 
 );
 
-ActiveRecord::execute("
-  CREATE TABLE IF NOT EXISTS contact (
-    id INTEGER PRIMARY KEY, 
-    user_id INTEGER, 
-    email TEXT,
-    address TEXT
-  );"
+CREATE TABLE IF NOT EXISTS contact (
+  id INTEGER PRIMARY KEY, 
+  user_id INTEGER, 
+  email TEXT,
+  address TEXT
 );
 ```
 
@@ -945,7 +962,7 @@ use demo\User;
 
 $user = new User();
 $user->name = 'demo';
-$user->password = password_hash('demo', PASSWORD_BCRYPT, array("cost"=>15));
+$user->password = password_hash('demo', PASSWORD_BCRYPT, ["cost" => 15]);
 $user_id = $user->insert();
 
 var_dump($user_id); // the new id 
@@ -979,7 +996,7 @@ var_dump($user->notnull('id')->orderby('id desc')->fetch());
 
 echo "\nContact of User # {$user->id}\n";
 // get contacts by using relation:
-//   'contacts' => array(self::HAS_MANY, 'Contact', 'user_id'),
+//   'contacts' => [self::HAS_MANY, 'demo\Contact', 'user_id'],
 var_dump($user->contacts);
 
 $contact = new Contact();
@@ -988,7 +1005,7 @@ $contact = new Contact();
 var_dump($contact->fetch());
 
 // get user by using relation:
-//    'user' => array(self::BELONGS_TO, 'User', 'user_id'),
+//    'user' => [self::BELONGS_TO, 'demo\User', 'user_id'],
 var_dump($contact->user);
 ```
 

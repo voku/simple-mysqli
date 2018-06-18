@@ -137,45 +137,11 @@ final class Prepare extends \mysqli_stmt
    * INFO: We have to explicitly declare all parameters as references, otherwise it does not seem possible to pass them
    * on without losing the reference property.
    *
-   * @param mixed  $v1
-   * @param mixed  $v2
-   * @param mixed  $v3
-   * @param mixed  $v4
-   * @param mixed  $v5
-   * @param mixed  $v6
-   * @param mixed  $v7
-   * @param mixed  $v8
-   * @param mixed  $v9
-   * @param mixed  $v10
-   * @param mixed  $v11
-   * @param mixed  $v12
-   * @param mixed  $v13
-   * @param mixed  $v14
-   * @param mixed  $v15
-   * @param mixed  $v16
-   * @param mixed  $v17
-   * @param mixed  $v18
-   * @param mixed  $v19
-   * @param mixed  $v20
-   * @param mixed  $v21
-   * @param mixed  $v22
-   * @param mixed  $v23
-   * @param mixed  $v24
-   * @param mixed  $v25
-   * @param mixed  $v26
-   * @param mixed  $v27
-   * @param mixed  $v28
-   * @param mixed  $v29
-   * @param mixed  $v30
-   * @param mixed  $v31
-   * @param mixed  $v32
-   * @param mixed  $v33
-   * @param mixed  $v34
-   * @param mixed  $v35
+   * @param mixed  ...$v
    *
-   * @return boolean
+   * @return bool
    */
-  public function bind_param_debug(string $types, &$v1 = null, &$v2 = null, &$v3 = null, &$v4 = null, &$v5 = null, &$v6 = null, &$v7 = null, &$v8 = null, &$v9 = null, &$v10 = null, &$v11 = null, &$v12 = null, &$v13 = null, &$v14 = null, &$v15 = null, &$v16 = null, &$v17 = null, &$v18 = null, &$v19 = null, &$v20 = null, &$v21 = null, &$v22 = null, &$v23 = null, &$v24 = null, &$v25 = null, &$v26 = null, &$v27 = null, &$v28 = null, &$v29 = null, &$v30 = null, &$v31 = null, &$v32 = null, &$v33 = null, &$v34 = null, &$v35 = null)
+  public function bind_param_debug(string $types, &...$v): bool
   {
     $this->_use_bound_parameters_interpolated = true;
 
@@ -183,19 +149,19 @@ final class Prepare extends \mysqli_stmt
     $trace = \debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1);
 
     $args =& $trace[0]['args'];
-    $types = \str_split($types);
+    $typesArray = \str_split($types);
 
     $args_count = \count($args) - 1;
-    $types_count = \count($types);
+    $types_count = \count($typesArray);
 
     if ($args_count !== $types_count) {
-      \trigger_error('Number of variables doesn\'t match number of parameters in prepared statement', E_WARNING);
+      \trigger_error('Number of variables do not match number of parameters in prepared statement', E_WARNING);
 
       return false;
     }
 
     $arg = 1;
-    foreach ($types as $typeInner) {
+    foreach ($typesArray as $typeInner) {
       $val =& $args[$arg];
       $this->_boundParams[] = [
           'type'  => $typeInner,
@@ -314,7 +280,7 @@ final class Prepare extends \mysqli_stmt
    * @return bool <p>false on error</p>
    * @since 5.0
    */
-  public function prepare($query)
+  public function prepare($query): bool
   {
     $this->_sql = $query;
     $this->_sql_with_bound_parameters = $query;

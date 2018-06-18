@@ -495,48 +495,31 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     if (\is_object($class)) {
 
-      /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = $this->fetch_assoc()) {
-        $classTmp = clone $class;
-        $row = $this->cast($row);
-        foreach ($row as $key => $value) {
-          $propertyAccessor->setValue($classTmp, $key, $value);
-        }
-        $data[] = $classTmp;
-      }
+      $classTmpOrig = new $class;
 
     } else if ($class && $params) {
 
-      /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = $this->fetch_assoc()) {
-        $reflectorTmp = new \ReflectionClass($class);
-        $classTmp = $reflectorTmp->newInstanceArgs($params);
-        $row = $this->cast($row);
-        foreach ($row as $key => $value) {
-          if ($class === '\stdClass') {
-            $classTmp->{$key} = $value;
-          } else {
-            $propertyAccessor->setValue($classTmp, $key, $value);
-          }
-        }
-        $data[] = $classTmp;
-      }
+      $reflectorTmp = new \ReflectionClass($class);
+      $classTmpOrig = $reflectorTmp->newInstanceArgs($params);
 
     } else {
 
-      /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = $this->fetch_assoc()) {
-        $classTmp = new $class;
-        $row = $this->cast($row);
-        foreach ($row as $key => $value) {
-          if ($class === '\stdClass') {
-            $classTmp->{$key} = $value;
-          } else {
-            $propertyAccessor->setValue($classTmp, $key, $value);
-          }
+      $classTmpOrig = new $class;
+
+    }
+
+    /** @noinspection PhpAssignmentInConditionInspection */
+    while ($row = $this->fetch_assoc()) {
+      $classTmp = clone $classTmpOrig;
+      $row = $this->cast($row);
+      foreach ($row as $key => $value) {
+        if ($class === '\stdClass') {
+          $classTmp->{$key} = $value;
+        } else {
+          $propertyAccessor->setValue($classTmp, $key, $value);
         }
-        $data[] = $classTmp;
       }
+      $data[] = $classTmp;
     }
 
     return $data;
@@ -575,41 +558,23 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $propertyAccessor = PropertyAccess::createPropertyAccessor();
 
     if (\is_object($class)) {
-      /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = $this->fetch_assoc()) {
-        $classTmp = clone $class;
-        $row = $this->cast($row);
-        foreach ($row as $key => $value) {
-          $propertyAccessor->setValue($classTmp, $key, $value);
-        }
-        yield $classTmp;
-      }
 
-      return;
-    }
+      $classTmpOrig = $class;
 
-    if ($class && $params) {
-      /** @noinspection PhpAssignmentInConditionInspection */
-      while ($row = $this->fetch_assoc()) {
-        $reflectorTmp = new \ReflectionClass($class);
-        $classTmp = $reflectorTmp->newInstanceArgs($params);
-        $row = $this->cast($row);
-        foreach ($row as $key => $value) {
-          if ($class === '\stdClass') {
-            $classTmp->{$key} = $value;
-          } else {
-            $propertyAccessor->setValue($classTmp, $key, $value);
-          }
-        }
-        yield $classTmp;
-      }
+    } else if ($class && $params) {
 
-      return;
+      $reflectorTmp = new \ReflectionClass($class);
+      $classTmpOrig = $reflectorTmp->newInstanceArgs($params);
+
+    } else {
+
+      $classTmpOrig = new $class;
+
     }
 
     /** @noinspection PhpAssignmentInConditionInspection */
     while ($row = $this->fetch_assoc()) {
-      $classTmp = new $class;
+      $classTmp = clone $classTmpOrig;
       $row = $this->cast($row);
       foreach ($row as $key => $value) {
         if ($class === '\stdClass') {
@@ -896,6 +861,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $propertyAccessor = PropertyAccess::createPropertyAccessor();
 
     if (\is_object($class)) {
+
       $classTmp = $class;
 
     } else if ($class && $params) {
@@ -1022,6 +988,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     $propertyAccessor = PropertyAccess::createPropertyAccessor();
 
     if (\is_object($class)) {
+
       $classTmp = $class;
 
     } else if ($class && $params) {
@@ -1035,24 +1002,22 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     }
 
-    if (\is_object($class)) {
-      $row = $this->fetch_assoc();
-      $row = $row ? $this->cast($row) : false;
+    $row = $this->fetch_assoc();
+    $row = $row ? $this->cast($row) : false;
 
-      if (!$row) {
-        return;
-      }
-
-      foreach ($row as $key => $value) {
-        if ($class === '\stdClass') {
-          $classTmp->{$key} = $value;
-        } else {
-          $propertyAccessor->setValue($classTmp, $key, $value);
-        }
-      }
-
-      yield $classTmp;
+    if (!$row) {
+      return;
     }
+
+    foreach ($row as $key => $value) {
+      if ($class === '\stdClass') {
+        $classTmp->{$key} = $value;
+      } else {
+        $propertyAccessor->setValue($classTmp, $key, $value);
+      }
+    }
+
+    yield $classTmp;
   }
 
   /**
@@ -1311,7 +1276,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    *
    * @return $this
    */
-  public function map(\Closure $callable)
+  public function map(\Closure $callable): self
   {
     $this->_mapper = $callable;
 

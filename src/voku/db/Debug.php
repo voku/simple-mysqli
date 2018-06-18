@@ -147,21 +147,23 @@ class Debug
 
     $this->_errors[] = $error;
 
-    if ($this->checkForDev() === true) {
-      if ($this->echo_on_error) {
-        $box_border = $this->css_mysql_box_border;
-        $box_bg = $this->css_mysql_box_bg;
+    if (
+        $this->echo_on_error
+        &&
+        $this->checkForDev() === true
+    ) {
+      $box_border = $this->css_mysql_box_border;
+      $box_bg = $this->css_mysql_box_bg;
 
-        echo '
-        <div class="OBJ-mysql-box" style="border:' . $box_border . '; background:' . $box_bg . '; padding:10px; margin:10px;">
-          <b style="font-size:14px;">MYSQL Error:</b>
-          <code style="display:block;">
-            file / line: ' . $fileInfo['file'] . ' / ' . $fileInfo['line'] . '
-            ' . $error . '
-          </code>
-        </div>
-        ';
-      }
+      echo '
+      <div class="OBJ-mysql-box" style="border:' . $box_border . '; background:' . $box_bg . '; padding:10px; margin:10px;">
+        <b style="font-size:14px;">MYSQL Error:</b>
+        <code style="display:block;">
+          file / line: ' . $fileInfo['file'] . ' / ' . $fileInfo['line'] . '
+          ' . $error . '
+        </code>
+      </div>
+      ';
     }
 
     if (

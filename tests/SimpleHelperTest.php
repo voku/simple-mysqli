@@ -166,7 +166,14 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
 
     // ------------------------------
 
-    $result = Helper::phoneticSearch('Moelleken Wosnitza', 'page_type', 'page_id', 'de', $this->tableName, $whereArray);
+    $result = Helper::phoneticSearch(
+        'Moelleken Wosnitza',
+        'page_type',
+        'page_id',
+        'de',
+        $this->tableName,
+        $whereArray
+    );
 
     $resultValues = array_values($result);
     self::assertSame(
@@ -205,7 +212,18 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
 
     // ------------------------------ save into cache (first call)
 
-    $result = Helper::phoneticSearch('Moelleken Wosnitza', 'page_type', 'page_id', 'de', $this->tableName, $whereArray, null, null, true, 100);
+    $result = Helper::phoneticSearch(
+        'Moelleken Wosnitza',
+        'page_type',
+        'page_id',
+        'de',
+        $this->tableName,
+        $whereArray,
+        null,
+        null,
+        true,
+        200
+    );
 
     $resultValues = array_values($result);
     self::assertSame(
@@ -222,7 +240,18 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
 
     // ------------------------------ get result from cache (second call)
 
-    $result = Helper::phoneticSearch('Moelleken Wosnitza', 'page_type', 'page_id', 'de', $this->tableName, $whereArray, null, null, true, 100);
+    $result = Helper::phoneticSearch(
+        'Moelleken Wosnitza',
+        'page_type',
+        'page_id',
+        'de',
+        $this->tableName,
+        $whereArray,
+        null,
+        null,
+        true,
+        200
+    );
 
     $resultValues = array_values($result);
     self::assertSame(

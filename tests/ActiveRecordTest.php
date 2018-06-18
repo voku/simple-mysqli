@@ -7,7 +7,6 @@ require_once __DIR__ . '/FoobarContact.php';
 
 use tests\FoobarContact;
 use tests\FoobarUser;
-use voku\db\ActiveRecord;
 use voku\db\DB;
 
 /**
@@ -21,13 +20,18 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
    */
   private $db;
 
+  public function setUp()
+  {
+    parent::setUp();
+
+    $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, true);
+  }
+
   public function testInit()
   {
-    $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, true);
-
     $result = [];
 
-    $result[] = ActiveRecord::execute(
+    $result[] = $this->db->query(
         'CREATE TABLE IF NOT EXISTS user (
             id INTEGER NOT NULL AUTO_INCREMENT, 
             name TEXT, 
@@ -36,7 +40,7 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
         );'
     );
 
-    $result[] = ActiveRecord::execute(
+    $result[] = $this->db->query(
         'CREATE TABLE IF NOT EXISTS contact (
             id INTEGER NOT NULL AUTO_INCREMENT, 
             user_id INTEGER, 
@@ -46,13 +50,13 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
         );'
     );
 
-    self::assertFalse(in_array(false, $result, true));
+    self::assertNotContains(false, $result);
   }
 
   /**
    * @depends testInit
    */
-  public function testInsertUser()
+  public function testInsertUser(): FoobarUser
   {
     $user = new FoobarUser();
     $user->name = 'demo';
@@ -76,7 +80,7 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
   /**
    * @depends testInit
    */
-  public function testInsertUserV2()
+  public function testInsertUserV2(): FoobarUser
   {
     $user = FoobarUser::fetchEmpty();
     $user->name = 'demo';
@@ -102,9 +106,9 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
    *
    * @param FoobarUser $user
    *
-   * @return mixed
+   * @return FoobarUser
    */
-  public function testEditUser($user)
+  public function testEditUser($user): FoobarUser
   {
     $user->name = 'demo1';
     $user->password = md5('demo1');
@@ -176,11 +180,11 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
    */
   public function testRelationsBackRef($contact)
   {
-    self::assertSame(false, $contact->user->contact === $contact);
-    self::assertSame(true, $contact->user_with_backref->contact === $contact);
+    self::assertNotSame($contact->user->contact, $contact);
+    self::assertSame($contact->user_with_backref->contact, $contact);
     $user = $contact->user;
-    self::assertSame(false, $user->contacts[0]->user === $user);
-    self::assertSame(true, $user->contacts_with_backref[0]->user === $user);
+    self::assertNotSame($user->contacts[0]->user, $user);
+    self::assertSame($user->contacts_with_backref[0]->user, $user);
 
     return $contact;
   }
@@ -210,6 +214,7 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
   {
     $user = new FoobarUser();
     $user->fetch($contact->user_id);
+    self::assertInstanceOf(FoobarUser::class, $user);
 
     // name etc. will stored in user data array.
     self::assertSame($contact->user_id, $user->id);
@@ -253,6 +258,7 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
     $user = new FoobarUser();
     $sql = 'SELECT * FROM user WHERE id = ' . (int)$contact->user_id;
     $user->fetchOneByQuery($sql);
+    self::assertInstanceOf(FoobarUser::class, $user);
 
     // name etc. will stored in user data array.
     self::assertSame($contact->user_id, $user->id);
@@ -429,11 +435,11 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
     $result = $userNon->fetchByIdIfExists(-1);
 
     // name etc. will not stored in user data array.
-    self::assertSame(null, $result);
-    self::assertSame(null, $userNon->id);
-    self::assertSame(null, $userNon->id);
-    self::assertSame(null, $userNon->getPrimaryKey());
-    self::assertSame(null, $userNon->name);
+    self::assertNull($result);
+    self::assertNull($userNon->id);
+    self::assertNull($userNon->id);
+    self::assertNull($userNon->getPrimaryKey());
+    self::assertNull($userNon->name);
   }
 
   /**
@@ -486,14 +492,14 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
     $new_user = new FoobarUser();
     self::assertSame($cid, $new_contact->fetch($cid)->id);
     self::assertSame($uid, $new_user->eq('id', $uid)->fetch()->id);
-    self::assertSame(true, $contact->user->delete());
-    self::assertSame(true, $contact->delete());
+    self::assertTrue($contact->user->delete());
+    self::assertTrue($contact->delete());
     $new_contact = new FoobarContact();
     $new_user = new FoobarUser();
     self::assertFalse($new_contact->eq('id', $cid)->fetch());
     self::assertFalse($new_user->fetch($uid));
 
-    ActiveRecord::execute('DROP TABLE IF EXISTS user;');
-    ActiveRecord::execute('DROP TABLE IF EXISTS contact;');
+    $this->db->query('DROP TABLE IF EXISTS user;');
+    $this->db->query('DROP TABLE IF EXISTS contact;');
   }
 }

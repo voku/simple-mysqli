@@ -1531,6 +1531,7 @@ final class DB
 
     $query_start_time = microtime(true);
     $queryException = null;
+    $query_result_doctrine = false;
 
     if ($this->_doctrine_connection) {
 
@@ -1561,10 +1562,12 @@ final class DB
       if ($this->_doctrine_connection) {
 
         $result = false;
-        if ($query_result_doctrine) {
-          if ($query_result_doctrine instanceof \Doctrine\DBAL\Statement) {
-            $result = $query_result_doctrine;
-          }
+        if (
+            $query_result_doctrine
+            &&
+            $query_result_doctrine instanceof \Doctrine\DBAL\Statement
+        ) {
+          $result = $query_result_doctrine;
         }
 
       } else {

@@ -9,10 +9,12 @@ use voku\db\ActiveRecord;
 /**
  * Class FoobarContact
  *
- * @property int    $id
- * @property int    $user_id
- * @property string $email
- * @property string $address
+ * @property int        $id
+ * @property int        $user_id
+ * @property string     $email
+ * @property string     $address
+ * @property FoobarUser $user_with_backref
+ * @property FoobarUser $user
  */
 class FoobarContact extends ActiveRecord
 {

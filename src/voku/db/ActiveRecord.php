@@ -41,10 +41,11 @@ use voku\db\exceptions\FetchingException;
  */
 abstract class ActiveRecord extends Arrayy
 {
-  /**
-   * @var DB static
-   */
-  protected static $db;
+  const BELONGS_TO = 'belongs_to';
+  const HAS_MANY   = 'has_many';
+  const HAS_ONE    = 'has_one';
+
+  const PREFIX = ':active_record';
 
   /**
    * @var array <p>Mapping the function name and the operator, to build Expressions in WHERE condition.</p>
@@ -82,6 +83,17 @@ abstract class ActiveRecord extends Arrayy
       'isnotnull'          => 'IS NOT NULL',
       'notnull'            => 'IS NOT NULL',
   ];
+
+  /**
+   * @var int <p>The count of bind params, using this count and const "PREFIX" (:ph) to generate place holder in
+   *      SQL.</p>
+   */
+  private static $count = 0;
+
+  /**
+   * @var DB
+   */
+  protected $db;
 
   /**
    * @var array <p>Part of the SQL, mapping the function name and the operator to build SQL Part.</p>
@@ -155,7 +167,7 @@ abstract class ActiveRecord extends Arrayy
   /**
    * @var bool
    */
-  protected static $new_data_are_dirty = true;
+  protected $new_data_are_dirty = true;
 
   /**
    * @var array <p>Stored the params will bind to SQL when call DB->query().</p>
@@ -168,104 +180,383 @@ abstract class ActiveRecord extends Arrayy
   protected $relations = [];
 
   /**
-   * @var int <p>The count of bind params, using this count and const "PREFIX" (:ph) to generate place holder in
-   *      SQL.</p>
+   * Magic function to make calls witch in function mapping stored in $operators and $sqlPart.
+   * also can call function of DB object.
+   *
+   * @param string $name <p>The name of the function.</p>
+   * @param array  $args <p>The arguments of the function.</p>
+   *
+   * @return $this|mixed <p>Return the result of callback or the current object to make chain method calls.</p>
+   *
+   * @throws ActiveRecordException
    */
-  private static $count = 0;
-
-  const BELONGS_TO = 'belongs_to';
-  const HAS_MANY   = 'has_many';
-  const HAS_ONE    = 'has_one';
-
-  const PREFIX = ':active_record';
-
-  /**
-   * @return array
-   */
-  public function getParams(): array
+  public function __call(string $name, array $args = [])
   {
-    return $this->params;
-  }
-
-  /**
-   * @return string
-   */
-  public function getPrimaryKeyName(): string
-  {
-    return $this->primaryKeyName;
-  }
-
-  /**
-   * @return mixed|null
-   */
-  public function getPrimaryKey()
-  {
-    $id = $this->{$this->primaryKeyName};
-    if ($id) {
-      return $id;
+    if (!$this->db instanceof DB) {
+      $this->db = DB::getInstance();
     }
 
-    return null;
-  }
+    $nameTmp = \strtolower($name);
 
-  /**
-   * @param mixed $primaryKey
-   * @param bool  $dirty
-   *
-   * @return $this
-   */
-  public function setPrimaryKey($primaryKey, bool $dirty = true)
-  {
-    if ($dirty === true) {
-      $this->dirty[$this->primaryKeyName] = $primaryKey;
+    if (\array_key_exists($nameTmp, self::$operators)) {
+
+      $this->addCondition(
+          $args[0],
+          self::$operators[$nameTmp],
+          $args[1] ?? null,
+          (\is_string(\end($args)) && 'or' === \strtolower(\end($args))) ? 'OR' : 'AND'
+      );
+
+    } elseif (\array_key_exists($nameTmp = \str_replace('by', '', $nameTmp), $this->sqlParts)) {
+
+      $this->{$name} = new ActiveRecordExpressions(
+          [
+              'operator' => $this->sqlParts[$nameTmp],
+              'target'   => \implode(', ', $args),
+          ]
+      );
+
+    } elseif (\is_callable($callback = [$this->db, $name])) {
+
+      return \call_user_func_array($callback, $args);
+
     } else {
-      $this->array[$this->primaryKeyName] = $primaryKey;
+
+      throw new ActiveRecordException("Method $name not exist.");
+
     }
 
     return $this;
   }
 
   /**
+   * Magic function to GET the values of current object.
+   *
+   * @param mixed $var
+   *
+   * @return mixed
+   */
+  public function &__get($var)
+  {
+    if (\array_key_exists($var, $this->sqlExpressions)) {
+      return $this->sqlExpressions[$var];
+    }
+
+    if (\array_key_exists($var, $this->relations)) {
+      return $this->getRelation($var);
+    }
+
+    if (isset($this->dirty[$var])) {
+      return $this->dirty[$var];
+    }
+
+    return parent::__get($var);
+  }
+
+  /**
+   * Magic function to SET values of the current object.
+   *
+   * @param mixed $var
+   * @param mixed $val
+   */
+  public function __set($var, $val)
+  {
+    if (
+        \array_key_exists($var, $this->sqlExpressions)
+        ||
+        \array_key_exists($var, $this->defaultSqlExpressions)
+    ) {
+
+      $this->sqlExpressions[$var] = $val;
+
+    } elseif (
+        \array_key_exists($var, $this->relations)
+        &&
+        $val instanceof self
+    ) {
+
+      $this->relations[$var] = $val;
+
+    } else {
+
+      $this->set($var, $val);
+
+      if ($this->new_data_are_dirty === true) {
+        $this->dirty[$var] = $val;
+      }
+
+    }
+  }
+
+  /**
+   * Magic function to UNSET values of the current object.
+   *
+   * @param mixed $var
+   */
+  public function __unset($var)
+  {
+    if (\array_key_exists($var, $this->sqlExpressions)) {
+      unset($this->sqlExpressions[$var]);
+    }
+
+    if (isset($this->array[$var])) {
+      unset($this->array[$var]);
+    }
+
+    if (isset($this->dirty[$var])) {
+      unset($this->dirty[$var]);
+    }
+  }
+
+  /**
+   * Get a value from an array (optional using dot-notation).
+   *
+   * @param mixed $key       <p>The key to look for.</p>
+   * @param mixed $fallback  <p>Value to fallback to.</p>
+   * @param array $array     <p>The array to get from, if it's set to "null" we use the current array from the
+   *                         class.</p>
+   *
+   * @return mixed
+   */
+  public function get($key, $fallback = null, array $array = null)
+  {
+    if (\property_exists($this, $key) === true) {
+      return $this->{$key};
+    }
+
+    return parent::get($key, $fallback, $array);
+  }
+
+  /**
+   * helper function to add condition into WHERE.
+   *
+   * @param ActiveRecordExpressions $expression <p>The expression will be concat into WHERE or SET statement.</p>
+   * @param string                  $operator   <p>The operator to concat this Expressions into WHERE or SET
+   *                                            statement.</p>
+   * @param string                  $name       <p>The Expression will contact to.</p>
+   */
+  protected function _addCondition(ActiveRecordExpressions $expression, string $operator, string $name = 'where')
+  {
+    if (!$this->{$name}) {
+
+      $this->{$name} = new ActiveRecordExpressions(
+          [
+              'operator' => \strtoupper($name),
+              'target'   => $expression,
+          ]
+      );
+
+    } else {
+
+      $this->{$name}->target = new ActiveRecordExpressions(
+          [
+              'source'   => $this->{$name}->target,
+              'operator' => $operator,
+              'target'   => $expression,
+          ]
+      );
+
+    }
+  }
+
+  /**
+   * helper function to make wrapper. Stored the expression in to array.
+   *
+   * @param ActiveRecordExpressions $exp      <p>The expression will be stored.</p>
+   * @param string                  $operator <p>The operator to concat this Expressions into WHERE statement.</p>
+   */
+  protected function _addExpression(ActiveRecordExpressions $exp, string $operator)
+  {
+    if (
+        !\is_array($this->expressions)
+        ||
+        \count($this->expressions) === 0
+    ) {
+      $this->expressions = [$exp];
+    } else {
+      $this->expressions[] = new ActiveRecordExpressions(
+          [
+              'operator' => $operator,
+              'target'   => $exp,
+          ]
+      );
+    }
+  }
+
+  /**
+   * Helper function to build SQL with sql parts.
+   *
+   * @param string[] $sql_array <p>The SQL part will be build.</p>
+   *
    * @return string
    */
-  public function getTable(): string
+  protected function _buildSql(array $sql_array = []): string
   {
-    return $this->table;
+    \array_walk($sql_array, [$this, '_buildSqlCallback'], $this);
+
+    // DEBUG
+    //echo 'SQL: ', implode(' ', $sql_array), "\n", 'PARAMS: ', implode(', ', $this->params), "\n";
+
+    return \implode(' ', $sql_array);
   }
 
   /**
-   * Function to reset the $params and $sqlExpressions.
+   * Helper function to build SQL with sql parts.
+   *
+   * @param string $sql_string_part <p>The SQL part will be build.</p>
+   * @param int    $index           <p>The index of $n in $sql array.</p>
+   * @param self   $active_record   <p>The reference to $this.</p>
+   */
+  private function _buildSqlCallback(string &$sql_string_part, int $index, self $active_record)
+  {
+    if (
+        'select' === $sql_string_part
+        &&
+        null === $active_record->{$sql_string_part}
+    ) {
+
+      $sql_string_part = \strtoupper($sql_string_part) . ' ' . $active_record->table . '.*';
+
+    } elseif (
+        (
+            'update' === $sql_string_part
+            ||
+            'from' === $sql_string_part
+        )
+        &&
+        null === $active_record->{$sql_string_part}
+    ) {
+
+      $sql_string_part = \strtoupper($sql_string_part) . ' ' . $active_record->table;
+
+    } elseif ('delete' === $sql_string_part) {
+
+      $sql_string_part = \strtoupper($sql_string_part) . ' ';
+
+    } else {
+
+      $sql_string_part = (null !== $active_record->{$sql_string_part}) ? $active_record->{$sql_string_part} . ' ' : '';
+
+    }
+  }
+
+  /**
+   * Helper function to build place holder when make SQL expressions.
+   *
+   * @param mixed $value <p>The value will be bind to SQL, just store it in $this->params.</p>
+   *
+   * @return mixed $value
+   */
+  protected function _filterParam($value)
+  {
+    if (\is_array($value)) {
+      foreach ($value as $key => $val) {
+        $this->params[$value[$key] = self::PREFIX . ++self::$count] = $val;
+      }
+    } elseif (\is_string($value)) {
+      $this->params[$ph = self::PREFIX . ++self::$count] = $value;
+      $value = $ph;
+    }
+
+    return $value;
+  }
+
+  /**
+   * Helper function to add condition into WHERE.
+   *
+   * @param string $field           <p>The field name, the source of Expressions</p>
+   * @param string $operator        <p>The operator for this condition.</p>
+   * @param mixed  $value           <p>The target of the Expressions.</p>
+   * @param string $operator_concat <p>The operator to concat this Expressions into WHERE or SET statement.</p>
+   * @param string $name            <p>The Expression will contact to.</p>
+   */
+  public function addCondition(string $field, string $operator, $value, string $operator_concat = 'AND', string $name = 'where')
+  {
+    $value = $this->_filterParam($value);
+    $expression = new ActiveRecordExpressions(
+        [
+            'source'   => ('where' === strtolower($name) ? $this->table . '.' : '') . $field,
+            'operator' => $operator,
+            'target'   => \is_array($value)
+                ? new ActiveRecordExpressionsWrap(
+                    'between' === \strtolower($operator)
+                        ? ['target' => $value, 'start' => ' ', 'end' => ' ', 'delimiter' => ' AND ']
+                        : ['target' => $value]
+                ) : $value,
+        ]
+    );
+
+    if ($expression) {
+      if (!$this->wrap) {
+        $this->_addCondition($expression, $operator_concat, $name);
+      } else {
+        $this->_addExpression($expression, $operator_concat);
+      }
+    }
+  }
+
+  /**
+   * Helper function to copy an existing active record (and insert it into the database).
+   *
+   * @param bool $insert
    *
    * @return $this
    */
-  public function reset()
+  public function copy(bool $insert = true): self
   {
-    $this->params = [];
-    $this->sqlExpressions = [];
+    $new = clone $this;
 
-    return $this;
+    if ($insert) {
+      $new->setPrimaryKey(null);
+      $id = $new->insert();
+      $new->setPrimaryKey($id);
+    }
+
+    return $new;
   }
 
   /**
-   * Reset the dirty data.
+   * Function to delete current record in database.
    *
-   * @return $this
+   * @return bool
    */
-  public function resetDirty()
+  public function delete(): bool
   {
-    $this->dirty = [];
+    $return = $this->execute(
+        $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
+            [
+                'delete',
+                'from',
+                'where',
+            ]
+        ),
+        $this->params
+    );
 
-    return $this;
+    return $return !== false;
   }
 
   /**
-   * set the DB connection.
+   * Helper function to exec sql.
    *
-   * @param DB $db
+   * @param string $sql   <p>The SQL need to be execute.</p>
+   * @param array  $param <p>The param will be bind to the sql statement.</p>
+   *
+   * @return bool|int|Result              <p>
+   *                                      "Result" by "<b>SELECT</b>"-queries<br />
+   *                                      "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+   *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                                      "true" by e.g. "DROP"-queries<br />
+   *                                      "false" on error
+   *                                      </p>
    */
-  public static function setDb(DB $db)
+  public function execute(string $sql, array $param = [])
   {
-    self::$db = $db;
+    if (!$this->db instanceof DB) {
+      $this->db = DB::getInstance();
+    }
+
+    return $this->db->query($sql, $param);
   }
 
   /**
@@ -287,23 +578,166 @@ abstract class ActiveRecord extends Arrayy
       $this->reset()->eq($this->primaryKeyName, $id);
     }
 
-    return self::query(
-        $this->limit(1)->_buildSql(
+    $sqlQuery = $this->limit(1)->_buildSql(
+        [
+            'select',
+            'from',
+            'join',
+            'where',
+            'group',
+            'having',
+            'order',
+            'limit',
+        ]
+    );
+
+    $return = $this->query(
+        $sqlQuery,
+        $this->params,
+        $this->reset(),
+        true
+    );
+
+    return $return;
+  }
+
+  /**
+   * Function to find all records in database.
+   *
+   * @param array|null $ids <p>
+   *                        If call this function using this param, we will find the record by using this id's.
+   *                        If not set, just find all records in database.
+   *                        </p>
+   *
+   * @return $this[]
+   */
+  public function fetchAll(array $ids = null): array
+  {
+    if ($ids) {
+      $this->reset()->in($this->primaryKeyName, $ids);
+    }
+
+    return $this->query(
+        $this->_buildSql(
             [
                 'select',
                 'from',
                 'join',
                 'where',
-                'group',
+                'groupBy',
                 'having',
-                'order',
+                'orderBy',
                 'limit',
             ]
         ),
         $this->params,
-        $this->reset(),
-        true
+        $this->reset()
     );
+  }
+
+  /**
+   * @param mixed $id
+   *
+   * @return $this
+   *
+   * @throws FetchingException <p>Will be thrown, if we can not find the id.</p>
+   */
+  public function fetchById($id): self
+  {
+    $obj = $this->fetchByIdIfExists($id);
+    if ($obj === null) {
+      throw new FetchingException("No row with primary key '$id' in table '$this->table'.");
+    }
+
+    return $obj;
+  }
+
+  /**
+   * @param mixed $id
+   *
+   * @return $this|null
+   */
+  public function fetchByIdIfExists($id)
+  {
+    $list = $this->fetch($id);
+
+    if (!$list) {
+      return null;
+    }
+
+    return $list;
+  }
+
+  /**
+   * @param array $ids
+   *
+   * @return $this[]
+   */
+  public function fetchByIds(array $ids): array
+  {
+    if (empty($ids)) {
+      return [];
+    }
+
+    $list = $this->fetchAll($ids);
+    if (\is_array($list) && \count($list) > 0) {
+      return $list;
+    }
+
+    return [];
+  }
+
+  /**
+   * @param array $ids
+   *
+   * @return $this[]
+   */
+  public function fetchByIdsPrimaryKeyAsArrayIndex(array $ids): array
+  {
+    $result = $this->fetchAll($ids);
+
+    $resultNew = [];
+    foreach ($result as $item) {
+      $resultNew[$item->getPrimaryKey()] = $item;
+    }
+
+    return $resultNew;
+  }
+
+  /**
+   * @param string $query
+   *
+   * @return $this[]|$this
+   */
+  public function fetchByQuery(string $query)
+  {
+    $list = $this->query(
+        $query,
+        $this->params,
+        $this->reset()
+    );
+
+    if (\is_array($list)) {
+      if (\count($list) === 0) {
+        return [];
+      }
+
+      return $list;
+    }
+
+    $this->array = $list->getArray();
+
+    return $this;
+  }
+
+  /**
+   * @return $this
+   */
+  public static function fetchEmpty(): self
+  {
+    $class = static::class;
+
+    return new $class;
   }
 
   /**
@@ -345,357 +779,40 @@ abstract class ActiveRecord extends Arrayy
   }
 
   /**
-   * @param mixed $id
-   *
-   * @return $this
-   *
-   * @throws FetchingException <p>Will be thrown, if we can not find the id.</p>
+   * @return array
    */
-  public function fetchById($id)
+  public function getDirty(): array
   {
-    $obj = $this->fetchByIdIfExists($id);
-    if ($obj === null) {
-      throw new FetchingException("No row with primary key '$id' in table '$this->table'.");
-    }
-
-    return $obj;
+    return $this->dirty;
   }
 
   /**
-   * @param mixed $id
-   *
-   * @return $this|null
+   * @return array
    */
-  public function fetchByIdIfExists($id)
+  public function getParams(): array
   {
-    $list = $this->fetch($id);
-
-    if (!$list || $list->isEmpty()) {
-      return null;
-    }
-
-    return $list;
+    return $this->params;
   }
 
   /**
-   * @param array $ids
-   *
-   * @return $this[]
+   * @return mixed|null
    */
-  public function fetchByIds(array $ids): array
+  public function getPrimaryKey()
   {
-    if (empty($ids)) {
-      return [];
+    $id = $this->{$this->primaryKeyName};
+    if ($id) {
+      return $id;
     }
 
-    $list = $this->fetchAll($ids);
-    if (\is_array($list) && \count($list) > 0) {
-      return $list;
-    }
-
-    return [];
+    return null;
   }
 
   /**
-   * @param string $query
-   *
-   * @return $this[]|$this
+   * @return string
    */
-  public function fetchByQuery(string $query)
+  public function getPrimaryKeyName(): string
   {
-    $list = self::query(
-        $query,
-        $this->params,
-        $this->reset()
-    );
-
-    if (\is_array($list)) {
-      if (\count($list) === 0) {
-        return [];
-      }
-
-      return $list;
-    }
-
-    $this->array = $list->getArray();
-
-    return $this;
-  }
-
-  /**
-   * @param array $ids
-   *
-   * @return $this[]
-   */
-  public function fetchByIdsPrimaryKeyAsArrayIndex(array $ids): array
-  {
-    $result = $this->fetchAll($ids);
-
-    $resultNew = [];
-    foreach ($result as $item) {
-      $resultNew[$item->getPrimaryKey()] = $item;
-    }
-
-    return $resultNew;
-  }
-
-  /**
-   * Function to find all records in database.
-   *
-   * @param array|null $ids <p>
-   *                        If call this function using this param, we will find the record by using this id's.
-   *                        If not set, just find all records in database.
-   *                        </p>
-   *
-   * @return $this[]
-   */
-  public function fetchAll(array $ids = null): array
-  {
-    if ($ids) {
-      $this->reset()->in($this->primaryKeyName, $ids);
-    }
-
-    return self::query(
-        $this->_buildSql(
-            [
-                'select',
-                'from',
-                'join',
-                'where',
-                'groupBy',
-                'having',
-                'orderBy',
-                'limit',
-            ]
-        ),
-        $this->params,
-        $this->reset()
-    );
-  }
-
-  /**
-   * Function to delete current record in database.
-   *
-   * @return bool
-   */
-  public function delete(): bool
-  {
-    $return = self::execute(
-        $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
-            [
-                'delete',
-                'from',
-                'where',
-            ]
-        ),
-        $this->params
-    );
-
-    return $return !== false;
-  }
-
-  /**
-   * @param string $primaryKeyName
-   *
-   * @return $this
-   */
-  public function setPrimaryKeyName(string $primaryKeyName)
-  {
-    $this->primaryKeyName = $primaryKeyName;
-
-    return $this;
-  }
-
-  /**
-   * @param string $table
-   */
-  public function setTable(string $table)
-  {
-    $this->table = $table;
-  }
-
-  /**
-   * Function to build update SQL, and update current record in database, just write the dirty data into database.
-   *
-   * @return bool|int <p>
-   *                  If update was successful, it will return the affected rows as int,
-   *                  otherwise it will return false or true (if there are no dirty data).
-   *                  </p>
-   */
-  public function update()
-  {
-    if (\count($this->dirty) == 0) {
-      return true;
-    }
-
-    foreach ($this->dirty as $field => $value) {
-      $this->addCondition($field, '=', $value, ',', 'set');
-    }
-
-    $result = self::execute(
-        $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
-            [
-                'update',
-                'set',
-                'where',
-            ]
-        ),
-        $this->params
-    );
-    if ($result !== false) {
-      $this->resetDirty();
-      $this->reset();
-
-      return $result;
-    }
-
-    return false;
-  }
-
-  /**
-   * @return $this
-   */
-  public static function fetchEmpty()
-  {
-    $class = static::class;
-
-    return new $class;
-  }
-
-  /**
-   * Function to build insert SQL, and insert current record into database.
-   *
-   * @return bool|int <p>
-   *                  If insert was successful, it will return the new id,
-   *                  otherwise it will return false or true (if there are no dirty data).
-   *                  </p>
-   */
-  public function insert()
-  {
-    if (!self::$db instanceof DB) {
-      self::$db = DB::getInstance();
-    }
-
-    if (\count($this->dirty) === 0) {
-      return true;
-    }
-
-    $value = $this->_filterParam($this->dirty);
-    $this->insert = new ActiveRecordExpressions(
-        [
-            'operator' => 'INSERT INTO ' . $this->table,
-            'target'   => new ActiveRecordExpressionsWrap(['target' => \array_keys($this->dirty)]),
-        ]
-    );
-    $this->values = new ActiveRecordExpressions(
-        [
-            'operator' => 'VALUES',
-            'target'   => new ActiveRecordExpressionsWrap(['target' => $value]),
-        ]
-    );
-
-    $result = self::execute($this->_buildSql(['insert', 'values']), $this->params);
-    if ($result !== false) {
-      $this->{$this->primaryKeyName} = $result;
-
-      $this->resetDirty();
-      $this->reset();
-
-      return $result;
-    }
-
-    return false;
-  }
-
-  /**
-   * Helper function to copy an existing active record (and insert it into the database).
-   *
-   * @param bool $insert
-   *
-   * @return $this
-   */
-  public function copy(bool $insert = true)
-  {
-    $new = clone $this;
-
-    if ($insert) {
-      $new->setPrimaryKey(null);
-      $id = $new->insert();
-      $new->setPrimaryKey($id);
-    }
-
-    return $new;
-  }
-
-  /**
-   * Helper function to exec sql.
-   *
-   * @param string $sql   <p>The SQL need to be execute.</p>
-   * @param array  $param <p>The param will be bind to the sql statement.</p>
-   *
-   * @return bool|int|Result              <p>
-   *                                      "Result" by "<b>SELECT</b>"-queries<br />
-   *                                      "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
-   *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-   *                                      "true" by e.g. "DROP"-queries<br />
-   *                                      "false" on error
-   *                                      </p>
-   */
-  public static function execute(string $sql, array $param = [])
-  {
-    if (!self::$db instanceof DB) {
-      self::$db = DB::getInstance();
-    }
-
-    return self::$db->query($sql, $param);
-  }
-
-  /**
-   * Helper function to query one record by sql and params.
-   *
-   * @param string    $sql            <p>
-   *                                  The SQL query to find the record.
-   *                                  </p>
-   * @param array     $param          <p>
-   *                                  The param will be bind to the $sql query.
-   *                                  </p>
-   * @param null|self $obj            <p>
-   *                                  The object, if find record in database, we will assign the attributes into
-   *                                  this object.
-   *                                  </p>
-   * @param bool      $single         <p>
-   *                                  If set to true, we will find record and fetch in current object, otherwise
-   *                                  will find all records.
-   *                                  </p>
-   *
-   * @return bool|$this|array
-   */
-  public static function query(string $sql, array $param = [], self $obj = null, bool $single = false)
-  {
-    $result = self::execute($sql, $param);
-
-    if ($result === false) {
-      return false;
-    }
-
-    $useObject = \is_object($obj);
-    if ($useObject === true) {
-      $called_class = $obj;
-    } else {
-      $called_class = static::class;
-    }
-
-    self::setNewDataAreDirty(false);
-
-    if ($single) {
-      $return = $result->fetchObject($called_class, null, true);
-    } else {
-      $return = $result->fetchAllObject($called_class, null);
-    }
-
-    self::setNewDataAreDirty(true);
-
-    return $return;
+    return $this->primaryKeyName;
   }
 
   /**
@@ -780,110 +897,290 @@ abstract class ActiveRecord extends Arrayy
   }
 
   /**
-   * Helper function to build SQL with sql parts.
-   *
-   * @param string $sql_string_part <p>The SQL part will be build.</p>
-   * @param int    $index           <p>The index of $n in $sql array.</p>
-   * @param self   $active_record   <p>The reference to $this.</p>
-   */
-  private function _buildSqlCallback(string &$sql_string_part, $index, self $active_record)
-  {
-    if (
-        'select' === $sql_string_part
-        &&
-        null === $active_record->{$sql_string_part}
-    ) {
-
-      $sql_string_part = \strtoupper($sql_string_part) . ' ' . $active_record->table . '.*';
-
-    } elseif (
-        (
-            'update' === $sql_string_part
-            ||
-            'from' === $sql_string_part
-        )
-        &&
-        null === $active_record->{$sql_string_part}
-    ) {
-
-      $sql_string_part = \strtoupper($sql_string_part) . ' ' . $active_record->table;
-
-    } elseif ('delete' === $sql_string_part) {
-
-      $sql_string_part = \strtoupper($sql_string_part) . ' ';
-
-    } else {
-
-      $sql_string_part = (null !== $active_record->{$sql_string_part}) ? $active_record->{$sql_string_part} . ' ' : '';
-
-    }
-  }
-
-  /**
-   * Helper function to build SQL with sql parts.
-   *
-   * @param string[] $sql_array <p>The SQL part will be build.</p>
-   *
    * @return string
    */
-  protected function _buildSql(array $sql_array = []): string
+  public function getTable(): string
   {
-    \array_walk($sql_array, [$this, '_buildSqlCallback'], $this);
-
-    // DEBUG
-    //echo 'SQL: ', implode(' ', $sqls), "\n", 'PARAMS: ', implode(', ', $this->params), "\n";
-
-    return \implode(' ', $sql_array);
+    return $this->table;
   }
 
   /**
-   * Magic function to make calls witch in function mapping stored in $operators and $sqlPart.
-   * also can call function of DB object.
+   * Helper function for "GROUP BY".
    *
-   * @param string $name <p>The name of the function.</p>
-   * @param array  $args <p>The arguments of the function.</p>
+   * @param mixed $args
    *
-   * @return $this|mixed <p>Return the result of callback or the current object to make chain method calls.</p>
-   *
-   * @throws ActiveRecordException
+   * @return $this
    */
-  public function __call(string $name, array $args = [])
+  public function groupBy($args): self
   {
-    if (!self::$db instanceof DB) {
-      self::$db = DB::getInstance();
+    $this->__call('groupBy', \func_get_args());
+
+    return $this;
+  }
+
+  /**
+   * Function to build insert SQL, and insert current record into database.
+   *
+   * @return bool|int <p>
+   *                  If insert was successful, it will return the new id,
+   *                  otherwise it will return false or true (if there are no dirty data).
+   *                  </p>
+   */
+  public function insert()
+  {
+    if (!$this->db instanceof DB) {
+      $this->db = DB::getInstance();
     }
 
-    $nameTmp = \strtolower($name);
+    if (\count($this->dirty) === 0) {
+      return true;
+    }
 
-    if (\array_key_exists($nameTmp, self::$operators)) {
+    $value = $this->_filterParam($this->dirty);
+    $this->insert = new ActiveRecordExpressions(
+        [
+            'operator' => 'INSERT INTO ' . $this->table,
+            'target'   => new ActiveRecordExpressionsWrap(['target' => \array_keys($this->dirty)]),
+        ]
+    );
+    $this->values = new ActiveRecordExpressions(
+        [
+            'operator' => 'VALUES',
+            'target'   => new ActiveRecordExpressionsWrap(['target' => $value]),
+        ]
+    );
 
-      $this->addCondition(
-          $args[0],
-          self::$operators[$nameTmp],
-          $args[1] ?? null,
-          (\is_string(\end($args)) && 'or' === \strtolower(\end($args))) ? 'OR' : 'AND'
-      );
+    $result = $this->execute($this->_buildSql(['insert', 'values']), $this->params);
+    if ($result !== false) {
+      $this->{$this->primaryKeyName} = $result;
 
-    } elseif (\array_key_exists($nameTmp = \str_replace('by', '', $nameTmp), $this->sqlParts)) {
+      $this->resetDirty();
+      $this->reset();
 
-      $this->{$name} = new ActiveRecordExpressions(
-          [
-              'operator' => $this->sqlParts[$nameTmp],
-              'target'   => \implode(', ', $args),
-          ]
-      );
+      return $result;
+    }
 
-    } elseif (\is_callable($callback = [self::$db, $name])) {
+    return false;
+  }
 
-      return \call_user_func_array($callback, $args);
+  /**
+   * @return bool
+   */
+  public function isNewDataAreDirty(): bool
+  {
+    return $this->new_data_are_dirty;
+  }
 
+  /**
+   * Helper function to add condition into JOIN.
+   *
+   * @param string $table <p>The join table name.</p>
+   * @param string $on    <p>The condition of ON.</p>
+   * @param string $type  <p>The join type, like "LEFT", "INNER", "OUTER".</p>
+   *
+   * @return $this
+   */
+  public function join(string $table, string $on, string $type = 'LEFT'): self
+  {
+    $this->join = new ActiveRecordExpressions(
+        [
+            'source'   => $this->join ?: '',
+            'operator' => $type . ' JOIN',
+            'target'   => new ActiveRecordExpressions(
+                [
+                    'source'   => $table,
+                    'operator' => 'ON',
+                    'target'   => $on,
+                ]
+            ),
+        ]
+    );
+
+    return $this;
+  }
+
+  /**
+   * Helper function for "ORDER BY".
+   *
+   * @param mixed $args
+   *
+   * @return $this
+   */
+  public function orderBy($args): self
+  {
+    $this->__call('orderBy', \func_get_args());
+
+    return $this;
+  }
+
+  /**
+   * Helper function to query one record by sql and params.
+   *
+   * @param string    $sql            <p>
+   *                                  The SQL query to find the record.
+   *                                  </p>
+   * @param array     $param          <p>
+   *                                  The param will be bind to the $sql query.
+   *                                  </p>
+   * @param null|self $obj            <p>
+   *                                  The object, if find record in database, we will assign the attributes into
+   *                                  this object.
+   *                                  </p>
+   * @param bool      $single         <p>
+   *                                  If set to true, we will find record and fetch in current object, otherwise
+   *                                  will find all records.
+   *                                  </p>
+   *
+   * @return bool|$this|$this[]
+   */
+  public function query(string $sql, array $param = [], self $obj = null, bool $single = false)
+  {
+    $result = $this->execute($sql, $param);
+
+    if ($result === false) {
+      return false;
+    }
+
+    $useObject = \is_object($obj);
+    if ($useObject === true) {
+      $called_class = $obj;
     } else {
+      $called_class = static::class;
+    }
 
-      throw new ActiveRecordException("Method $name not exist.");
+    $this->setNewDataAreDirty(false);
 
+    if ($single) {
+      $return = $result->fetchObject($called_class, null, true);
+    } else {
+      $return = $result->fetchAllObject($called_class, null);
+    }
+
+    $this->setNewDataAreDirty(true);
+
+    return $return;
+  }
+
+  /**
+   * Function to reset the $params and $sqlExpressions.
+   *
+   * @return $this
+   */
+  public function reset(): self
+  {
+    $this->params = [];
+    $this->sqlExpressions = [];
+
+    return $this;
+  }
+
+  /**
+   * Reset the dirty data.
+   *
+   * @return $this
+   */
+  public function resetDirty(): self
+  {
+    $this->dirty = [];
+
+    return $this;
+  }
+
+  /**
+   * set the DB connection.
+   *
+   * @param DB $db
+   */
+  public function setDb(DB $db)
+  {
+    $this->db = $db;
+  }
+
+  /**
+   * @param bool $bool
+   */
+  public function setNewDataAreDirty(bool $bool)
+  {
+    $this->new_data_are_dirty = $bool;
+  }
+
+  /**
+   * @param mixed $primaryKey
+   * @param bool  $dirty
+   *
+   * @return $this
+   */
+  public function setPrimaryKey($primaryKey, bool $dirty = true): self
+  {
+    if (\property_exists($this, $this->primaryKeyName)) {
+      $this->{$this->primaryKeyName} = $primaryKey;
+    }
+
+    if ($dirty === true) {
+      $this->dirty[$this->primaryKeyName] = $primaryKey;
+    } else {
+      $this->array[$this->primaryKeyName] = $primaryKey;
     }
 
     return $this;
+  }
+
+  /**
+   * @param string $primaryKeyName
+   *
+   * @return $this
+   */
+  public function setPrimaryKeyName(string $primaryKeyName): self
+  {
+    $this->primaryKeyName = $primaryKeyName;
+
+    return $this;
+  }
+
+  /**
+   * @param string $table
+   */
+  public function setTable(string $table)
+  {
+    $this->table = $table;
+  }
+
+  /**
+   * Function to build update SQL, and update current record in database, just write the dirty data into database.
+   *
+   * @return bool|int <p>
+   *                  If update was successful, it will return the affected rows as int,
+   *                  otherwise it will return false or true (if there are no dirty data).
+   *                  </p>
+   */
+  public function update()
+  {
+    if (\count($this->dirty) == 0) {
+      return true;
+    }
+
+    foreach ($this->dirty as $field => $value) {
+      $this->addCondition($field, '=', $value, ',', 'set');
+    }
+
+    $result = $this->execute(
+        $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
+            [
+                'update',
+                'set',
+                'where',
+            ]
+        ),
+        $this->params
+    );
+    if ($result !== false) {
+      $this->resetDirty();
+      $this->reset();
+
+      return $result;
+    }
+
+    return false;
   }
 
   /**
@@ -894,7 +1191,7 @@ abstract class ActiveRecord extends Arrayy
    *
    * @return $this
    */
-  public function wrap($op = null)
+  public function wrap($op = null): self
   {
     if (1 === \func_num_args()) {
       $this->wrap = false;
@@ -915,266 +1212,5 @@ abstract class ActiveRecord extends Arrayy
     }
 
     return $this;
-  }
-
-  /**
-   * Helper function to build place holder when make SQL expressions.
-   *
-   * @param mixed $value <p>The value will be bind to SQL, just store it in $this->params.</p>
-   *
-   * @return mixed $value
-   */
-  protected function _filterParam($value)
-  {
-    if (\is_array($value)) {
-      foreach ($value as $key => $val) {
-        $this->params[$value[$key] = self::PREFIX . ++self::$count] = $val;
-      }
-    } elseif (\is_string($value)) {
-      $this->params[$ph = self::PREFIX . ++self::$count] = $value;
-      $value = $ph;
-    }
-
-    return $value;
-  }
-
-  /**
-   * Helper function to add condition into WHERE.
-   *
-   * @param string $field           <p>The field name, the source of Expressions</p>
-   * @param string $operator        <p>The operator for this condition.</p>
-   * @param mixed  $value           <p>The target of the Expressions.</p>
-   * @param string $operator_concat <p>The operator to concat this Expressions into WHERE or SET statement.</p>
-   * @param string $name            <p>The Expression will contact to.</p>
-   */
-  public function addCondition($field, $operator, $value, $operator_concat = 'AND', $name = 'where')
-  {
-    $value = $this->_filterParam($value);
-    $expression = new ActiveRecordExpressions(
-        [
-            'source'   => ('where' === strtolower($name) ? $this->table . '.' : '') . $field,
-            'operator' => $operator,
-            'target'   => \is_array($value)
-                ? new ActiveRecordExpressionsWrap(
-                    'between' === \strtolower($operator)
-                        ? ['target' => $value, 'start' => ' ', 'end' => ' ', 'delimiter' => ' AND ']
-                        : ['target' => $value]
-                ) : $value,
-        ]
-    );
-
-    if ($expression) {
-      if (!$this->wrap) {
-        $this->_addCondition($expression, $operator_concat, $name);
-      } else {
-        $this->_addExpression($expression, $operator_concat);
-      }
-    }
-  }
-
-  /**
-   * Helper function to add condition into JOIN.
-   *
-   * @param string $table <p>The join table name.</p>
-   * @param string $on    <p>The condition of ON.</p>
-   * @param string $type  <p>The join type, like "LEFT", "INNER", "OUTER".</p>
-   *
-   * @return $this
-   */
-  public function join($table, $on, $type = 'LEFT')
-  {
-    $this->join = new ActiveRecordExpressions(
-        [
-            'source'   => $this->join ?: '',
-            'operator' => $type . ' JOIN',
-            'target'   => new ActiveRecordExpressions(
-                ['source' => $table, 'operator' => 'ON', 'target' => $on]
-            ),
-        ]
-    );
-
-    return $this;
-  }
-
-  /**
-   * helper function to make wrapper. Stored the expression in to array.
-   *
-   * @param ActiveRecordExpressions $exp      <p>The expression will be stored.</p>
-   * @param string                  $operator <p>The operator to concat this Expressions into WHERE statement.</p>
-   */
-  protected function _addExpression($exp, $operator)
-  {
-    if (
-        !\is_array($this->expressions)
-        ||
-        \count($this->expressions) === 0
-    ) {
-      $this->expressions = [$exp];
-    } else {
-      $this->expressions[] = new ActiveRecordExpressions(['operator' => $operator, 'target' => $exp]);
-    }
-  }
-
-  /**
-   * helper function to add condition into WHERE.
-   *
-   * @param ActiveRecordExpressions $expression <p>The expression will be concat into WHERE or SET statement.</p>
-   * @param string                  $operator   <p>The operator to concat this Expressions into WHERE or SET
-   *                                            statement.</p>
-   * @param string                  $name       <p>The Expression will contact to.</p>
-   */
-  protected function _addCondition($expression, $operator, $name = 'where')
-  {
-    if (!$this->{$name}) {
-
-      $this->{$name} = new ActiveRecordExpressions(
-          [
-              'operator' => \strtoupper($name),
-              'target'   => $expression,
-          ]
-      );
-
-    } else {
-
-      $this->{$name}->target = new ActiveRecordExpressions(
-          [
-              'source'   => $this->{$name}->target,
-              'operator' => $operator,
-              'target'   => $expression,
-          ]
-      );
-
-    }
-  }
-
-  /**
-   * @return array
-   */
-  public function getDirty(): array
-  {
-    return $this->dirty;
-  }
-
-  /**
-   * @return bool
-   */
-  public static function isNewDataAreDirty(): bool
-  {
-    return self::$new_data_are_dirty;
-  }
-
-  /**
-   * @param bool $bool
-   */
-  public static function setNewDataAreDirty($bool)
-  {
-    self::$new_data_are_dirty = (bool)$bool;
-  }
-
-  /**
-   * Magic function to SET values of the current object.
-   *
-   * @param mixed $var
-   * @param mixed $val
-   */
-  public function __set($var, $val)
-  {
-    if (
-        \array_key_exists($var, $this->sqlExpressions)
-        ||
-        \array_key_exists($var, $this->defaultSqlExpressions)
-    ) {
-
-      $this->sqlExpressions[$var] = $val;
-
-    } elseif (
-        \array_key_exists($var, $this->relations)
-        &&
-        $val instanceof self
-    ) {
-
-      $this->relations[$var] = $val;
-
-    } else {
-
-      $this->array[$var] = $val;
-
-      if (self::$new_data_are_dirty === true) {
-        $this->dirty[$var] = $val;
-      }
-
-    }
-  }
-
-  /**
-   * Magic function to UNSET values of the current object.
-   *
-   * @param mixed $var
-   */
-  public function __unset($var)
-  {
-    if (\array_key_exists($var, $this->sqlExpressions)) {
-      unset($this->sqlExpressions[$var]);
-    }
-
-    if (isset($this->array[$var])) {
-      unset($this->array[$var]);
-    }
-
-    if (isset($this->dirty[$var])) {
-      unset($this->dirty[$var]);
-    }
-  }
-
-  /**
-   * Helper function for "GROUP BY".
-   *
-   * @param array $args
-   *
-   * @return $this
-   */
-  public function groupBy($args)
-  {
-    $this->__call('groupBy', \func_get_args());
-
-    return $this;
-  }
-
-  /**
-   * Helper function for "ORDER BY".
-   *
-   * @param $args ...
-   *
-   * @return $this
-   */
-  public function orderBy($args)
-  {
-    $this->__call('orderBy', \func_get_args());
-
-    return $this;
-  }
-
-  /**
-   * Magic function to GET the values of current object.
-   *
-   * @param $var
-   *
-   * @return mixed
-   */
-  public function &__get($var)
-  {
-    if (\array_key_exists($var, $this->sqlExpressions)) {
-      return $this->sqlExpressions[$var];
-    }
-
-    if (\array_key_exists($var, $this->relations)) {
-      return $this->getRelation($var);
-    }
-
-    if (isset($this->dirty[$var])) {
-      return $this->dirty[$var];
-    }
-
-    return parent::__get($var);
   }
 }

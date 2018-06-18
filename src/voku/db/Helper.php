@@ -158,7 +158,7 @@ class Helper
    *
    * @return array
    */
-  public static function phoneticSearch(string $searchString, string $searchFieldName, string $idFieldName = null, string $language = 'de', string $table, array $whereArray = null, DB $dbConnection = null, string $databaseName = null, bool $useCache = false, int $cacheTTL = 3600): array
+  public static function phoneticSearch(string $searchString, string $searchFieldName, string $idFieldName = null, string $language = 'de', string $table = '', array $whereArray = null, DB $dbConnection = null, string $databaseName = null, bool $useCache = false, int $cacheTTL = 3600): array
   {
     // init
     $cacheKey = null;
@@ -357,7 +357,7 @@ class Helper
    * @return bool|int "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
    *                   "false" on error
    */
-  public static function copyTableRow($table, array $whereArray, array $updateArray = [], array $ignoreArray = [], DB $dbConnection = null, $databaseName = null)
+  public static function copyTableRow(string $table, array $whereArray, array $updateArray = [], array $ignoreArray = [], DB $dbConnection = null, string $databaseName = null)
   {
     // init
     $table = trim($table);

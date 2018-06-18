@@ -1,6 +1,12 @@
 Changelog
 =========
 
+7.2.1 (2018-06-19)
+
+- optimize for PHP >= 7.0
+- fix doc / examples for the simple active record
+- add more tests
+
 7.2.0 (2018-06-04)
 
 - add support for Doctrine/DBAL as parent driver

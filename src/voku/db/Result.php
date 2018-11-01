@@ -327,7 +327,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       }
 
       if ($this->doctrinePdoStmt) {
-        return (bool)$this->doctrinePdoStmt->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT, $row);
+        return (bool)$this->doctrinePdoStmt->fetch(2, 0, $row); // FETCH_ASSOC + FETCH_ORI_NEXT
       }
 
       return \mysqli_data_seek($this->_result, $row);
@@ -485,13 +485,13 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     // fallback
     if (!$class || $class === 'stdClass') {
+      /** @noinspection ClassConstantCanBeUsedInspection */
       $class = '\stdClass';
     }
 
     // init
     $data = [];
     $this->reset();
-    $propertyAccessor = PropertyAccess::createPropertyAccessor();
 
     if (\is_object($class)) {
 
@@ -508,6 +508,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     }
 
+    $propertyAccessor = PropertyAccess::createPropertyAccessor();
     /** @noinspection PhpAssignmentInConditionInspection */
     while ($row = $this->fetch_assoc()) {
       $classTmp = clone $classTmpOrig;
@@ -552,10 +553,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     // fallback
     if (!$class || $class === 'stdClass') {
+      /** @noinspection ClassConstantCanBeUsedInspection */
       $class = '\stdClass';
     }
-
-    $propertyAccessor = PropertyAccess::createPropertyAccessor();
 
     if (\is_object($class)) {
 
@@ -572,6 +572,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     }
 
+    $propertyAccessor = PropertyAccess::createPropertyAccessor();
     /** @noinspection PhpAssignmentInConditionInspection */
     while ($row = $this->fetch_assoc()) {
       $classTmp = clone $classTmpOrig;
@@ -728,10 +729,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
           if (isset($_row[$column]) === false) {
             continue;
           }
-        } else {
-          if (\array_key_exists($column, $_row) === false) {
-            break;
-          }
+        } else if (\array_key_exists($column, $_row) === false) {
+          break;
         }
 
         $columnData = $_row[$column];
@@ -745,21 +744,17 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     $columnData = [];
 
-    $data = $this->fetchAllArray();
-
-    foreach ($data as $_row) {
+    foreach ($this->fetchAllYield() as $_row) {
 
       if ($skipNullValues === true) {
-        if (isset($_row[$column]) === false) {
+        if (isset($_row->{$column}) === false) {
           continue;
         }
-      } else {
-        if (\array_key_exists($column, $_row) === false) {
-          break;
-        }
+      } else if (\array_key_exists($column, $_row) === false) {
+        break;
       }
 
-      $columnData[] = $_row[$column];
+      $columnData[] = $_row->{$column};
     }
 
     return $columnData;
@@ -848,6 +843,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     // fallback
     if (!$class || $class === 'stdClass') {
+      /** @noinspection ClassConstantCanBeUsedInspection */
       $class = '\stdClass';
     }
 
@@ -857,8 +853,6 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     if (!$row) {
       return false;
     }
-
-    $propertyAccessor = PropertyAccess::createPropertyAccessor();
 
     if (\is_object($class)) {
 
@@ -875,6 +869,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     }
 
+    $propertyAccessor = PropertyAccess::createPropertyAccessor();
     foreach ($row as $key => $value) {
       if ($class === '\stdClass') {
         $classTmp->{$key} = $value;
@@ -982,10 +977,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     // fallback
     if (!$class || $class === 'stdClass') {
+      /** @noinspection ClassConstantCanBeUsedInspection */
       $class = '\stdClass';
     }
-
-    $propertyAccessor = PropertyAccess::createPropertyAccessor();
 
     if (\is_object($class)) {
 
@@ -1009,6 +1003,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       return;
     }
 
+    $propertyAccessor = PropertyAccess::createPropertyAccessor();
     foreach ($row as $key => $value) {
       if ($class === '\stdClass') {
         $classTmp->{$key} = $value;
@@ -1026,7 +1021,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   private function fetch_assoc()
   {
     if ($this->_result instanceof \Doctrine\DBAL\Statement) {
-      $this->_result->setFetchMode(\PDO::FETCH_ASSOC);
+      $this->_result->setFetchMode(2); // FETCH_ASSOC
       $object = $this->_result->fetch();
 
       return $object;

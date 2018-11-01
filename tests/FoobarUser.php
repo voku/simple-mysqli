@@ -9,12 +9,12 @@ use voku\db\ActiveRecord;
 /**
  * Class FoobarUser
  *
- * @property int    $id
- * @property string $name
- * @property string $password
- * @property FoobarContact[] $contacts_with_backref
- * @property FoobarContact[] $contacts
- * @property FoobarContact   $contact
+ * @property int                    $id
+ * @property string                 $name
+ * @property string                 $password
+ * @property \tests\FoobarContact[] $contacts_with_backref
+ * @property \tests\FoobarContact[] $contacts
+ * @property \tests\FoobarContact   $contact
  */
 class FoobarUser extends ActiveRecord
 {
@@ -24,19 +24,19 @@ class FoobarUser extends ActiveRecord
   public $relations = [
       'contacts'              => [
           self::HAS_MANY,
-          'tests\FoobarContact',
+          FoobarContact::class,
           'user_id',
       ],
       'contacts_with_backref' => [
           self::HAS_MANY,
-          'tests\FoobarContact',
+          FoobarContact::class,
           'user_id',
           null,
           'user',
       ],
       'contact'               => [
           self::HAS_ONE,
-          'tests\FoobarContact',
+          FoobarContact::class,
           'user_id',
           ['where' => '1', 'orderBy' => 'id desc'],
       ],

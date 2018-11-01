@@ -318,16 +318,7 @@ final class DB
     $this->_debug->setLoggerClassName($logger_class_name);
     $this->_debug->setLoggerLevel($logger_level);
 
-    if (\is_array($extra_config) === true) {
-
-      $this->setConfigExtra($extra_config);
-
-    } else {
-
-      // only for backward compatibility
-      $this->session_to_db = (boolean)$extra_config;
-
-    }
+    $this->setConfigExtra($extra_config);
 
     return $this->showConfigError();
   }
@@ -514,7 +505,7 @@ final class DB
     foreach ($params as $key => $param) {
 
       // use this only for not named parameters
-      if (!is_int($key)) {
+      if (!\is_int($key)) {
         continue;
       }
 
@@ -557,7 +548,7 @@ final class DB
     foreach ($params as $name => $param) {
 
       // use this only for named parameters
-      if (is_int($name)) {
+      if (\is_int($name)) {
         continue;
       }
 
@@ -633,6 +624,10 @@ final class DB
 
   /**
    * Closes a previously opened database connection.
+   *
+   * @return bool
+   *              Will return "true", if the connection was closed,
+   *              otherwise (e.g. if the connection was already closed) "false".
    */
   public function close(): bool
   {
@@ -645,7 +640,11 @@ final class DB
       $this->_doctrine_connection->close();
       $this->link = null;
 
-      return ($connectedBefore === true ? !$this->_doctrine_connection->isConnected() : false);
+      if ($connectedBefore === true) {
+        return !$this->_doctrine_connection->isConnected();
+      }
+
+      return false;
     }
 
     if (
@@ -700,23 +699,21 @@ final class DB
     if ($this->_doctrine_connection) {
       $this->_doctrine_connection->connect();
 
-      if (method_exists($this->_doctrine_connection, 'getWrappedConnection')) {
-        $doctrineMySQLi = $this->_doctrine_connection->getWrappedConnection();
-        if ($doctrineMySQLi instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliConnection) {
-          $this->link = $doctrineMySQLi->getWrappedResourceHandle();
+      $doctrineMySQLi = $this->_doctrine_connection->getWrappedConnection();
+      if ($doctrineMySQLi instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliConnection) {
+        $this->link = $doctrineMySQLi->getWrappedResourceHandle();
 
-          $this->connected = $this->_doctrine_connection->isConnected();
+        $this->connected = $this->_doctrine_connection->isConnected();
 
-          if (!$this->connected) {
-            $error = 'Error connecting to mysql server: ' . $this->_doctrine_connection->errorInfo();
-            $this->_debug->displayError($error, false);
-            throw new DBConnectException($error, 101);
-          }
-
-          $this->set_charset($this->charset);
-
-          return $this->isReady();
+        if (!$this->connected) {
+          $error = 'Error connecting to mysql server: ' . $this->_doctrine_connection->errorInfo();
+          $this->_debug->displayError($error, false);
+          throw new DBConnectException($error, 101);
         }
+
+        $this->set_charset($this->charset);
+
+        return $this->isReady();
       }
     }
 
@@ -897,7 +894,7 @@ final class DB
     }
 
     // check the type
-    $type = gettype($var);
+    $type = \gettype($var);
 
     if ($type === 'object') {
       if ($var instanceof \DateTime) {
@@ -1156,18 +1153,13 @@ final class DB
     }
 
     $extra_config_string = '';
-    if (\is_array($extra_config) === true) {
-      foreach ($extra_config as $extra_config_key => $extra_config_value) {
-        if (\is_object($extra_config_value)) {
-          $extra_config_value_tmp = \spl_object_hash($extra_config_value);
-        } else {
-          $extra_config_value_tmp = (string)$extra_config_value;
-        }
-        $extra_config_string .= $extra_config_key . $extra_config_value_tmp;
+    foreach ($extra_config as $extra_config_key => $extra_config_value) {
+      if (\is_object($extra_config_value)) {
+        $extra_config_value_tmp = \spl_object_hash($extra_config_value);
+      } else {
+        $extra_config_value_tmp = (string)$extra_config_value;
       }
-    } else {
-      // only for backward compatibility
-      $extra_config_string = (int)$extra_config;
+      $extra_config_string .= $extra_config_key . $extra_config_value_tmp;
     }
 
     $connection = \md5(
@@ -1345,14 +1337,17 @@ final class DB
           $returnTheResult = true;
           $result[] = new Result($sql, $resultTmpInner);
 
+        } else if (
+            $resultTmpInner === true
+            ||
+            !\mysqli_errno($this->link)
+        ) {
+
+          $result[] = true;
+
         } else {
 
-          // is the query successful
-          if ($resultTmpInner === true || !\mysqli_errno($this->link)) {
-            $result[] = true;
-          } else {
-            $result[] = false;
-          }
+          $result[] = false;
 
         }
 
@@ -1427,8 +1422,7 @@ final class DB
         &&
         $this->link instanceof \mysqli
     ) {
-      /** @noinspection PhpUsageOfSilenceOperatorInspection */
-      return (bool)@\mysqli_ping($this->link);
+      return \mysqli_ping($this->link);
     }
 
     return false;
@@ -1847,11 +1841,48 @@ final class DB
    * </p>
    *
    * @param mixed $var
+   * @param bool|null $convert_array <strong>false</strong> => Keep the array.<br />
+   *                                 <strong>true</strong> => Convert to string var1,var2,var3...<br />
+   *                                 <strong>null</strong> => Convert the array into null, every time.
    *
    * @return mixed
    */
-  public function secure($var)
+  public function secure($var, $convert_array = true)
   {
+    if (\is_array($var)) {
+      if ($convert_array === null) {
+
+        if ($this->_convert_null_to_empty_string === true) {
+          $var = "''";
+        } else {
+          $var = 'NULL';
+        }
+
+      } else {
+
+        $varCleaned = [];
+        foreach ((array)$var as $key => $value) {
+
+          $key = $this->escape($key, false, false, $convert_array);
+          $value = $this->secure($value);
+
+          /** @noinspection OffsetOperationsInspection */
+          $varCleaned[$key] = $value;
+        }
+
+        if ($convert_array === true) {
+          $varCleaned = \implode(',', $varCleaned);
+
+          $var = $varCleaned;
+        } else {
+          $var = $varCleaned;
+        }
+
+      }
+
+      return $var;
+    }
+
     if ($var === '') {
       return "''";
     }

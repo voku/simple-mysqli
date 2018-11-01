@@ -1755,7 +1755,7 @@ class SimpleDoctrineTest extends \PHPUnit\Framework\TestCase
       self::assertSame($after, $this->db->secure($before));
     }
 
-    self::assertSame('\'NULL\'', $this->db->secure(array_keys($testArray)));
+    self::assertSame('NOW(),\'fooo\',123,\'κόσμε\',\'&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)\',\'&#246;&#228;&#252;\'', $this->db->secure(array_keys($testArray)));
   }
 
   public function testUtf8Query()

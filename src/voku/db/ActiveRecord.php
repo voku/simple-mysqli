@@ -256,8 +256,8 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Magic function to SET values of the current object.
    *
-   * @param mixed $var
-   * @param mixed $val
+   * @param string $var
+   * @param mixed  $val
    */
   public function __set($var, $val)
   {
@@ -311,19 +311,15 @@ abstract class ActiveRecord extends Arrayy
   /**
    * Get a value from an array (optional using dot-notation).
    *
-   * @param mixed $key       <p>The key to look for.</p>
-   * @param mixed $fallback  <p>Value to fallback to.</p>
-   * @param array $array     <p>The array to get from, if it's set to "null" we use the current array from the
+   * @param string $key       <p>The key to look for.</p>
+   * @param mixed  $fallback  <p>Value to fallback to.</p>
+   * @param array  $array     <p>The array to get from, if it's set to "null" we use the current array from the
    *                         class.</p>
    *
    * @return mixed
    */
   public function get($key, $fallback = null, array $array = null)
   {
-    if (\property_exists($this, $key) === true) {
-      return $this->{$key};
-    }
-
     return parent::get($key, $fallback, $array);
   }
 

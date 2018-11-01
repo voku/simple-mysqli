@@ -561,7 +561,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
       $classTmpOrig = $class;
 
-    } else if ($class && $params) {
+    } elseif ($class && $params) {
 
       $reflectorTmp = new \ReflectionClass($class);
       $classTmpOrig = $reflectorTmp->newInstanceArgs($params);

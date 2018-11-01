@@ -39,6 +39,14 @@ matrix:
       env: DB=mariadb
       addons:
         mariadb: 10.3
+    - php: 7.3
+      env: DB=mariadb
+      addons:
+        mariadb: 5.5
+    - php: 7.3
+      env: DB=mariadb
+      addons:
+        mariadb: 10.3
     - php: nightly
       env: DB=mariadb
       addons:

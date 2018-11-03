@@ -1337,7 +1337,7 @@ final class DB
           $returnTheResult = true;
           $result[] = new Result($sql, $resultTmpInner);
 
-        } else if (
+        } elseif (
             $resultTmpInner === true
             ||
             !\mysqli_errno($this->link)

@@ -48,6 +48,21 @@ abstract class ActiveRecord extends Arrayy
   const PREFIX = ':active_record';
 
   /**
+   * Check "@property" types from class-phpdoc.
+   *
+   * @var bool
+   */
+  protected $checkPropertyTypes = true;
+
+  /**
+   * Check properties mismatch in the constructor.
+   *
+   * @var bool
+   */
+  protected $checkPropertiesMismatchInConstructor = false;
+
+
+  /**
    * @var array <p>Mapping the function name and the operator, to build Expressions in WHERE condition.</p>
    *
    * call the function like this:
@@ -140,6 +155,7 @@ abstract class ActiveRecord extends Arrayy
       'having'      => null,
       'limit'       => null,
       'order'       => null,
+      'orderBy'     => null,
       'group'       => null,
   ];
 

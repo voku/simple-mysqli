@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/FoobarUser.php';
 require_once __DIR__ . '/FoobarContact.php';
+require_once __DIR__ . '/FoobarUserContactJoin.php';
 
 use tests\FoobarContact;
 use tests\FoobarUser;
+use tests\FoobarUserContactJoin;
 use voku\db\DB;
 
 /**
@@ -99,6 +101,23 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
     self::assertSame('demo', $user->name);
 
     return $user;
+  }
+
+  /**
+   * @depends testInit
+   * @expectedException InvalidArgumentException
+   * @expectedExceptionMessage expected password to be of type {string}, instead got value `0` with type {integer}
+   */
+  public function testInsertUserTypeFail()
+  {
+    $user = FoobarUser::fetchEmpty();
+    $user->name = 'demo';
+    $user->password = 0;
+
+    self::assertSame('demo', $user->get('name'));
+    self::assertSame('demo', $user->name);
+
+    $user->insert();
   }
 
   /**
@@ -196,7 +215,7 @@ class ActiveRecordTest extends \PHPUnit\Framework\TestCase
    */
   public function testJoin($contact)
   {
-    $user = new FoobarUser();
+    $user = new FoobarUserContactJoin();
     $user->select('*, c.email, c.address')->join('contact as c', 'c.user_id = ' . $contact->user_id)->fetch();
 
     // email and address will stored in user data array.

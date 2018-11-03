@@ -35,7 +35,7 @@ class ActiveRecordExpressionsWrap extends ActiveRecordExpressions
       $str .= '(';
     }
 
-    $str .= \implode($delimiter, $this->target->getArray());
+    $str .= $this->target->implode($delimiter);
 
     if ($this->end) {
       $str .= $this->end;

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+7.3.0 (2018-11-03)
+
+- simple active record -> use "@property" phpdoc type check via Arrayy
+
 7.2.1 (2018-06-19)
 
 - optimize for PHP >= 7.0

@@ -775,7 +775,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
           if (isset($_row[$column]) === false) {
             continue;
           }
-        } else if (\array_key_exists($column, $_row) === false) {
+        } elseif (\array_key_exists($column, $_row) === false) {
           break;
         }
 
@@ -796,7 +796,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         if (isset($_row->{$column}) === false) {
           continue;
         }
-      } else if (\array_key_exists($column, $_row) === false) {
+      } elseif (\array_key_exists($column, $_row) === false) {
         break;
       }
 

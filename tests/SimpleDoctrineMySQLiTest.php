@@ -9,9 +9,9 @@ use voku\db\Result;
 use voku\helper\UTF8;
 
 /**
- * Class SimpleDoctrineTest
+ * Class SimpleDoctrineMySQLiTest
  */
-class SimpleDoctrineTest extends \PHPUnit\Framework\TestCase
+class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
 {
 
   /**
@@ -119,7 +119,7 @@ class SimpleDoctrineTest extends \PHPUnit\Framework\TestCase
 
     // sql - false
     $false = $db_1->query();
-    $this->expectOutputRegex('/(.)*SimpleDoctrineTest\.php \/(.)*/');
+    $this->expectOutputRegex('/(.)*Can not execute an empty query(.)*/');
     self::assertFalse($false);
   }
 
@@ -1150,22 +1150,6 @@ class SimpleDoctrineTest extends \PHPUnit\Framework\TestCase
     }
   }
 
-  /**
-   * @depends testRollback
-   */
-  public function testGetErrors()
-  {
-    // INFO: run all previous tests and generate some errors
-
-    $error = $this->db->lastError();
-    self::assertInternalType('string', $error);
-    self::assertContains('Unknown column \'page_lall\' in \'field list', $error);
-
-    $errors = $this->db->getErrors();
-    self::assertInternalType('array', $errors);
-    self::assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);
-  }
-
   public function testTransactionTrue()
   {
 
@@ -1250,6 +1234,22 @@ class SimpleDoctrineTest extends \PHPUnit\Framework\TestCase
     ];
     $resultSelect = $this->db->select($this->tableName, $where);
     self::assertSame(0, $resultSelect->num_rows);
+  }
+
+  /**
+   * @depends testRollback
+   */
+  public function testGetErrors()
+  {
+    // INFO: run all previous tests and generate some errors
+
+    $error = $this->db->lastError();
+    self::assertInternalType('string', $error);
+    self::assertContains('Unknown column \'page_lall\' in \'field list', $error);
+
+    $errors = $this->db->getErrors();
+    self::assertInternalType('array', $errors);
+    self::assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);
   }
 
   public function testCommit()

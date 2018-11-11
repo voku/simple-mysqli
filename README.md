@@ -118,7 +118,7 @@ You can use ```DB::getInstance()``` without any parameters and you will get your
       'user'     => 'yourDbUser',
       'password' => 'yourDbPassword',
       'host'     => 'yourDbHost',
-      'driver'   => 'mysqli', // 'pdo_mysql' is also working, but you need to add password etc. again into the DB class
+      'driver'   => 'mysqli', // 'pdo_mysql' || 'mysqli'
       'charset'  => 'utf8mb4',
   ];
   $config = new \Doctrine\DBAL\Configuration();
@@ -128,12 +128,7 @@ You can use ```DB::getInstance()``` without any parameters and you will get your
   );
   $doctrineConnection->connect();
 
-  // no need to add password etc. again. because we use 'mysqli' from doctrine in this example
-  $db = DB::getInstance('', '', '', '', '', '', true, true, '', '',
-      [
-          'doctrine' => $doctrineConnection
-      ]
-  );
+  $db = DB::getInstanceDoctrineHelper($doctrineConnection);
 ```
 
 ## Using the "DB"-Class

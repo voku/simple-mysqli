@@ -252,17 +252,27 @@ class Helper
    */
   public static function get_mysql_client_version(DB $dbConnection = null): string
   {
-    static $_mysqli_client_version = null;
+    static $MYSQL_CLIENT_VERSION_CACHE = [];
 
     if ($dbConnection === null) {
       $dbConnection = DB::getInstance();
     }
 
-    if ($_mysqli_client_version === null) {
-      $_mysqli_client_version = (string)\mysqli_get_client_version($dbConnection->getLink());
+    $cacheKey = implode('--', $dbConnection->getConfig());
+
+    if (isset($MYSQL_CLIENT_VERSION_CACHE[$cacheKey])) {
+      return $MYSQL_CLIENT_VERSION_CACHE[$cacheKey];
     }
 
-    return $_mysqli_client_version;
+    $doctrineConnection = $dbConnection->getDoctrineConnection();
+    if ($doctrineConnection) {
+      $doctrineWrappedConnection = $doctrineConnection->getWrappedConnection();
+      if ($doctrineWrappedConnection instanceof \Doctrine\DBAL\Driver\PDOConnection) {
+        return $MYSQL_CLIENT_VERSION_CACHE[$cacheKey] = '';
+      }
+    }
+
+    return $MYSQL_CLIENT_VERSION_CACHE[$cacheKey] = (string)\mysqli_get_client_version($dbConnection->getLink());
   }
 
 
@@ -275,17 +285,27 @@ class Helper
    */
   public static function get_mysql_server_version(DB $dbConnection = null): string
   {
-    static $_mysqli_server_version = null;
+    static $MYSQL_SERVER_VERSION_CACHE = [];
 
     if ($dbConnection === null) {
       $dbConnection = DB::getInstance();
     }
 
-    if ($_mysqli_server_version === null) {
-      $_mysqli_server_version = (string)\mysqli_get_server_version($dbConnection->getLink());
+    $cacheKey = implode('--', $dbConnection->getConfig());
+
+    if (isset($MYSQL_SERVER_VERSION_CACHE[$cacheKey])) {
+      return $MYSQL_SERVER_VERSION_CACHE[$cacheKey];
     }
 
-    return $_mysqli_server_version;
+    $doctrineConnection = $dbConnection->getDoctrineConnection();
+    if ($doctrineConnection) {
+      $doctrineWrappedConnection = $doctrineConnection->getWrappedConnection();
+      if ($doctrineWrappedConnection instanceof \Doctrine\DBAL\Driver\PDOConnection) {
+        return $MYSQL_SERVER_VERSION_CACHE[$cacheKey] = (string)$doctrineWrappedConnection->getServerVersion();
+      }
+    }
+
+    return $MYSQL_SERVER_VERSION_CACHE[$cacheKey] = (string)\mysqli_get_server_version($dbConnection->getLink());
   }
 
   /**

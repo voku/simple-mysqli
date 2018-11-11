@@ -91,11 +91,26 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   private $doctrinePdoStmt;
 
   /**
+   * @var int
+   */
+  private $doctrinePdoStmtDataSeekFake = 0;
+
+  /**
+   * @var int
+   */
+  private $doctrinePdoStmtDataSeekInit = false;
+
+  /**
+   * @var array
+   */
+  private $doctrinePdoStmtDataSeekFakeCache = [];
+
+  /**
    * Result constructor.
    *
-   * @param string         $sql
-   * @param \mysqli_result $result
-   * @param \Closure       $mapper Optional callback mapper for the "fetchCallable()" method
+   * @param string                                  $sql
+   * @param \mysqli_result|\Doctrine\DBAL\Statement $result
+   * @param \Closure                                $mapper Optional callback mapper for the "fetchCallable()" method
    */
   public function __construct(string $sql, $result, \Closure $mapper = null)
   {
@@ -115,10 +130,20 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
       $doctrineDriver = $this->_result->getWrappedStatement();
 
-      if ($doctrineDriver instanceof \Doctrine\DBAL\Driver\PDOStatement) {
+      if (
+          $doctrineDriver
+          &&
+          $doctrineDriver instanceof \Doctrine\DBAL\Driver\PDOStatement
+      ) {
         $this->doctrinePdoStmt = $doctrineDriver;
-      } // try to get the mysqli driver from doctrine
-      elseif ($doctrineDriver instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliStatement) {
+      }
+
+      if (
+          $doctrineDriver
+          &&
+          $doctrineDriver instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliStatement
+      ) {
+        // try to get the mysqli driver from doctrine
         $reflectionTmp = new \ReflectionClass($doctrineDriver);
         $propertyTmp = $reflectionTmp->getProperty('_stmt');
         $propertyTmp->setAccessible(true);
@@ -320,14 +345,22 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   {
     if (\is_int($row) && $row >= 0 && $row < $this->num_rows) {
 
-      if ($this->doctrineMySQLiStmt) {
+      if (
+          $this->doctrineMySQLiStmt
+          &&
+          $this->doctrineMySQLiStmt instanceof \mysqli_stmt
+      ) {
         $this->doctrineMySQLiStmt->data_seek($row);
 
         return true;
       }
 
-      if ($this->doctrinePdoStmt) {
-        return (bool)$this->doctrinePdoStmt->fetch(2, 0, $row); // FETCH_ASSOC + FETCH_ORI_NEXT
+      if (
+          $this->doctrinePdoStmt
+          &&
+          $this->doctrinePdoStmt instanceof \Doctrine\DBAL\Driver\PDOStatement
+      ) {
+        return true;
       }
 
       return \mysqli_data_seek($this->_result, $row);
@@ -584,6 +617,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
           $propertyAccessor->setValue($classTmp, $key, $value);
         }
       }
+
       yield $classTmp;
     }
   }
@@ -694,17 +728,29 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
       return null;
     }
 
-    if (null !== $row) {
+    if ($row !== null) {
       $this->seek($row);
     }
 
     $rows = $this->fetch_assoc();
 
     if ($column) {
-      return \is_array($rows) && isset($rows[$column]) ? $rows[$column] : null;
+      if (
+          \is_array($rows)
+          &&
+          isset($rows[$column])
+      ) {
+        return $rows[$column];
+      }
+
+      return null;
     }
 
-    return \is_callable($this->_mapper) ? \call_user_func($this->_mapper, $rows) : $rows;
+    if (\is_callable($this->_mapper)) {
+      return \call_user_func($this->_mapper, $rows);
+    }
+
+    return $rows;
   }
 
   /**
@@ -1021,13 +1067,42 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   private function fetch_assoc()
   {
     if ($this->_result instanceof \Doctrine\DBAL\Statement) {
-      $this->_result->setFetchMode(2); // FETCH_ASSOC
-      $object = $this->_result->fetch();
 
-      return $object;
+      if (
+          $this->doctrinePdoStmt
+          &&
+          $this->doctrinePdoStmt instanceof \Doctrine\DBAL\Driver\PDOStatement
+      ) {
+        if ($this->doctrinePdoStmtDataSeekInit === false) {
+          $this->doctrinePdoStmtDataSeekInit = true;
+
+          $this->doctrinePdoStmtDataSeekFakeCache = $this->_result->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
+        }
+
+        $return = ($this->doctrinePdoStmtDataSeekFakeCache[$this->doctrinePdoStmtDataSeekFake] ?? null);
+
+        $this->doctrinePdoStmtDataSeekFake++;
+
+        return $return;
+      }
+
+      if (
+          $this->doctrineMySQLiStmt
+          &&
+          $this->doctrineMySQLiStmt instanceof \mysqli_stmt
+      ) {
+        $object = $this->_result->fetch(
+            \Doctrine\DBAL\FetchMode::ASSOCIATIVE,
+            0 // FETCH_ORI_NEXT
+        );
+
+        return $object;
+      }
+
+      return null;
     }
 
-    return mysqli_fetch_assoc($this->_result);
+    return \mysqli_fetch_assoc($this->_result);
   }
 
   /**
@@ -1099,9 +1174,24 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function free()
   {
-    if ($this->_result instanceof \mysqli_result) {
+    if (
+      $this->_result
+      &&
+      $this->_result instanceof \mysqli_result
+    ) {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
       @\mysqli_free_result($this->_result);
+      $this->_result = null;
+
+      return true;
+    }
+
+    if (
+        $this->doctrineMySQLiStmt
+        &&
+        $this->doctrineMySQLiStmt instanceof \mysqli_stmt
+    ) {
+      $this->doctrineMySQLiStmt->free_result();
       $this->_result = null;
 
       return true;
@@ -1223,7 +1313,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function getYield($asArray = false): \Generator
   {
-    yield $this->fetchAllYield($asArray);
+    return $this->fetchAllYield($asArray);
   }
 
   /**
@@ -1346,13 +1436,23 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
    */
   public function reset(): self
   {
+    $this->doctrinePdoStmtDataSeekFake = 0;
+
     if (!$this->is_empty()) {
 
-      if ($this->doctrineMySQLiStmt) {
+      if (
+          $this->doctrineMySQLiStmt
+          &&
+          $this->doctrineMySQLiStmt instanceof \mysqli_stmt
+      ) {
         $this->doctrineMySQLiStmt->data_seek(0);
       }
 
-      if ($this->_result instanceof \mysqli_result) {
+      if (
+          $this->_result
+          &&
+          $this->_result instanceof \mysqli_result
+      ) {
         \mysqli_data_seek($this->_result, 0);
       }
     }

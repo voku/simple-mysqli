@@ -30,7 +30,8 @@
     "voku/simple-cache": "~3.0",
     "voku/portable-utf8": "~5.0",
     "voku/phonetic-algorithms": "~4.0",
-    "symfony/property-access": "~2.8|~3.3|~4.0"
+    "symfony/property-access": "~2.8|~3.3|~4.0",
+    "ext-mysqli": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "~6.0",

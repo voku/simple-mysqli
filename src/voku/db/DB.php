@@ -26,7 +26,7 @@ final class DB
   /**
    * @var \mysqli|null
    */
-  private $link;
+  private $mysqli_link;
 
   /**
    * @var bool
@@ -81,48 +81,53 @@ final class DB
   /**
    * @var bool
    */
-  private $_in_transaction = false;
+  private $in_transaction = false;
 
   /**
    * @var bool
    */
-  private $_convert_null_to_empty_string = false;
+  private $convert_null_to_empty_string = false;
 
   /**
    * @var bool
    */
-  private $_ssl = false;
+  private $ssl = false;
 
   /**
    * The path name to the key file
    *
    * @var string
    */
-  private $_clientkey;
+  private $clientkey;
 
   /**
    * The path name to the certificate file
    *
    * @var string
    */
-  private $_clientcert;
+  private $clientcert;
 
   /**
    * The path name to the certificate authority file
    *
    * @var string
    */
-  private $_cacert;
+  private $cacert;
 
   /**
    * @var Debug
    */
-  private $_debug;
+  private $debug;
 
   /**
    * @var null|\Doctrine\DBAL\Connection
    */
-  private $_doctrine_connection;
+  private $doctrine_connection;
+
+  /**
+   * @var null|int
+   */
+  private $affected_rows;
 
   /**
    * __construct()
@@ -150,7 +155,7 @@ final class DB
    */
   private function __construct(string $hostname, string $username, string $password, string $database, $port, string $charset, bool $exit_on_error, bool $echo_on_error, string $logger_class_name, string $logger_level, array $extra_config = [])
   {
-    $this->_debug = new Debug($this);
+    $this->debug = new Debug($this);
 
     $this->_loadConfig(
         $hostname,
@@ -312,11 +317,11 @@ final class DB
       $this->socket = @ini_get('mysqli.default_socket');
     }
 
-    $this->_debug->setExitOnError($exit_on_error);
-    $this->_debug->setEchoOnError($echo_on_error);
+    $this->debug->setExitOnError($exit_on_error);
+    $this->debug->setEchoOnError($echo_on_error);
 
-    $this->_debug->setLoggerClassName($logger_class_name);
-    $this->_debug->setLoggerLevel($logger_level);
+    $this->debug->setLoggerClassName($logger_class_name);
+    $this->debug->setLoggerLevel($logger_level);
 
     $this->setConfigExtra($extra_config);
 
@@ -586,7 +591,15 @@ final class DB
    */
   public function affected_rows(): int
   {
-    return \mysqli_affected_rows($this->link);
+    if (
+        $this->mysqli_link
+        &&
+        $this->mysqli_link instanceof \mysqli
+    ) {
+      return \mysqli_affected_rows($this->mysqli_link);
+    }
+
+    return (int)$this->affected_rows;
   }
 
   /**
@@ -596,17 +609,30 @@ final class DB
    */
   public function beginTransaction(): bool
   {
-    if ($this->_in_transaction === true) {
-      $this->_debug->displayError('Error: mysql server already in transaction!', false);
+    if ($this->in_transaction === true) {
+      $this->debug->displayError('Error: mysql server already in transaction!', false);
 
       return false;
     }
 
     $this->clearErrors(); // needed for "$this->endTransaction()"
-    $this->_in_transaction = true;
-    $return = \mysqli_autocommit($this->link, false);
+    $this->in_transaction = true;
+
+    if ($this->isDoctrinePDOConnection() === true) {
+      $this->doctrine_connection->setAutoCommit(false);
+      $this->doctrine_connection->beginTransaction();
+
+      if ($this->doctrine_connection->isTransactionActive() === true) {
+        $return = true;
+      } else {
+        $return = false;
+      }
+    } else {
+      $return = \mysqli_autocommit($this->mysqli_link, false);
+    }
+
     if ($return === false) {
-      $this->_in_transaction = false;
+      $this->in_transaction = false;
     }
 
     return $return;
@@ -619,7 +645,7 @@ final class DB
    */
   public function clearErrors(): bool
   {
-    return $this->_debug->clearErrors();
+    return $this->debug->clearErrors();
   }
 
   /**
@@ -633,32 +659,33 @@ final class DB
   {
     $this->connected = false;
 
-    if ($this->_doctrine_connection) {
+    if ($this->doctrine_connection) {
 
-      $connectedBefore = $this->_doctrine_connection->isConnected();
+      $connectedBefore = $this->doctrine_connection->isConnected();
 
-      $this->_doctrine_connection->close();
-      $this->link = null;
+      $this->doctrine_connection->close();
+
+      $this->mysqli_link = null;
 
       if ($connectedBefore === true) {
-        return !$this->_doctrine_connection->isConnected();
+        return !$this->doctrine_connection->isConnected();
       }
 
       return false;
     }
 
     if (
-        $this->link
+        $this->mysqli_link
         &&
-        $this->link instanceof \mysqli
+        $this->mysqli_link instanceof \mysqli
     ) {
-      $result = \mysqli_close($this->link);
-      $this->link = null;
+      $result = \mysqli_close($this->mysqli_link);
+      $this->mysqli_link = null;
 
       return $result;
     }
 
-    $this->link = null;
+    $this->mysqli_link = null;
 
     return false;
   }
@@ -670,15 +697,27 @@ final class DB
    */
   public function commit(): bool
   {
-    if ($this->_in_transaction === false) {
-      $this->_debug->displayError('Error: mysql server is not in transaction!', false);
+    if ($this->in_transaction === false) {
+      $this->debug->displayError('Error: mysql server is not in transaction!', false);
 
       return false;
     }
 
-    $return = \mysqli_commit($this->link);
-    \mysqli_autocommit($this->link, true);
-    $this->_in_transaction = false;
+    if ($this->isDoctrinePDOConnection() === true) {
+      $this->doctrine_connection->commit();
+      $this->doctrine_connection->setAutoCommit(true);
+
+      if ($this->doctrine_connection->isAutoCommit() === true) {
+        $return = true;
+      } else {
+        $return = false;
+      }
+    } else {
+      $return = \mysqli_commit($this->mysqli_link);
+      \mysqli_autocommit($this->mysqli_link, true);
+    }
+
+    $this->in_transaction = false;
 
     return $return;
   }
@@ -696,18 +735,38 @@ final class DB
       return true;
     }
 
-    if ($this->_doctrine_connection) {
-      $this->_doctrine_connection->connect();
+    if ($this->doctrine_connection) {
+      $this->doctrine_connection->connect();
 
-      $doctrineMySQLi = $this->_doctrine_connection->getWrappedConnection();
-      if ($doctrineMySQLi instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliConnection) {
-        $this->link = $doctrineMySQLi->getWrappedResourceHandle();
+      $doctrineWrappedConnection = $this->doctrine_connection->getWrappedConnection();
 
-        $this->connected = $this->_doctrine_connection->isConnected();
+      if ($this->isDoctrineMySQLiConnection() === true) {
+        /* @var $doctrineWrappedConnection \Doctrine\DBAL\Driver\Mysqli\MysqliConnection */
+
+        $this->mysqli_link = $doctrineWrappedConnection->getWrappedResourceHandle();
+
+        $this->connected = $this->doctrine_connection->isConnected();
 
         if (!$this->connected) {
-          $error = 'Error connecting to mysql server: ' . $this->_doctrine_connection->errorInfo();
-          $this->_debug->displayError($error, false);
+          $error = 'Error connecting to mysql server: ' . $this->doctrine_connection->errorInfo();
+          $this->debug->displayError($error, false);
+          throw new DBConnectException($error, 101);
+        }
+
+        $this->set_charset($this->charset);
+
+        return $this->isReady();
+      }
+
+      if ($this->isDoctrinePDOConnection() === true) {
+
+        $this->mysqli_link = null;
+
+        $this->connected = $this->doctrine_connection->isConnected();
+
+        if (!$this->connected) {
+          $error = 'Error connecting to mysql server: ' . $this->doctrine_connection->errorInfo();
+          $this->debug->displayError($error, false);
           throw new DBConnectException($error, 101);
         }
 
@@ -721,13 +780,13 @@ final class DB
 
     \mysqli_report(MYSQLI_REPORT_STRICT);
     try {
-      $this->link = \mysqli_init();
+      $this->mysqli_link = \mysqli_init();
 
       if (Helper::isMysqlndIsUsed() === true) {
-        \mysqli_options($this->link, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
+        \mysqli_options($this->mysqli_link, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
       }
 
-      if ($this->_ssl === true) {
+      if ($this->ssl === true) {
 
         if (empty($this->clientcert)) {
           throw new DBConnectException('Error connecting to mysql server: clientcert not defined');
@@ -741,14 +800,14 @@ final class DB
           throw new DBConnectException('Error connecting to mysql server: cacert not defined');
         }
 
-        \mysqli_options($this->link, MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, true);
+        \mysqli_options($this->mysqli_link, MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, true);
 
         /** @noinspection PhpParamsInspection */
         \mysqli_ssl_set(
-            $this->link,
-            $this->_clientkey,
-            $this->_clientcert,
-            $this->_cacert,
+            $this->mysqli_link,
+            $this->clientkey,
+            $this->clientcert,
+            $this->cacert,
             null,
             null
         );
@@ -758,7 +817,7 @@ final class DB
 
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
       $this->connected = @\mysqli_real_connect(
-          $this->link,
+          $this->mysqli_link,
           $this->hostname,
           $this->username,
           $this->password,
@@ -770,7 +829,7 @@ final class DB
 
     } catch (\Exception $e) {
       $error = 'Error connecting to mysql server: ' . $e->getMessage();
-      $this->_debug->displayError($error, false);
+      $this->debug->displayError($error, false);
       throw new DBConnectException($error, 100, $e);
     }
     \mysqli_report(MYSQLI_REPORT_OFF);
@@ -778,7 +837,7 @@ final class DB
     $errno = \mysqli_connect_errno();
     if (!$this->connected || $errno) {
       $error = 'Error connecting to mysql server: ' . \mysqli_connect_error() . ' (' . $errno . ')';
-      $this->_debug->displayError($error, false);
+      $this->debug->displayError($error, false);
       throw new DBConnectException($error, 101);
     }
 
@@ -804,7 +863,7 @@ final class DB
     $table = \trim($table);
 
     if ($table === '') {
-      $this->_debug->displayError('Invalid table name, table name in empty.', false);
+      $this->debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }
@@ -833,33 +892,44 @@ final class DB
    */
   public function endTransaction(): bool
   {
-    if ($this->_in_transaction === false) {
-      $this->_debug->displayError('Error: mysql server is not in transaction!', false);
+    if ($this->in_transaction === false) {
+      $this->debug->displayError('Error: mysql server is not in transaction!', false);
 
       return false;
     }
 
     if (!$this->errors()) {
-      $return = \mysqli_commit($this->link);
+      $return = $this->commit();
     } else {
       $this->rollback();
       $return = false;
     }
 
-    \mysqli_autocommit($this->link, true);
-    $this->_in_transaction = false;
+    if ($this->isDoctrinePDOConnection() === true) {
+      $this->doctrine_connection->setAutoCommit(true);
+
+      if ($this->doctrine_connection->isAutoCommit() === true) {
+        $return = true;
+      } else {
+        $return = false;
+      }
+    } else {
+      \mysqli_autocommit($this->mysqli_link, true);
+    }
+
+    $this->in_transaction = false;
 
     return $return;
   }
 
   /**
-   * Get all errors from "$this->_errors".
+   * Get all errors from "$this->errors".
    *
    * @return array|false <p>false === on errors</p>
    */
   public function errors()
   {
-    $errors = $this->_debug->getErrors();
+    $errors = $this->debug->getErrors();
 
     return \count($errors) > 0 ? $errors : false;
   }
@@ -926,14 +996,23 @@ final class DB
 
         $var = \get_magic_quotes_gpc() ? \stripslashes($var) : $var;
 
-        $var = \mysqli_real_escape_string($this->link, $var);
+        if (
+            $this->mysqli_link
+            &&
+            $this->mysqli_link instanceof \mysqli
+        ) {
+          $var = \mysqli_real_escape_string($this->mysqli_link, $var);
+        } else if ($this->isDoctrinePDOConnection() === true) {
+          $var = $this->getDoctrinePDOConnection()->quote($var);
+          $var = \substr($var, 1, -1);
+        }
 
         break;
 
       case 'array':
         if ($convert_array === null) {
 
-          if ($this->_convert_null_to_empty_string === true) {
+          if ($this->convert_null_to_empty_string === true) {
             $var = "''";
           } else {
             $var = 'NULL';
@@ -963,7 +1042,7 @@ final class DB
         break;
 
       case 'NULL':
-        if ($this->_convert_null_to_empty_string === true) {
+        if ($this->convert_null_to_empty_string === true) {
           $var = "''";
         } else {
           $var = 'NULL';
@@ -1058,38 +1137,76 @@ final class DB
   }
 
   /**
+   * @return array
+   */
+  public function getConfig()
+  {
+    $config = [
+        'hostname'   => $this->hostname,
+        'username'   => $this->username,
+        'password'   => $this->password,
+        'port'       => $this->port,
+        'database'   => $this->database,
+        'socket'     => $this->socket,
+        'charset'    => $this->charset,
+        'cacert'     => $this->cacert,
+        'clientcert' => $this->clientcert,
+        'clientkey'  => $this->clientkey,
+    ];
+
+    if ($this->doctrine_connection instanceof \Doctrine\DBAL\Connection) {
+      $config += $this->doctrine_connection->getParams();
+    }
+
+    return $config;
+  }
+
+  /**
    * @return Debug
    */
   public function getDebugger(): Debug
   {
-    return $this->_debug;
+    return $this->debug;
   }
 
   /**
-   * @return \Doctrine\DBAL\Connection|null
+   * @return null|\Doctrine\DBAL\Connection|null
    */
   public function getDoctrineConnection()
   {
-    return $this->_doctrine_connection;
+    return $this->doctrine_connection;
   }
 
   /**
-   * Get errors from "$this->_errors".
+   * @return false|\Doctrine\DBAL\Driver\Connection
+   */
+  private function getDoctrinePDOConnection()
+  {
+    if ($this->doctrine_connection) {
+      $doctrineWrappedConnection = $this->doctrine_connection->getWrappedConnection();
+      if ($doctrineWrappedConnection instanceof \Doctrine\DBAL\Driver\PDOConnection) {
+        return $doctrineWrappedConnection;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Get errors from "$this->errors".
    *
    * @return array
    */
   public function getErrors(): array
   {
-    return $this->_debug->getErrors();
+    return $this->debug->getErrors();
   }
 
   /**
-   * getInstance()
-   *
-   * @param string $hostname
-   * @param string $username
-   * @param string $password
-   * @param string $database
+   * @param string $hostname             <p>Hostname of the mysql server</p>
+   * @param string $username             <p>Username for the mysql connection</p>
+   * @param string $password             <p>Password for the mysql connection</p>
+   * @param string $database             <p>Database for the mysql connection</p>
    * @param int    $port                 <p>default is (int)3306</p>
    * @param string $charset              <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
    * @param bool   $exit_on_error        <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
@@ -1141,7 +1258,7 @@ final class DB
     }
 
     if (
-        $hostname . $username . $password . $database . $port . $charset == '3306utf8'
+        '' . $hostname . $username . $password . $database . $port . $charset == '' . $port . $charset
         &&
         null !== $firstInstance
     ) {
@@ -1194,13 +1311,62 @@ final class DB
   }
 
   /**
+   * @param \Doctrine\DBAL\Connection $doctrine
+   * @param string                    $charset       <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
+   * @param bool                      $exit_on_error <p>Throw a 'Exception' when a query failed, otherwise it will
+   *                                                 return 'false'. Use false to disable it.</p>
+   * @param bool                      $echo_on_error <p>Echo the error if "checkForDev()" returns true.
+   *                                                 Use false to disable it.</p>
+   * @param string                    $logger_class_name
+   * @param string                    $logger_level  <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
+   * @param array                     $extra_config  <p>
+   *                                                 're_connect'    => bool<br>
+   *                                                 'session_to_db' => bool<br>
+   *                                                 'doctrine'      => \Doctrine\DBAL\Connection<br>
+   *                                                 'socket'        => 'string (path)'<br>
+   *                                                 'ssl'           => bool<br>
+   *                                                 'clientkey'     => 'string (path)'<br>
+   *                                                 'clientcert'    => 'string (path)'<br>
+   *                                                 'cacert'        => 'string (path)'<br>
+   *                                                 </p>
+   *
+   * @return self
+   */
+  public static function getInstanceDoctrineHelper(
+      \Doctrine\DBAL\Connection $doctrine,
+      string $charset = 'utf8',
+      bool $exit_on_error = true,
+      bool $echo_on_error = true,
+      string $logger_class_name = '',
+      string $logger_level = '',
+      array $extra_config = []
+  ): self
+  {
+    $extra_config['doctrine'] = $doctrine;
+
+    return self::getInstance(
+        '',
+        '',
+        '',
+        '',
+        3306,
+        $charset,
+        $exit_on_error,
+        $echo_on_error,
+        $logger_class_name,
+        $logger_level,
+        $extra_config
+    );
+  }
+
+  /**
    * Get the mysqli-link (link identifier returned by mysqli-connect).
    *
-   * @return \mysqli
+   * @return null|\mysqli
    */
-  public function getLink(): \mysqli
+  public function getLink()
   {
-    return $this->link;
+    return $this->mysqli_link;
   }
 
   /**
@@ -1220,7 +1386,7 @@ final class DB
    */
   public function inTransaction(): bool
   {
-    return $this->_in_transaction;
+    return $this->in_transaction;
   }
 
   /**
@@ -1240,13 +1406,13 @@ final class DB
     $table = \trim($table);
 
     if ($table === '') {
-      $this->_debug->displayError('Invalid table name, table name in empty.', false);
+      $this->debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }
 
     if (\count($data) === 0) {
-      $this->_debug->displayError('Invalid data for INSERT, data is empty.', false);
+      $this->debug->displayError('Invalid data for INSERT, data is empty.', false);
 
       return false;
     }
@@ -1269,13 +1435,43 @@ final class DB
    */
   public function insert_id()
   {
-    return \mysqli_insert_id($this->link);
+    return \mysqli_insert_id($this->mysqli_link);
+  }
+
+  /**
+   * @return bool
+   */
+  public function isDoctrineMySQLiConnection(): bool
+  {
+    if ($this->doctrine_connection) {
+      $doctrineWrappedConnection = $this->doctrine_connection->getWrappedConnection();
+      if ($doctrineWrappedConnection instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliConnection) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * @return bool
+   */
+  public function isDoctrinePDOConnection(): bool
+  {
+    if ($this->doctrine_connection) {
+      $doctrineWrappedConnection = $this->doctrine_connection->getWrappedConnection();
+      if ($doctrineWrappedConnection instanceof \Doctrine\DBAL\Driver\PDOConnection) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
    * Check if db-connection is ready.
    *
-   * @return boolean
+   * @return bool
    */
   public function isReady(): bool
   {
@@ -1289,7 +1485,7 @@ final class DB
    */
   public function lastError()
   {
-    $errors = $this->_debug->getErrors();
+    $errors = $this->debug->getErrors();
 
     return \count($errors) > 0 ? end($errors) : false;
   }
@@ -1313,52 +1509,123 @@ final class DB
     }
 
     if (!$sql || $sql === '') {
-      $this->_debug->displayError('Can not execute an empty query.', false);
+      $this->debug->displayError('Can not execute an empty query.', false);
 
       return false;
     }
 
-    $query_start_time = microtime(true);
-    $resultTmp = \mysqli_multi_query($this->link, $sql);
-    $query_duration = microtime(true) - $query_start_time;
+    if ($this->isDoctrinePDOConnection() === true) {
 
-    $this->_debug->logQuery($sql, $query_duration, 0);
+      $query_start_time = microtime(true);
+      $queryException = null;
+      $query_result_doctrine = false;
 
-    $returnTheResult = false;
-    $result = [];
+      try {
+        $query_result_doctrine = $this->doctrine_connection->prepare($sql);
+        $resultTmp = $query_result_doctrine->execute();
+        $mysqli_field_count = $query_result_doctrine->columnCount();
+      } catch (\Exception $e) {
+        $resultTmp = false;
+        $mysqli_field_count = null;
 
-    if ($resultTmp) {
-      do {
+        $queryException = $e;
+      }
 
-        $resultTmpInner = \mysqli_store_result($this->link);
+      $query_duration = microtime(true) - $query_start_time;
 
-        if ($resultTmpInner instanceof \mysqli_result) {
+      $this->debug->logQuery($sql, $query_duration, 0);
 
-          $returnTheResult = true;
-          $result[] = new Result($sql, $resultTmpInner);
+      $returnTheResult = false;
+      $result = [];
 
-        } else if (
-            $resultTmpInner === true
-            ||
-            !\mysqli_errno($this->link)
-        ) {
+      if ($resultTmp) {
 
-          $result[] = true;
+        if ($mysqli_field_count) {
+
+          if (
+              $query_result_doctrine
+              &&
+              $query_result_doctrine instanceof \Doctrine\DBAL\Statement
+          ) {
+            $result = $query_result_doctrine;
+          }
 
         } else {
-
-          $result[] = false;
-
+          $result = $resultTmp;
         }
 
-      } while (\mysqli_more_results($this->link) === true ? \mysqli_next_result($this->link) : false);
+        if (
+            $result instanceof \Doctrine\DBAL\Statement
+            &&
+            $result->columnCount() > 0
+        ) {
+          $returnTheResult = true;
+
+          // return query result object
+          $result = [new Result($sql, $result)];
+        } else {
+          $result = [$result];
+        }
+
+      } else {
+
+        // log the error query
+        $this->debug->logQuery($sql, $query_duration, 0, true);
+
+        if (
+            isset($queryException)
+            &&
+            $queryException instanceof \Doctrine\DBAL\Query\QueryException
+        ) {
+          return $this->queryErrorHandling($queryException->getMessage(), $queryException->getCode(), $sql, false, true);
+        }
+      }
 
     } else {
 
-      // log the error query
-      $this->_debug->logQuery($sql, $query_duration, 0, true);
+      $query_start_time = microtime(true);
+      $resultTmp = \mysqli_multi_query($this->mysqli_link, $sql);
+      $query_duration = microtime(true) - $query_start_time;
 
-      return $this->queryErrorHandling(\mysqli_error($this->link), \mysqli_errno($this->link), $sql, false, true);
+      $this->debug->logQuery($sql, $query_duration, 0);
+
+      $returnTheResult = false;
+      $result = [];
+
+      if ($resultTmp) {
+        do {
+
+          $resultTmpInner = \mysqli_store_result($this->mysqli_link);
+
+          if ($resultTmpInner instanceof \mysqli_result) {
+
+            $returnTheResult = true;
+            $result[] = new Result($sql, $resultTmpInner);
+
+          } else if (
+              $resultTmpInner === true
+              ||
+              !\mysqli_errno($this->mysqli_link)
+          ) {
+
+            $result[] = true;
+
+          } else {
+
+            $result[] = false;
+
+          }
+
+        } while (\mysqli_more_results($this->mysqli_link) === true ? \mysqli_next_result($this->mysqli_link) : false);
+
+      } else {
+
+        // log the error query
+        $this->debug->logQuery($sql, $query_duration, 0, true);
+
+        return $this->queryErrorHandling(\mysqli_error($this->mysqli_link), \mysqli_errno($this->mysqli_link), $sql, false, true);
+      }
+
     }
 
     // return the result only if there was a "SELECT"-query
@@ -1403,26 +1670,24 @@ final class DB
    * Pings a server connection, or tries to reconnect
    * if the connection has gone down.
    *
-   * @return boolean
+   * @return bool
    */
   public function ping(): bool
   {
-    if ($this->_doctrine_connection) {
+    if ($this->connected === false) {
+      return false;
+    }
 
-      // this check is needed, but I don't know why "ping" isn't working?
-      if (!$this->_doctrine_connection->isConnected()) {
-        return false;
-      }
-
-      return $this->_doctrine_connection->ping();
+    if ($this->isDoctrinePDOConnection() === true) {
+      return $this->doctrine_connection->ping();
     }
 
     if (
-        $this->link
+        $this->mysqli_link
         &&
-        $this->link instanceof \mysqli
+        $this->mysqli_link instanceof \mysqli
     ) {
-      return \mysqli_ping($this->link);
+      return \mysqli_ping($this->mysqli_link);
     }
 
     return false;
@@ -1487,7 +1752,7 @@ final class DB
    *
    * @return bool|int|Result              <p>
    *                                      "Result" by "<b>SELECT</b>"-queries<br />
-   *                                      "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+   *                                      "int|string" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
    *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
    *                                      "true" by e.g. "DROP"-queries<br />
    *                                      "false" on error
@@ -1502,7 +1767,7 @@ final class DB
     }
 
     if (!$sql || $sql === '') {
-      $this->_debug->displayError('Can not execute an empty query.', false);
+      $this->debug->displayError('Can not execute an empty query.', false);
 
       return false;
     }
@@ -1527,10 +1792,10 @@ final class DB
     $queryException = null;
     $query_result_doctrine = false;
 
-    if ($this->_doctrine_connection) {
+    if ($this->doctrine_connection) {
 
       try {
-        $query_result_doctrine = $this->_doctrine_connection->prepare($sql);
+        $query_result_doctrine = $this->doctrine_connection->prepare($sql);
         $query_result = $query_result_doctrine->execute();
         $mysqli_field_count = $query_result_doctrine->columnCount();
       } catch (\Exception $e) {
@@ -1542,8 +1807,8 @@ final class DB
 
     } else {
 
-      $query_result = \mysqli_real_query($this->link, $sql);
-      $mysqli_field_count = \mysqli_field_count($this->link);
+      $query_result = \mysqli_real_query($this->mysqli_link, $sql);
+      $mysqli_field_count = \mysqli_field_count($this->mysqli_link);
 
     }
 
@@ -1553,7 +1818,7 @@ final class DB
 
     if ($mysqli_field_count) {
 
-      if ($this->_doctrine_connection) {
+      if ($this->doctrine_connection) {
 
         $result = false;
         if (
@@ -1566,7 +1831,7 @@ final class DB
 
       } else {
 
-        $result = \mysqli_store_result($this->link);
+        $result = \mysqli_store_result($this->mysqli_link);
 
       }
     } else {
@@ -1580,7 +1845,7 @@ final class DB
     ) {
 
       // log the select query
-      $this->_debug->logQuery($sql, $query_duration, $mysqli_field_count);
+      $this->debug->logQuery($sql, $query_duration, $mysqli_field_count);
 
       // return query result object
       return new Result($sql, $result);
@@ -1589,7 +1854,7 @@ final class DB
     if ($result instanceof \mysqli_result) {
 
       // log the select query
-      $this->_debug->logQuery($sql, $query_duration, $mysqli_field_count);
+      $this->debug->logQuery($sql, $query_duration, $mysqli_field_count);
 
       // return query result object
       return new Result($sql, $result);
@@ -1599,34 +1864,50 @@ final class DB
 
       // "INSERT" || "REPLACE"
       if (preg_match('/^\s*?(?:INSERT|REPLACE)\s+/i', $sql)) {
-        $insert_id = (int)$this->insert_id();
-        $this->_debug->logQuery($sql, $query_duration, $insert_id);
+
+        if ($this->isDoctrinePDOConnection() === true) {
+          $insert_id = $this->doctrine_connection->lastInsertId();
+        } else {
+          $insert_id = $this->insert_id();
+        }
+
+        $this->debug->logQuery($sql, $query_duration, $insert_id);
 
         return $insert_id;
       }
 
       // "UPDATE" || "DELETE"
       if (preg_match('/^\s*?(?:UPDATE|DELETE)\s+/i', $sql)) {
-        $affected_rows = $this->affected_rows();
-        $this->_debug->logQuery($sql, $query_duration, $affected_rows);
 
-        return $affected_rows;
+        if ($this->mysqli_link) {
+          $this->affected_rows = $this->affected_rows();
+        } else if ($query_result_doctrine) {
+          $this->affected_rows = $query_result_doctrine->rowCount();
+        }
+
+        $this->debug->logQuery($sql, $query_duration, $this->affected_rows);
+
+        return $this->affected_rows;
       }
 
       // log the ? query
-      $this->_debug->logQuery($sql, $query_duration, 0);
+      $this->debug->logQuery($sql, $query_duration, 0);
 
       return true;
     }
 
     // log the error query
-    $this->_debug->logQuery($sql, $query_duration, 0, true);
+    $this->debug->logQuery($sql, $query_duration, 0, true);
 
     if ($queryException) {
       return $this->queryErrorHandling($queryException->getMessage(), $queryException->getCode(), $sql, $params);
     }
 
-    return $this->queryErrorHandling(\mysqli_error($this->link), \mysqli_errno($this->link), $sql, $params);
+    if ($this->mysqli_link) {
+      return $this->queryErrorHandling(\mysqli_error($this->mysqli_link), \mysqli_errno($this->mysqli_link), $sql, $params);
+    }
+
+    return false;
   }
 
   /**
@@ -1656,11 +1937,11 @@ final class DB
 
       // exit if we have more then 3 "DB server has gone away"-errors
       if ($RECONNECT_COUNTER > 3) {
-        $this->_debug->mailToAdmin('DB-Fatal-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql, 5);
+        $this->debug->mailToAdmin('DB-Fatal-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql, 5);
         throw new DBGoneAwayException($errorMessage);
       }
 
-      $this->_debug->mailToAdmin('DB-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql);
+      $this->debug->mailToAdmin('DB-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql);
 
       // reconnect
       $RECONNECT_COUNTER++;
@@ -1674,15 +1955,15 @@ final class DB
       return false;
     }
 
-    $this->_debug->mailToAdmin('SQL-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql);
+    $this->debug->mailToAdmin('SQL-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql);
 
     $force_exception_after_error = null; // auto
-    if ($this->_in_transaction === true) {
+    if ($this->in_transaction === true) {
       $force_exception_after_error = false;
     }
     // this query returned an error, we must display it (only for dev) !!!
 
-    $this->_debug->displayError($errorMessage . '(' . $errorNumber . ') ' . ' | ' . $sql, $force_exception_after_error);
+    $this->debug->displayError($errorMessage . '(' . $errorNumber . ') ' . ' | ' . $sql, $force_exception_after_error);
 
     return false;
   }
@@ -1722,7 +2003,7 @@ final class DB
       $ping = $this->ping();
     }
 
-    if ($ping !== true) {
+    if ($ping === false) {
       $this->connected = false;
       $this->connect();
     }
@@ -1747,13 +2028,13 @@ final class DB
     $table = \trim($table);
 
     if ($table === '') {
-      $this->_debug->displayError('Invalid table name, table name in empty.', false);
+      $this->debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }
 
     if (\count($data) === 0) {
-      $this->_debug->displayError('Invalid data for REPLACE, data is empty.', false);
+      $this->debug->displayError('Invalid data for REPLACE, data is empty.', false);
 
       return false;
     }
@@ -1790,15 +2071,27 @@ final class DB
    */
   public function rollback(): bool
   {
-    if ($this->_in_transaction === false) {
-      $this->_debug->displayError('Error: mysql server is not in transaction!', false);
+    if ($this->in_transaction === false) {
+      $this->debug->displayError('Error: mysql server is not in transaction!', false);
 
       return false;
     }
 
-    $return = \mysqli_rollback($this->link);
-    \mysqli_autocommit($this->link, true);
-    $this->_in_transaction = false;
+    if ($this->isDoctrinePDOConnection() === true) {
+      $this->doctrine_connection->rollBack();
+      $this->doctrine_connection->setAutoCommit(true);
+
+      if ($this->doctrine_connection->isAutoCommit() === true) {
+        $return = true;
+      } else {
+        $return = false;
+      }
+    } else {
+      $return = \mysqli_rollback($this->mysqli_link);
+      \mysqli_autocommit($this->mysqli_link, true);
+    }
+
+    $this->in_transaction = false;
 
     return $return;
   }
@@ -1840,7 +2133,7 @@ final class DB
    * 1. return null
    * </p>
    *
-   * @param mixed $var
+   * @param mixed     $var
    * @param bool|null $convert_array <strong>false</strong> => Keep the array.<br />
    *                                 <strong>true</strong> => Convert to string var1,var2,var3...<br />
    *                                 <strong>null</strong> => Convert the array into null, every time.
@@ -1852,7 +2145,7 @@ final class DB
     if (\is_array($var)) {
       if ($convert_array === null) {
 
-        if ($this->_convert_null_to_empty_string === true) {
+        if ($this->convert_null_to_empty_string === true) {
           $var = "''";
         } else {
           $var = 'NULL';
@@ -1892,7 +2185,7 @@ final class DB
     }
 
     if ($var === null) {
-      if ($this->_convert_null_to_empty_string === true) {
+      if ($this->convert_null_to_empty_string === true) {
         return "''";
       }
 
@@ -1933,7 +2226,7 @@ final class DB
     $table = \trim($table);
 
     if ($table === '') {
-      $this->_debug->displayError('Invalid table name, table name in empty.', false);
+      $this->debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }
@@ -1968,7 +2261,7 @@ final class DB
       return false;
     }
 
-    return mysqli_select_db($this->link, $database);
+    return mysqli_select_db($this->mysqli_link, $database);
   }
 
   /**
@@ -1992,7 +2285,7 @@ final class DB
         &&
         $extra_config['doctrine'] instanceof \Doctrine\DBAL\Connection
     ) {
-      $this->_doctrine_connection = $extra_config['doctrine'];
+      $this->doctrine_connection = $extra_config['doctrine'];
     }
 
     if (isset($extra_config['socket'])) {
@@ -2000,19 +2293,19 @@ final class DB
     }
 
     if (isset($extra_config['ssl'])) {
-      $this->_ssl = $extra_config['ssl'];
+      $this->ssl = $extra_config['ssl'];
     }
 
     if (isset($extra_config['clientkey'])) {
-      $this->_clientkey = $extra_config['clientkey'];
+      $this->clientkey = $extra_config['clientkey'];
     }
 
     if (isset($extra_config['clientcert'])) {
-      $this->_clientcert = $extra_config['clientcert'];
+      $this->clientcert = $extra_config['clientcert'];
     }
 
     if (isset($extra_config['cacert'])) {
-      $this->_cacert = $extra_config['cacert'];
+      $this->cacert = $extra_config['cacert'];
     }
   }
 
@@ -2035,11 +2328,33 @@ final class DB
 
     $this->charset = $charset;
 
-    $return = mysqli_set_charset($this->link, $charset);
-    /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    @\mysqli_query($this->link, 'SET CHARACTER SET ' . $charset);
-    /** @noinspection PhpUsageOfSilenceOperatorInspection */
-    @\mysqli_query($this->link, "SET NAMES '" . $charset . "'");
+    if (
+        $this->mysqli_link
+        &&
+        $this->mysqli_link instanceof \mysqli
+    ) {
+
+      $return = mysqli_set_charset($this->mysqli_link, $charset);
+
+      /** @noinspection PhpUsageOfSilenceOperatorInspection */
+      @\mysqli_query($this->mysqli_link, 'SET CHARACTER SET ' . $charset);
+      /** @noinspection PhpUsageOfSilenceOperatorInspection */
+      @\mysqli_query($this->mysqli_link, "SET NAMES '" . $charset . "'");
+
+    } elseif ($this->isDoctrinePDOConnection() === true) {
+
+      $doctrineWrappedConnection = $this->getDoctrinePDOConnection();
+
+      $doctrineWrappedConnection->exec('SET CHARACTER SET ' . $charset);
+      $doctrineWrappedConnection->exec("SET NAMES '" . $charset . "'");
+
+      $return = true;
+
+    } else {
+
+      throw new DBConnectException('Can not set the charset');
+
+    }
 
     return $return;
   }
@@ -2057,7 +2372,7 @@ final class DB
    */
   public function set_convert_null_to_empty_string(bool $bool): self
   {
-    $this->_convert_null_to_empty_string = $bool;
+    $this->convert_null_to_empty_string = $bool;
 
     return $this;
   }
@@ -2116,11 +2431,11 @@ final class DB
    */
   public function showConfigError(): bool
   {
-    // check if a doctrine connection is already open
+    // check if a doctrine connection is already open, first
     if (
-        $this->_doctrine_connection
+        $this->doctrine_connection
         &&
-        $this->_doctrine_connection->isConnected()
+        $this->doctrine_connection->isConnected()
     ) {
       return true;
     }
@@ -2191,7 +2506,7 @@ final class DB
 
       $beginTransaction = $this->beginTransaction();
       if ($beginTransaction === false) {
-        $this->_debug->displayError('Error: transact -> can not start transaction!', false);
+        $this->debug->displayError('Error: transact -> can not start transaction!', false);
 
         return false;
       }
@@ -2230,13 +2545,13 @@ final class DB
     $table = \trim($table);
 
     if ($table === '') {
-      $this->_debug->displayError('Invalid table name, table name in empty.', false);
+      $this->debug->displayError('Invalid table name, table name in empty.', false);
 
       return false;
     }
 
     if (\count($data) === 0) {
-      $this->_debug->displayError('Invalid data for UPDATE, data is empty.', false);
+      $this->debug->displayError('Invalid data for UPDATE, data is empty.', false);
 
       return false;
     }

@@ -1,9 +1,15 @@
 Changelog
 =========
 
+7.4.0 (2018-11-11)
+
+- add support for PDO connection as parent driver (via Doctrine/DBAL)
+
+
 7.3.0 (2018-11-03)
 
 - simple active record -> use "@property" phpdoc type check via Arrayy
+
 
 7.2.1 (2018-06-19)
 
@@ -11,31 +17,38 @@ Changelog
 - fix doc / examples for the simple active record
 - add more tests
 
+
 7.2.0 (2018-06-04)
 
 - add support for Doctrine/DBAL as parent driver
 
+
 7.1.4 (2018-04-28)
 
 - DB->_parseQueryParamsByName() is private now (only internal usage)
+
 
 7.1.3 (2018-04-27)
 
 - optimize the "escape" function
 - do not trim the input string
 
+
 7.1.2 (2018-04-27)
 
 - optimize performance for the query builder
+
 
 7.1.1 (2018-02-13)
 
 - "DB" -> implement "re_connect" for "DB::getInstance()"
 
+
 7.1.0 (2018-01-21)
 
 - "define constants for default_result_type"
 - add usage of "yield" via "Result->fetchAllYield()"  
+
 
 7.0.2 (2018-01-07)
 

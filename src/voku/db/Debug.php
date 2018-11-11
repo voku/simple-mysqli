@@ -124,8 +124,8 @@ class Debug
   /**
    * Display SQL-Errors or throw Exceptions (for dev).
    *
-   * @param string       $error                       <p>The error message.</p>
-   * @param null|boolean $force_exception_after_error <p>
+   * @param string    $error                       <p>The error message.</p>
+   * @param null|bool $force_exception_after_error <p>
    *                                                  If you use default "null" here, then the behavior depends
    *                                                  on "$this->exit_on_error (default: true)".
    *                                                  </p>
@@ -251,7 +251,7 @@ class Debug
   }
 
   /**
-   * @return boolean
+   * @return bool
    */
   public function isEchoOnError(): bool
   {
@@ -259,7 +259,7 @@ class Debug
   }
 
   /**
-   * @return boolean
+   * @return bool
    */
   public function isExitOnError(): bool
   {
@@ -405,7 +405,7 @@ class Debug
   }
 
   /**
-   * @param boolean $echo_on_error
+   * @param bool $echo_on_error
    */
   public function setEchoOnError($echo_on_error)
   {
@@ -413,7 +413,7 @@ class Debug
   }
 
   /**
-   * @param boolean $exit_on_error
+   * @param bool $exit_on_error
    */
   public function setExitOnError($exit_on_error)
   {

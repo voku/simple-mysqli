@@ -618,7 +618,9 @@ final class DB
     $this->clearErrors(); // needed for "$this->endTransaction()"
     $this->in_transaction = true;
 
-    if ($this->isDoctrinePDOConnection() === true) {
+    if ($this->mysqli_link) {
+      $return = \mysqli_autocommit($this->mysqli_link, false);
+    } elseif ($this->isDoctrinePDOConnection() === true) {
       $this->doctrine_connection->setAutoCommit(false);
       $this->doctrine_connection->beginTransaction();
 
@@ -627,8 +629,6 @@ final class DB
       } else {
         $return = false;
       }
-    } else {
-      $return = \mysqli_autocommit($this->mysqli_link, false);
     }
 
     if ($return === false) {
@@ -659,7 +659,11 @@ final class DB
   {
     $this->connected = false;
 
-    if ($this->doctrine_connection) {
+    if (
+        $this->doctrine_connection
+        &&
+        $this->doctrine_connection instanceof \Doctrine\DBAL\Connection
+    ) {
 
       $connectedBefore = $this->doctrine_connection->isConnected();
 
@@ -693,7 +697,7 @@ final class DB
   /**
    * Commits the current transaction and end the transaction.
    *
-   * @return bool <p>Boolean true on success, false otherwise.</p>
+   * @return bool <p>bool true on success, false otherwise.</p>
    */
   public function commit(): bool
   {
@@ -703,7 +707,10 @@ final class DB
       return false;
     }
 
-    if ($this->isDoctrinePDOConnection() === true) {
+    if ($this->mysqli_link) {
+      $return = \mysqli_commit($this->mysqli_link);
+      \mysqli_autocommit($this->mysqli_link, true);
+    } elseif ($this->isDoctrinePDOConnection() === true) {
       $this->doctrine_connection->commit();
       $this->doctrine_connection->setAutoCommit(true);
 
@@ -712,9 +719,6 @@ final class DB
       } else {
         $return = false;
       }
-    } else {
-      $return = \mysqli_commit($this->mysqli_link);
-      \mysqli_autocommit($this->mysqli_link, true);
     }
 
     $this->in_transaction = false;
@@ -905,7 +909,9 @@ final class DB
       $return = false;
     }
 
-    if ($this->isDoctrinePDOConnection() === true) {
+    if ($this->mysqli_link) {
+      \mysqli_autocommit($this->mysqli_link, true);
+    } elseif ($this->isDoctrinePDOConnection() === true) {
       $this->doctrine_connection->setAutoCommit(true);
 
       if ($this->doctrine_connection->isAutoCommit() === true) {
@@ -913,8 +919,6 @@ final class DB
       } else {
         $return = false;
       }
-    } else {
-      \mysqli_autocommit($this->mysqli_link, true);
     }
 
     $this->in_transaction = false;
@@ -937,7 +941,7 @@ final class DB
   /**
    * Escape: Use "mysqli_real_escape_string" and clean non UTF-8 chars + some extra optional stuff.
    *
-   * @param mixed     $var           boolean: convert into "integer"<br />
+   * @param mixed     $var           bool: convert into "integer"<br />
    *                                 int: int (don't change it)<br />
    *                                 float: float (don't change it)<br />
    *                                 null: null (don't change it)<br />
@@ -1435,7 +1439,13 @@ final class DB
    */
   public function insert_id()
   {
-    return \mysqli_insert_id($this->mysqli_link);
+    if ($this->mysqli_link) {
+      return \mysqli_insert_id($this->mysqli_link);
+    }
+
+    if ($this->getDoctrinePDOConnection()) {
+      return $this->getDoctrinePDOConnection()->lastInsertId();
+    }
   }
 
   /**
@@ -1496,9 +1506,9 @@ final class DB
    * @param string $sql
    *
    * @return false|Result[] "Result"-Array by "<b>SELECT</b>"-queries<br />
-   *                        "boolean" by only "<b>INSERT</b>"-queries<br />
-   *                        "boolean" by only (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-   *                        "boolean" by only by e.g. "DROP"-queries<br />
+   *                        "bool" by only "<b>INSERT</b>"-queries<br />
+   *                        "bool" by only (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+   *                        "bool" by only by e.g. "DROP"-queries<br />
    *
    * @throws QueryException
    */
@@ -1743,9 +1753,25 @@ final class DB
   /**
    * Execute a sql-query.
    *
-   * @param string        $sql            <p>The sql query-string.</p>
+   * example:
+   * <code>
+   * $sql = "INSERT INTO TABLE_NAME_HERE
+   *   SET
+   *     foo = :foo,
+   *     bar = :bar
+   * ";
+   * $insert_id = $db->query(
+   *   $sql,
+   *   [
+   *     'foo' => 1.1,
+   *     'bar' => 1,
+   *   ]
+   * );
+   * </code>
    *
-   * @param array|boolean $params         <p>
+   * @param string     $sql               <p>The sql query-string.</p>
+   *
+   * @param array|bool $params            <p>
    *                                      "array" of sql-query-parameters<br/>
    *                                      "false" if you don't need any parameter (default)<br/>
    *                                      </p>
@@ -1788,7 +1814,7 @@ final class DB
     // var_dump($params);
     // echo $sql . "\n";
 
-    $query_start_time = microtime(true);
+    $query_start_time = \microtime(true);
     $queryException = null;
     $query_result_doctrine = false;
 
@@ -1812,7 +1838,7 @@ final class DB
 
     }
 
-    $query_duration = microtime(true) - $query_start_time;
+    $query_duration = \microtime(true) - $query_start_time;
 
     $this->query_count++;
 
@@ -1863,13 +1889,9 @@ final class DB
     if ($query_result === true) {
 
       // "INSERT" || "REPLACE"
-      if (preg_match('/^\s*?(?:INSERT|REPLACE)\s+/i', $sql)) {
+      if (\preg_match('/^\s*?(?:INSERT|REPLACE)\s+/i', $sql)) {
 
-        if ($this->isDoctrinePDOConnection() === true) {
-          $insert_id = $this->doctrine_connection->lastInsertId();
-        } else {
-          $insert_id = $this->insert_id();
-        }
+        $insert_id = $this->insert_id();
 
         $this->debug->logQuery($sql, $query_duration, $insert_id);
 
@@ -1877,7 +1899,7 @@ final class DB
       }
 
       // "UPDATE" || "DELETE"
-      if (preg_match('/^\s*?(?:UPDATE|DELETE)\s+/i', $sql)) {
+      if (\preg_match('/^\s*?(?:UPDATE|DELETE)\s+/i', $sql)) {
 
         if ($this->mysqli_link) {
           $this->affected_rows = $this->affected_rows();
@@ -2067,7 +2089,7 @@ final class DB
   /**
    * Rollback in a transaction and end the transaction.
    *
-   * @return bool <p>Boolean true on success, false otherwise.</p>
+   * @return bool <p>bool true on success, false otherwise.</p>
    */
   public function rollback(): bool
   {
@@ -2077,7 +2099,10 @@ final class DB
       return false;
     }
 
-    if ($this->isDoctrinePDOConnection() === true) {
+    if ($this->mysqli_link) {
+      $return = \mysqli_rollback($this->mysqli_link);
+      \mysqli_autocommit($this->mysqli_link, true);
+    } elseif ($this->isDoctrinePDOConnection() === true) {
       $this->doctrine_connection->rollBack();
       $this->doctrine_connection->setAutoCommit(true);
 
@@ -2086,9 +2111,6 @@ final class DB
       } else {
         $return = false;
       }
-    } else {
-      $return = \mysqli_rollback($this->mysqli_link);
-      \mysqli_autocommit($this->mysqli_link, true);
     }
 
     $this->in_transaction = false;
@@ -2253,7 +2275,7 @@ final class DB
    *
    * @param string $database <p>Database name to switch to.</p>
    *
-   * @return bool <p>Boolean true on success, false otherwise.</p>
+   * @return bool <p>bool true on success, false otherwise.</p>
    */
   public function select_db(string $database): bool
   {
@@ -2261,18 +2283,26 @@ final class DB
       return false;
     }
 
-    return mysqli_select_db($this->mysqli_link, $database);
+    if ($this->mysqli_link) {
+      return \mysqli_select_db($this->mysqli_link, $database);
+    }
+
+    if ($this->isDoctrinePDOConnection()) {
+      return $this->query('use :database', ['database' => $database]);
+    }
+
+    return false;
   }
 
   /**
-   * @param array $extra_config           <p>
-   *                                      'session_to_db' => false|true<br>
-   *                                      'socket' => 'string (path)'<br>
-   *                                      'ssl' => 'bool'<br>
-   *                                      'clientkey' => 'string (path)'<br>
-   *                                      'clientcert' => 'string (path)'<br>
-   *                                      'cacert' => 'string (path)'<br>
-   *                                      </p>
+   * @param array $extra_config   <p>
+   *                              'session_to_db' => false|true<br>
+   *                              'socket' => 'string (path)'<br>
+   *                              'ssl' => 'bool'<br>
+   *                              'clientkey' => 'string (path)'<br>
+   *                              'clientcert' => 'string (path)'<br>
+   *                              'cacert' => 'string (path)'<br>
+   *                              </p>
    */
   public function setConfigExtra(array $extra_config)
   {
@@ -2280,12 +2310,12 @@ final class DB
       $this->session_to_db = (boolean)$extra_config['session_to_db'];
     }
 
-    if (
-        isset($extra_config['doctrine'])
-        &&
-        $extra_config['doctrine'] instanceof \Doctrine\DBAL\Connection
-    ) {
-      $this->doctrine_connection = $extra_config['doctrine'];
+    if (isset($extra_config['doctrine'])) {
+      if ($extra_config['doctrine'] instanceof \Doctrine\DBAL\Connection) {
+        $this->doctrine_connection = $extra_config['doctrine'];
+      } else {
+        throw new DBConnectException('Error "doctrine"-connection is not valid');
+      }
     }
 
     if (isset($extra_config['socket'])) {
@@ -2419,7 +2449,15 @@ final class DB
    */
   public function set_mysqli_report(int $flags): bool
   {
-    return \mysqli_report($flags);
+    if (
+        $this->mysqli_link
+        &&
+        $this->mysqli_link instanceof \mysqli
+    ) {
+      return \mysqli_report($flags);
+    }
+
+    return false;
   }
 
   /**
@@ -2498,7 +2536,7 @@ final class DB
    * @param callback $callback <p>The callback to run inside the transaction, if it's throws an "Exception" or if it's
    *                           returns "false", all SQL-statements in the callback will be rollbacked.</p>
    *
-   * @return bool <p>Boolean true on success, false otherwise.</p>
+   * @return bool <p>bool true on success, false otherwise.</p>
    */
   public function transact($callback): bool
   {

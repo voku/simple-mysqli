@@ -1175,9 +1175,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
   public function free()
   {
     if (
-      $this->_result
-      &&
-      $this->_result instanceof \mysqli_result
+        $this->_result
+        &&
+        $this->_result instanceof \mysqli_result
     ) {
       /** @noinspection PhpUsageOfSilenceOperatorInspection */
       @\mysqli_free_result($this->_result);

@@ -1002,7 +1002,7 @@ final class DB
             $this->mysqli_link instanceof \mysqli
         ) {
           $var = \mysqli_real_escape_string($this->mysqli_link, $var);
-        } else if ($this->isDoctrinePDOConnection() === true) {
+        } elseif ($this->isDoctrinePDOConnection() === true) {
           $var = $this->getDoctrinePDOConnection()->quote($var);
           $var = \substr($var, 1, -1);
         }
@@ -1602,7 +1602,7 @@ final class DB
             $returnTheResult = true;
             $result[] = new Result($sql, $resultTmpInner);
 
-          } else if (
+          } elseif (
               $resultTmpInner === true
               ||
               !\mysqli_errno($this->mysqli_link)
@@ -1881,7 +1881,7 @@ final class DB
 
         if ($this->mysqli_link) {
           $this->affected_rows = $this->affected_rows();
-        } else if ($query_result_doctrine) {
+        } elseif ($query_result_doctrine) {
           $this->affected_rows = $query_result_doctrine->rowCount();
         }
 

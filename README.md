@@ -170,9 +170,22 @@ Example: SELECT
 ```
 
 Here is a list of connectors for the "WHERE"-array:
-'NOT', 'IS', 'IS NOT', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'LIKE', 'NOT LIKE', '>', '<', '>=', '<=', '<>'
+'NOT', 'IS', 'IS NOT', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'LIKE', 'NOT LIKE', '>', '<', '>=', '<=', '<>', '+', '-'
 
 INFO: use an array as $value for "[NOT] IN" and "[NOT] BETWEEN"
+
+Example: UPDATE with "page_template = page_template + 1"
+```php
+  $where = [
+      'page_type ='        => 'foo',
+      'page_type NOT LIKE' => 'bar',
+      'page_id ='          => 1,
+  ];
+  $data = [
+      'page_template +' => ['page_template' => '1'],
+  ];
+  $resultSelect = $db->update('page', $data, $where);
+```
 
 Example: SELECT with "NOT IN"
 ```php

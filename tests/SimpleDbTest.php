@@ -953,7 +953,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
   public function testConnector()
   {
     $data = [
-        'page_template' => 'tpl_test_new',
+        'page_template' => '123',
     ];
     $where = [
         'page_id LIKE' => '1',
@@ -964,7 +964,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     self::assertSame(1, $resultUpdate);
 
     $data = [
-        'page_template' => 'tpl_test_new2',
+        'page_template' => '123',
         'page_type'     => 'öäü',
     ];
 
@@ -978,9 +978,37 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
         'page_id ='          => $resultInsert,
     ];
 
+    $data = [
+        'page_template +' => ['page_template' => '1'],
+    ];
+
+    // will return the number of effected rows
+    $resultUpdate = $this->db->update($this->tableName, $data, $where);
+    self::assertSame(1, $resultUpdate);
+
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchArray();
     self::assertSame('öäü', $resultSelectArray['page_type']);
+    self::assertSame('124', $resultSelectArray['page_template']);
+
+    $where = [
+        'page_type ='        => 'öäü',
+        'page_type NOT LIKE' => '%öäü123',
+        'page_id ='          => $resultInsert,
+    ];
+
+    $data = [
+        'page_template -' => ['page_template' => '2'],
+    ];
+
+    // will return the number of effected rows
+    $resultUpdate = $this->db->update($this->tableName, $data, $where);
+    self::assertSame(1, $resultUpdate);
+
+    $resultSelect = $this->db->select($this->tableName, $where);
+    $resultSelectArray = $resultSelect->fetchArray();
+    self::assertSame('öäü', $resultSelectArray['page_type']);
+    self::assertSame('122', $resultSelectArray['page_template']);
 
     $resultSelect = $this->db->select($this->tableName, $where);
     foreach ($resultSelect->fetchYield() as $resultSelectArray) {

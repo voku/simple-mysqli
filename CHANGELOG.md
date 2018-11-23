@@ -1,6 +1,11 @@
 Changelog
 =========
 
+7.4.1 (2018-11-23)
+
+- add support for "+" and "-" for DB->update()
+
+
 7.4.0 (2018-11-11)
 
 - add support for PDO connection as parent driver (via Doctrine/DBAL)

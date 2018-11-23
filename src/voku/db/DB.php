@@ -350,6 +350,7 @@ final class DB
     $arrayPairCounter = 0;
     foreach ($arrayPair as $_key => $_value) {
       $_connector = '=';
+      $_connector_dummy = null;
       $_glueHelper = '';
       $_key_upper = \strtoupper($_key);
 
@@ -417,15 +418,37 @@ final class DB
         $_glueHelper = 'AND';
       }
 
+      if (\strpos($_key_upper, ' +') !== false) {
+        $_connector = '+';
+      }
+
+      if (\strpos($_key_upper, ' -') !== false) {
+        $_connector = '-';
+      }
+
       if (\is_array($_value) === true) {
+        $firstKey = null;
+        $firstValue = null;
         foreach ($_value as $oldKey => $oldValue) {
           $_value[$oldKey] = $this->secure($oldValue);
+
+          if ($firstKey === null) {
+            $firstKey = $oldKey;
+          }
+
+          if ($firstValue === null) {
+            $firstValue = $_value[$oldKey];
+          }
         }
 
         if ($_connector === 'NOT IN' || $_connector === 'IN') {
           $_value = '(' . \implode(',', $_value) . ')';
         } elseif ($_connector === 'NOT BETWEEN' || $_connector === 'BETWEEN') {
           $_value = '(' . \implode(' AND ', $_value) . ')';
+        } elseif ($_connector === '+' || $_connector === '-') {
+          $_value = $firstKey . ' ' . $_connector . ' ' . $firstValue;
+          $_connector_dummy = $_connector;
+          $_connector = '=';
         }
 
       } else {
@@ -437,6 +460,7 @@ final class DB
               \str_ireplace(
                   [
                       $_connector,
+                      $_connector_dummy,
                       $_glueHelper,
                   ],
                   '',
@@ -2594,7 +2618,13 @@ final class DB
       return false;
     }
 
+    // DEBUG
+    //var_dump($data);
+
     $SET = $this->_parseArrayPair($data);
+
+    // DEBUG
+    //var_dump($SET);
 
     if (\is_string($where)) {
       $WHERE = $this->escape($where, false);

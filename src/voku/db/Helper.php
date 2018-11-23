@@ -275,7 +275,6 @@ class Helper
     return $MYSQL_CLIENT_VERSION_CACHE[$cacheKey] = (string)\mysqli_get_client_version($dbConnection->getLink());
   }
 
-
   /**
    * Returns a string representing the version of the MySQL server that the MySQLi extension is connected to.
    *

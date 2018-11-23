@@ -350,7 +350,6 @@ final class DB
     $arrayPairCounter = 0;
     foreach ($arrayPair as $_key => $_value) {
       $_connector = '=';
-      $_connector_dummy = null;
       $_glueHelper = '';
       $_key_upper = \strtoupper($_key);
 
@@ -418,14 +417,6 @@ final class DB
         $_glueHelper = 'AND';
       }
 
-      if (\strpos($_key_upper, ' +') !== false) {
-        $_connector = '+';
-      }
-
-      if (\strpos($_key_upper, ' -') !== false) {
-        $_connector = '-';
-      }
-
       if (\is_array($_value) === true) {
         $firstKey = null;
         $firstValue = null;
@@ -445,10 +436,17 @@ final class DB
           $_value = '(' . \implode(',', $_value) . ')';
         } elseif ($_connector === 'NOT BETWEEN' || $_connector === 'BETWEEN') {
           $_value = '(' . \implode(' AND ', $_value) . ')';
-        } elseif ($_connector === '+' || $_connector === '-') {
-          $_value = $firstKey . ' ' . $_connector . ' ' . $firstValue;
-          $_connector_dummy = $_connector;
-          $_connector = '=';
+        } elseif ($firstKey && $firstValue) {
+
+          if (\strpos($firstKey, ' +') !== false) {
+            $firstKey = \str_replace(' +', '', $firstKey);
+            $_value = $firstKey . ' + ' . $firstValue;
+          }
+
+          if (\strpos($firstKey, ' -') !== false) {
+            $firstKey = \str_replace(' -', '', $firstKey);
+            $_value = $firstKey . ' - ' . $firstValue;
+          }
         }
 
       } else {
@@ -460,7 +458,6 @@ final class DB
               \str_ireplace(
                   [
                       $_connector,
-                      $_connector_dummy,
                       $_glueHelper,
                   ],
                   '',

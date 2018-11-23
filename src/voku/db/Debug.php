@@ -155,15 +155,22 @@ class Debug
       $box_border = $this->css_mysql_box_border;
       $box_bg = $this->css_mysql_box_bg;
 
-      echo '
-      <div class="OBJ-mysql-box" style="border:' . $box_border . '; background:' . $box_bg . '; padding:10px; margin:10px;">
-        <b style="font-size:14px;">MYSQL Error:</b>
-        <code style="display:block;">
-          file / line: ' . $fileInfo['file'] . ' / ' . $fileInfo['line'] . '
-          ' . $error . '
-        </code>
-      </div>
-      ';
+      if (\PHP_SAPI === 'cli') {
+        echo "\n";
+        echo 'file:line -> ' . $fileInfo['file'] . ':' . $fileInfo['line'] . "\n";
+        echo 'error: ' . \str_replace(  ["\r\n", "\n", "\r"], '', $error);
+        echo "\n";
+      } else {
+        echo '
+        <div class="OBJ-mysql-box" style="border: ' . $box_border . '; background: ' . $box_bg . '; padding: 10px; margin: 10px;">
+          <b style="font-size: 14px;">MYSQL Error:</b>
+          <code style="display: block;">
+            file:line -> ' . $fileInfo['file'] . ':' . $fileInfo['line'] . '
+            ' . $error . '
+          </code>
+        </div>
+        ';
+      }
     }
 
     if (
@@ -198,8 +205,8 @@ class Debug
   {
     // init
     $return = [];
-    $file = '';
-    $line = '';
+    $file = '[unknown]';
+    $line = '[unknown]';
 
     $referrer = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
 

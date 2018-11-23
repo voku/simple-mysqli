@@ -88,7 +88,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // sql - false
     $false = $db_1->query();
-    $this->expectOutputRegex('/(.)*SimpleDbTest\.php \/(.)*/');
+    $this->expectOutputRegex('/.*SimpleDbTest\.php.*/');
     self::assertFalse($false);
   }
 
@@ -99,7 +99,7 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     // sql - false
     $false = $db_1->query();
-    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
+    $this->expectOutputRegex('/error:/');
     self::assertFalse($false);
   }
 
@@ -979,31 +979,45 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     ];
 
     $data = [
-        'page_template +' => ['page_template' => '1'],
+        'page_template' => ['page_template +' => 1],
+        'page_type'     => 'abc'
     ];
 
     // will return the number of effected rows
     $resultUpdate = $this->db->update($this->tableName, $data, $where);
     self::assertSame(1, $resultUpdate);
 
+    $where = [
+        'page_type ='        => 'abc',
+        'page_type NOT LIKE' => '%öäü123',
+        'page_id ='          => $resultInsert,
+    ];
+
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchArray();
-    self::assertSame('öäü', $resultSelectArray['page_type']);
+    self::assertSame('abc', $resultSelectArray['page_type']);
     self::assertSame('124', $resultSelectArray['page_template']);
+
+    $where = [
+        'page_type ='        => 'abc',
+        'page_type NOT LIKE' => '%öäü123',
+        'page_id ='          => $resultInsert,
+    ];
+
+    $data = [
+        'page_template' => ['page_template -' => '2'],
+        'page_type'     => 'öäü',
+    ];
+
+    // will return the number of effected rows
+    $resultUpdate = $this->db->update($this->tableName, $data, $where);
+    self::assertSame(1, $resultUpdate);
 
     $where = [
         'page_type ='        => 'öäü',
         'page_type NOT LIKE' => '%öäü123',
         'page_id ='          => $resultInsert,
     ];
-
-    $data = [
-        'page_template -' => ['page_template' => '2'],
-    ];
-
-    // will return the number of effected rows
-    $resultUpdate = $this->db->update($this->tableName, $data, $where);
-    self::assertSame(1, $resultUpdate);
 
     $resultSelect = $this->db->select($this->tableName, $where);
     $resultSelectArray = $resultSelect->fetchArray();

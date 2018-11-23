@@ -174,15 +174,17 @@ Here is a list of connectors for the "WHERE"-array:
 
 INFO: use an array as $value for "[NOT] IN" and "[NOT] BETWEEN"
 
+INFO: use + / - in the value not in the key of the $data
+
 Example: UPDATE with "page_template = page_template + 1"
 ```php
   $where = [
-      'page_type ='        => 'foo',
+      'page_type LIKE'     => '%foo',
       'page_type NOT LIKE' => 'bar',
-      'page_id ='          => 1,
   ];
   $data = [
-      'page_template +' => ['page_template' => '1'],
+      'page_template' => ['page_template +' => 1],
+      'page_type'     => 'lall',
   ];
   $resultSelect = $db->update('page', $data, $where);
 ```

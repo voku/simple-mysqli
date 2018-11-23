@@ -109,7 +109,7 @@ class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     // sql - false
     $false = $db_1->query();
-    $this->expectOutputRegex('/(.)*SimpleDoctrinePdoTest\.php \/(.)*/');
+    $this->expectOutputRegex('/.*SimpleDoctrinePdoTest\.php.*/');
     self::assertFalse($false);
   }
 
@@ -120,7 +120,7 @@ class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     // sql - false
     $false = $db_1->query();
-    $this->expectOutputRegex('/<div class="OBJ-mysql-box"(.)*/');
+    $this->expectOutputRegex('/error:/');
     self::assertFalse($false);
   }
 
@@ -131,7 +131,7 @@ class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     // sql - false
     $false = $db_1->query();
-    $this->expectOutputRegex('/(.)*SimpleDoctrinePdoTest\.php \/(.)*/');
+    $this->expectOutputRegex('/.*SimpleDoctrinePdoTest\.php.*/');
     self::assertFalse($false);
 
     // close db-connection

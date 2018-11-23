@@ -158,7 +158,7 @@ class Debug
       if (\PHP_SAPI === 'cli') {
         echo "\n";
         echo 'file:line -> ' . $fileInfo['file'] . ':' . $fileInfo['line'] . "\n";
-        echo 'error: ' . \str_replace(  ["\r\n", "\n", "\r"], '', $error);
+        echo 'error: ' . \str_replace(["\r\n", "\n", "\r"], '', $error);
         echo "\n";
       } else {
         echo '

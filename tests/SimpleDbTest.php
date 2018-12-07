@@ -1150,15 +1150,38 @@ class SimpleDbTest extends \PHPUnit\Framework\TestCase
     $resultSelectArray = $resultSelect->fetchAllArrayy()->filterBy('page_type', 'öäü')->first();
     self::assertSame('öäü', $resultSelectArray['page_type']);
 
+    $i = 0;
     $resultSelect = $this->db->select($this->tableName, $where);
     foreach ($resultSelect->fetchAllYield('Foobar') as $tmpResult) {
+      $i++;
       self::assertSame('öäü', $tmpResult->page_type);
     }
+    self::assertTrue($i > 0);
 
+
+    $i = 0;
     $resultSelect = $this->db->select($this->tableName, $where);
-    foreach ($resultSelect->fetchAllYield() as $tmpResult) {
+    foreach ($resultSelect->fetchYield('Foobar') as $tmpResult) {
+      $i++;
       self::assertSame('öäü', $tmpResult->page_type);
     }
+    self::assertTrue($i > 0);
+
+    $i = 0;
+    $resultSelect = $this->db->select($this->tableName);
+    foreach ($resultSelect->fetchAllYield() as $tmpResult) {
+      $i++;
+      self::assertNotNull($tmpResult->page_type);
+    }
+    self::assertTrue($i > 0);
+
+    $i = 0;
+    $resultSelect = $this->db->select($this->tableName);
+    foreach ($resultSelect->getYield() as $tmpResult) {
+      $i++;
+      self::assertNotNull($tmpResult->page_type);
+    }
+    self::assertTrue($i > 0);
   }
 
   public function testTransactionTrue()

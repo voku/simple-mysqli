@@ -1324,7 +1324,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertSame('tpl_test_new5', $columnResult);
 
         $columnResult = $resultSelect->fetchColumn('page_template', false, false);
-        static::assertSame('', $columnResult);
+        static::assertSame('tpl_test_new5', $columnResult);
 
         $columnResult = $resultSelect->fetchColumn('page_template', true, true);
         static::assertSame(['tpl_test_new5'], $columnResult);
@@ -1352,7 +1352,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertSame('tpl_test_new5', $columnResult);
 
         $columnResult = $resultSelect->fetchColumn('page_template', false, false);
-        static::assertSame('', $columnResult);
+        static::assertSame('tpl_test_new5', $columnResult);
 
         $columnResult = $resultSelect->fetchColumn('page_template', true, true);
         static::assertSame(['tpl_test_new5'], $columnResult);
@@ -1371,7 +1371,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertSame('tpl_test_new5V2', $columnResult);
 
         $columnResult = $resultSelect->fetchColumn('page_template', false, false);
-        static::assertSame('', $columnResult);
+        static::assertSame('tpl_test_new5V2', $columnResult);
 
         $columnResult = $resultSelect->fetchColumn('page_template', true, true);
         static::assertSame(['tpl_test_new5', 'tpl_test_new5V2'], $columnResult);

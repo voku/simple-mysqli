@@ -7,46 +7,47 @@ use voku\db\Helper;
 
 /**
  * Class SimpleHelperTest
+ *
+ * @internal
  */
-class SimpleHelperTest extends \PHPUnit\Framework\TestCase
+final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
 {
+    /**
+     * @var DB
+     */
+    protected $db;
 
-  /**
-   * @var DB
-   */
-  protected $db;
+    /**
+     * @var string
+     */
+    protected $tableName = 'test_page';
 
-  /**
-   * @var string
-   */
-  protected $tableName = 'test_page';
+    protected function setUp()
+    {
+        $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
+    }
 
-  public function setUp()
-  {
-    $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
-  }
+    public function testOptimizeTables()
+    {
+        $result = Helper::optimizeTables([$this->tableName]);
 
-  public function testOptimizeTables()
-  {
-    $result = Helper::optimizeTables([$this->tableName]);
+        static::assertSame(1, $result);
+    }
 
-    self::assertEquals(1, $result);
-  }
+    public function testRepairTables()
+    {
+        $result = Helper::repairTables([$this->tableName]);
 
-  public function testRepairTables()
-  {
-    $result = Helper::repairTables([$this->tableName]);
+        static::assertSame(1, $result);
+    }
 
-    self::assertEquals(1, $result);
-  }
+    public function testGetDbFields()
+    {
+        // don't use static cache
 
-  public function testGetDbFields()
-  {
-    // don't use static cache
+        $dbFields = Helper::getDbFields($this->tableName, false);
 
-    $dbFields = Helper::getDbFields($this->tableName, false);
-
-    self::assertSame(
+        static::assertSame(
         [
             0 => 'page_id',
             1 => 'page_template',
@@ -55,11 +56,11 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         $dbFields
     );
 
-    // fill static cache
+        // fill static cache
 
-    $dbFields = Helper::getDbFields($this->tableName, true);
+        $dbFields = Helper::getDbFields($this->tableName, true);
 
-    self::assertSame(
+        static::assertSame(
         [
             0 => 'page_id',
             1 => 'page_template',
@@ -68,11 +69,11 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         $dbFields
     );
 
-    // test static-cache
+        // test static-cache
 
-    $dbFields = Helper::getDbFields($this->tableName, true, $this->db);
+        $dbFields = Helper::getDbFields($this->tableName, true, $this->db);
 
-    self::assertSame(
+        static::assertSame(
         [
             0 => 'page_id',
             1 => 'page_template',
@@ -81,11 +82,9 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         $dbFields
     );
 
-    //
+        $dbFields = Helper::getDbFields('mysql_test.test_page', true, $this->db);
 
-    $dbFields = Helper::getDbFields('mysql_test.test_page', true, $this->db);
-
-    self::assertSame(
+        static::assertSame(
         [
             0 => 'page_id',
             1 => 'page_template',
@@ -93,43 +92,42 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         ],
         $dbFields
     );
-  }
+    }
 
-  public function testCopyTableRow()
-  {
+    public function testCopyTableRow()
+    {
+        $data = [
+            'page_template' => 'tpl_test_new5',
+            'page_type'     => 'ö\'ä"ü',
+        ];
 
-    $data = [
-        'page_template' => 'tpl_test_new5',
-        'page_type'     => 'ö\'ä"ü',
-    ];
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
 
-    // will return the auto-increment value of the new row
-    $resultInsert = $this->db->insert($this->tableName, $data);
-    self::assertGreaterThan(1, $resultInsert);
+        // ------------------------------
 
-    // ------------------------------
+        // where
+        $whereArray = [
+            'page_id' => $resultInsert,
+        ];
 
-    // where
-    $whereArray = [
-        'page_id' => $resultInsert,
-    ];
+        // change column
+        $updateArray = [];
 
-    // change column
-    $updateArray = [];
+        // change column
+        $updateArray['page_template'] = 'tpl_test_new6';
 
-    // change column
-    $updateArray['page_template'] = 'tpl_test_new6';
+        // auto increment column
+        $ignoreArray = [
+            'page_id',
+        ];
 
-    // auto increment column
-    $ignoreArray = [
-        'page_id',
-    ];
+        $new_page_id = Helper::copyTableRow($this->tableName, $whereArray, $updateArray, $ignoreArray);
 
-    $new_page_id = Helper::copyTableRow($this->tableName, $whereArray, $updateArray, $ignoreArray);
-
-    $resultSelect = $this->db->select($this->tableName, ['page_id' => $new_page_id]);
-    $resultSelect = $resultSelect->fetchArray();
-    self::assertSame(
+        $resultSelect = $this->db->select($this->tableName, ['page_id' => $new_page_id]);
+        $resultSelect = $resultSelect->fetchArray();
+        static::assertSame(
         [
             'page_id'       => $new_page_id,
             'page_template' => 'tpl_test_new6',
@@ -137,36 +135,36 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         ],
         $resultSelect
     );
-  }
+    }
 
-  public function testPhoneticSearch()
-  {
-    $data = [
-        'page_template' => 'tpl_test_new5',
-        'page_type'     => 'Moelleken',
-    ];
+    public function testPhoneticSearch()
+    {
+        $data = [
+            'page_template' => 'tpl_test_new5',
+            'page_type'     => 'Moelleken',
+        ];
 
-    // will return the auto-increment value of the new row
-    $resultInsert = $this->db->insert($this->tableName, $data);
-    self::assertGreaterThan(1, $resultInsert);
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
 
-    $data = [
-        'page_template' => 'tpl_test_new5',
-        'page_type'     => 'Mölecken Wosnitsa',
-    ];
+        $data = [
+            'page_template' => 'tpl_test_new5',
+            'page_type'     => 'Mölecken Wosnitsa',
+        ];
 
-    // will return the auto-increment value of the new row
-    $resultInsert = $this->db->insert($this->tableName, $data);
-    self::assertGreaterThan(1, $resultInsert);
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
 
-    // where
-    $whereArray = [
-        'page_id >=' => $resultInsert - 2000,
-    ];
+        // where
+        $whereArray = [
+            'page_id >=' => $resultInsert - 2000,
+        ];
 
-    // ------------------------------
+        // ------------------------------
 
-    $result = Helper::phoneticSearch(
+        $result = Helper::phoneticSearch(
         'Moelleken Wosnitza',
         'page_type',
         'page_id',
@@ -175,44 +173,44 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         $whereArray
     );
 
-    $resultValues = array_values($result);
-    self::assertSame(
+        $resultValues = \array_values($result);
+        static::assertSame(
         [
             'Moelleken' => 'Mölecken',
             'Wosnitza'  => 'Wosnitsa',
         ],
         $resultValues[0]
     );
-  }
+    }
 
-  public function testPhoneticSearchWithCache()
-  {
-    $data = [
-        'page_template' => 'tpl_test_new5',
-        'page_type'     => 'Moelleken',
-    ];
+    public function testPhoneticSearchWithCache()
+    {
+        $data = [
+            'page_template' => 'tpl_test_new5',
+            'page_type'     => 'Moelleken',
+        ];
 
-    // will return the auto-increment value of the new row
-    $resultInsert = $this->db->insert($this->tableName, $data);
-    self::assertGreaterThan(1, $resultInsert);
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
 
-    $data = [
-        'page_template' => 'tpl_test_new5',
-        'page_type'     => 'Mölecken Wosnitsa',
-    ];
+        $data = [
+            'page_template' => 'tpl_test_new5',
+            'page_type'     => 'Mölecken Wosnitsa',
+        ];
 
-    // will return the auto-increment value of the new row
-    $resultInsert = $this->db->insert($this->tableName, $data);
-    self::assertGreaterThan(1, $resultInsert);
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
 
-    // where
-    $whereArray = [
-        'page_id >=' => $resultInsert - 2000,
-    ];
+        // where
+        $whereArray = [
+            'page_id >=' => $resultInsert - 2000,
+        ];
 
-    // ------------------------------ save into cache (first call)
+        // ------------------------------ save into cache (first call)
 
-    $result = Helper::phoneticSearch(
+        $result = Helper::phoneticSearch(
         'Moelleken Wosnitza',
         'page_type',
         'page_id',
@@ -225,8 +223,8 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         200
     );
 
-    $resultValues = array_values($result);
-    self::assertSame(
+        $resultValues = \array_values($result);
+        static::assertSame(
         [
             'Moelleken' => 'Mölecken',
             'Wosnitza'  => 'Wosnitsa',
@@ -234,13 +232,13 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         $resultValues[0]
     );
 
-    // ------------------------------ remove the db-value, so it's only in the cache
+        // ------------------------------ remove the db-value, so it's only in the cache
 
-    $this->db->delete($this->tableName, ['page_type' => 'Mölecken Wosnitsa']);
+        $this->db->delete($this->tableName, ['page_type' => 'Mölecken Wosnitsa']);
 
-    // ------------------------------ get result from cache (second call)
+        // ------------------------------ get result from cache (second call)
 
-    $result = Helper::phoneticSearch(
+        $result = Helper::phoneticSearch(
         'Moelleken Wosnitza',
         'page_type',
         'page_id',
@@ -253,13 +251,13 @@ class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         200
     );
 
-    $resultValues = array_values($result);
-    self::assertSame(
+        $resultValues = \array_values($result);
+        static::assertSame(
         [
             'Moelleken' => 'Mölecken',
             'Wosnitza'  => 'Wosnitsa',
         ],
         $resultValues[0]
     );
-  }
+    }
 }

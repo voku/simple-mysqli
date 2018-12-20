@@ -9,5 +9,4 @@ namespace voku\db\exceptions;
  */
 class QueryException extends \Exception
 {
-
 }

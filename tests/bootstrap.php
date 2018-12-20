@@ -1,10 +1,10 @@
 <?php
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+\error_reporting(\E_ALL);
+\ini_set('display_errors', 1);
 
 require_once __DIR__ . '/Foobar.php';
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once \dirname(__DIR__) . '/vendor/autoload.php';
 
 /*
 CREATE DATABASE mysql_test;
@@ -15,4 +15,4 @@ CREATE TABLE test_page (
   page_type varchar(255),
   PRIMARY KEY (page_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-*/
+ */

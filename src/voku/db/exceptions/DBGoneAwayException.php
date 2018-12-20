@@ -9,5 +9,4 @@ namespace voku\db\exceptions;
  */
 class DBGoneAwayException extends \Exception
 {
-
 }

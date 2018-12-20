@@ -1,6 +1,12 @@
 Changelog
 =========
 
+8.0.0 (2018-12-21)
+
+- move "Active Record"-classes into a separate repository 
+  -> https://github.com/voku/simple-active-record
+
+
 7.4.1 (2018-11-23)
 
 - add support for "+" and "-" for DB->update()

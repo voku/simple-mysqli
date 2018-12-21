@@ -15,7 +15,7 @@ and _secure_ interaction with your database using mysqli_* functions at
 its core. This is perfect for small scale applications such as cron jobs, 
 facebook canvas campaigns or micro frameworks or sites. 
 
-You can also use the :ring: ["Simple Active Record"](https://github.com/voku/simple-mysqli)-class, it's based on this db layer and add some OOP syntax. But please inform you about "Active Record" vs "Data Mapper" before you use it.
+You can also use the :ring: ["Simple Active Record"](https://github.com/voku/simple-active-record)-class, it's based on this db class and add some OOP syntax. But please inform you about "Active Record" vs "Data Mapper" before you use it.
 
 
 ## Get "Simple MySQLi"

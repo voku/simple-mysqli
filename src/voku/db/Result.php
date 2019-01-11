@@ -784,8 +784,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         if ($asArray === false) {
             $columnData = '';
 
-            $data = $this->fetchAllArrayy()->reverse();
+            $data = $this->fetchAllArrayy()->reverse()->getArray();
             foreach ($data as $_row) {
+
                 if ($skipNullValues === true) {
                     if (isset($_row[$column]) === false) {
                         continue;

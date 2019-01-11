@@ -5,10 +5,10 @@
 [![Latest Stable Version](https://poser.pugx.org/voku/simple-mysqli/v/stable)](https://packagist.org/packages/voku/simple-mysqli) 
 [![Total Downloads](https://poser.pugx.org/voku/simple-mysqli/downloads)](https://packagist.org/packages/voku/simple-mysqli)
 [![License](https://poser.pugx.org/voku/simple-mysqli/license)](https://packagist.org/packages/voku/simple-mysqli)
+[![Donate to this project using Paypal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.me/moelleken)
+[![Donate to this project using Patreon](https://img.shields.io/badge/patreon-donate-yellow.svg)](https://www.patreon.com/voku)
 
-:gem: Simple MySQLi Class
-===================
-
+# :gem: Simple MySQLi Class
 
 This is a simple MySQL Abstraction Layer compatible with PHP 7+ that provides a simple 
 and _secure_ interaction with your database using mysqli_* functions at 
@@ -18,7 +18,7 @@ facebook canvas campaigns or micro frameworks or sites.
 You can also use the :ring: ["Simple Active Record"](https://github.com/voku/simple-active-record)-class, it's based on this db class and add some OOP syntax. But please inform you about "Active Record" vs "Data Mapper" before you use it.
 
 
-## Get "Simple MySQLi"
+### Get "Simple MySQLi"
 
 You can download it from here, or require it using [composer](https://packagist.org/packages/voku/simple-mysqli).
 ```json
@@ -29,7 +29,7 @@ You can download it from here, or require it using [composer](https://packagist.
   }
 ```
 
-## Install via "composer require"
+### Install via "composer require"
 ```shell
   composer require voku/simple-mysqli
 ```
@@ -62,7 +62,7 @@ You can download it from here, or require it using [composer](https://packagist.
 * [Changelog](#changelog)
 
 
-## Starting the driver
+### Starting the driver
 ```php
   use voku\db\DB;
 
@@ -74,11 +74,11 @@ You can download it from here, or require it using [composer](https://packagist.
   // $db = DB::getInstance('localhost', 'root', '', 'test');
 ```
 
-## Multiton && Singleton
+### Multiton && Singleton
 
 You can use ```DB::getInstance()``` without any parameters and you will get your (as "singleton") first initialized connection. Or you can change the parameter and you will create an new "multiton"-instance which works like an singleton, but you need to use the same parameters again, otherwise (without the same parameter) you will get an new instance. 
 
-## Doctrine/DBAL as parent driver
+### Doctrine/DBAL as parent driver
 ```php
   use voku\db\DB;
 
@@ -288,7 +288,7 @@ $db->transact(function($db) {
 });
 ```
 
-## Using the "Result"-Class
+### Using the "Result"-Class
 
 After executing a `SELECT` query you receive a `Result` object that will help you manipulate the resultant data.
 there are different ways of accessing this data, check the examples bellow:
@@ -616,7 +616,7 @@ INFO: You can still use "bind_param" instead of "bind_param_debug", e.g. if you 
   // $data['page_template'] === 'tpl_test_new123123'
 ```
 
-## Logging and Errors
+### Logging and Errors
 
 You can hook into the "DB"-Class, so you can use your personal "Logger"-Class. But you have to cover the methods:
 
@@ -664,10 +664,25 @@ To debug mysql errors, use `$db->errors()` to fetch all errors (returns false if
 
 But the easiest way for debugging is to configure "DB"-Class via "DB::getInstance()" to show errors and exit on error (see the example above). Now you can see SQL-errors in your browser if you are working on "localhost" or you can implement your own "checkForDev()" via a simple function, you don't need to extend the "Debug"-Class. If you will receive error-messages via e-mail, you can implement your own "mailToAdmin()"-function instead of extending the "Debug"-Class.
 
-## Changelog
+### Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
 
+### Support
 
-## License
+For support and donations please visit [Github](https://github.com/voku/simple-mysqli/) | [Issues](https://github.com/voku/simple-mysqli/issues) | [PayPal](https://paypal.me/moelleken) | [Patreon](https://www.patreon.com/voku).
+
+For status updates and release announcements please visit [Releases](https://github.com/voku/simple-mysqli/releases) | [Twitter](https://twitter.com/suckup_de) | [Patreon](https://www.patreon.com/voku/posts).
+
+For professional support please contact [me](https://about.me/voku).
+
+### Thanks
+
+- Thanks to [GitHub](https://github.com) (Microsoft) for hosting the code and a good infrastructure including Issues-Managment, etc.
+- Thanks to [IntelliJ](https://www.jetbrains.com) as they make the best IDEs for PHP and they gave me an open source license for PhpStorm!
+- Thanks to [Travis CI](https://travis-ci.com/) for being the most awesome, easiest continous integration tool out there!
+- Thanks to [StyleCI](https://styleci.io/) for the simple but powerfull code style check.
+- Thanks to [PHPStan](https://github.com/phpstan/phpstan) && [Psalm](https://github.com/vimeo/psalm) for relly great Static analysis tools and for discover bugs in the code!
+
+### License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli?ref=badge_large)

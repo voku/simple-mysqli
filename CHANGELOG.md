@@ -1,6 +1,10 @@
 Changelog
 =========
 
+8.0.1 (2019-01-11)
+- fix usage of "Arrayy"
+
+
 8.0.0 (2018-12-21)
 
 - move "Active Record"-classes into a separate repository 

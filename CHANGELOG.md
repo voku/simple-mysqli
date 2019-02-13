@@ -1,7 +1,13 @@
 Changelog
 =========
 
+8.0.2 (2019-02-13)
+
+- fix php warning, if the db config contains multi-array
+
+
 8.0.1 (2019-01-11)
+
 - fix usage of "Arrayy"
 
 

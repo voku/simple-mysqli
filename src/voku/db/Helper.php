@@ -13,6 +13,28 @@ use voku\helper\Phonetic;
 class Helper
 {
     /**
+     * @param DB $dbConnection
+     *
+     * @return string
+     */
+    private static function generateCacheKey(DB $dbConnection): string
+    {
+        // init
+        $configTmp = [];
+
+        $configOrig = $dbConnection->getConfig();
+        array_walk_recursive(
+            $configOrig,
+            function ($k, $v) use (&$configTmp) {
+                $configTmp[] = $v;
+                $configTmp[] = $k;
+            }
+        );
+
+        return \implode('--', $configTmp);
+    }
+
+    /**
      * Optimize tables
      *
      * @param array   $tables       database table names
@@ -118,13 +140,13 @@ class Helper
             &&
             (
                 (
-                    self::isMysqlndIsUsed() === true
+                    self::isMysqlndIsUsed()
                     &&
                     $client_version >= 50009
                 )
                 ||
                 (
-                    self::isMysqlndIsUsed() === false
+                    !self::isMysqlndIsUsed()
                     &&
                     $client_version >= 50503
                 )
@@ -186,17 +208,17 @@ class Helper
 
         // get the row
         $query = 'SELECT ' . $dbConnection->quote_string($searchFieldName) . ', ' . $dbConnection->quote_string($idFieldName) . ' 
-      FROM ' . $databaseName . $dbConnection->quote_string($table) . '
-      WHERE 1 = 1
-      ' . $whereSQL . '
-    ';
+          FROM ' . $databaseName . $dbConnection->quote_string($table) . '
+          WHERE 1 = 1
+          ' . $whereSQL . '
+        ';
 
-        if ($useCache === true) {
+        if ($useCache) {
             $cache = new Cache(null, null, false, $useCache);
             $cacheKey = 'sql-phonetic-search-' . \md5($query);
 
             if (
-                $cache->getCacheIsReady() === true
+                $cache->getCacheIsReady()
                 &&
                 $cache->existsItem($cacheKey)
             ) {
@@ -227,11 +249,11 @@ class Helper
         if (
             $cacheKey !== null
             &&
-            $useCache === true
+            $useCache
             &&
             $cache instanceof Cache
             &&
-            $cache->getCacheIsReady() === true
+            $cache->getCacheIsReady()
         ) {
             $cache->setItem($cacheKey, $return, $cacheTTL);
         }
@@ -254,7 +276,7 @@ class Helper
             $dbConnection = DB::getInstance();
         }
 
-        $cacheKey = \implode('--', $dbConnection->getConfig());
+        $cacheKey = self::generateCacheKey($dbConnection);
 
         if (isset($MYSQL_CLIENT_VERSION_CACHE[$cacheKey])) {
             return $MYSQL_CLIENT_VERSION_CACHE[$cacheKey];
@@ -286,7 +308,7 @@ class Helper
             $dbConnection = DB::getInstance();
         }
 
-        $cacheKey = \implode('--', $dbConnection->getConfig());
+        $cacheKey = self::generateCacheKey($dbConnection);
 
         if (isset($MYSQL_SERVER_VERSION_CACHE[$cacheKey])) {
             return $MYSQL_SERVER_VERSION_CACHE[$cacheKey];
@@ -319,7 +341,7 @@ class Helper
 
         // use the static cache
         if (
-            $useStaticCache === true
+            $useStaticCache
             &&
             isset($DB_FIELDS_CACHE[$table])
         ) {
@@ -399,9 +421,9 @@ class Helper
 
         // get the row
         $query = 'SELECT * FROM ' . $databaseName . $dbConnection->quote_string($table) . '
-      WHERE 1 = 1
-      ' . $whereSQL . '
-    ';
+          WHERE 1 = 1
+          ' . $whereSQL . '
+        ';
         $result = $dbConnection->query($query);
 
         // make sure the row exists
@@ -435,10 +457,10 @@ class Helper
 
                 // insert the "copied" row
                 $new_query = 'INSERT INTO ' . $databaseName . $dbConnection->quote_string($table) . ' 
-          (' . $insert_keys . ')
-          VALUES 
-          (' . $insert_values . ')
-        ';
+                  (' . $insert_keys . ')
+                  VALUES 
+                  (' . $insert_values . ')
+                ';
 
                 return $dbConnection->query($new_query, $bindings);
             }

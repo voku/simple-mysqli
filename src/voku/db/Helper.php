@@ -23,9 +23,9 @@ class Helper
         $configTmp = [];
 
         $configOrig = $dbConnection->getConfig();
-        array_walk_recursive(
+        \array_walk_recursive(
             $configOrig,
-            function ($k, $v) use (&$configTmp) {
+            static function ($k, $v) use (&$configTmp) {
                 $configTmp[] = $v;
                 $configTmp[] = $k;
             }

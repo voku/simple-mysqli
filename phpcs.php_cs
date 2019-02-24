@@ -32,7 +32,7 @@ return PhpCsFixer\Config::create()
                                 'concat_space'                                  => [
                                     'spacing' => 'one',
                                 ],
-                                'date_time_immutable'                           => false,
+                                'date_time_immutable'                           => true,
                                 'declare_equal_normalize'                       => true,
                                 'declare_strict_types'                          => false, // some tests need declare_strict_types === 0
                                 'dir_constant'                                  => true,
@@ -59,7 +59,7 @@ return PhpCsFixer\Config::create()
                                     ],
                                 ],
                                 'heredoc_to_nowdoc'                             => false,
-                                'implode_call'                                  => false,
+                                'implode_call'                                  => true,
                                 'include'                                       => true,
                                 'increment_style'                               => false, // maybe better for readability, so keep it ...
                                 'indentation_type'                              => true,
@@ -206,7 +206,7 @@ return PhpCsFixer\Config::create()
                                 'space_after_semicolon'                         => true,
                                 'standardize_increment'                         => false, // maybe better for readability, so keep it ...
                                 'standardize_not_equals'                        => true,
-                                'static_lambda'                                 => false,
+                                'static_lambda'                                 => true,
                                 'strict_comparison'                             => true,
                                 'strict_param'                                  => true,
                                 'string_line_ending'                            => true,

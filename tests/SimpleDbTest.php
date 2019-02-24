@@ -662,7 +662,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     public function testEscape()
     {
-        $date = new DateTime('2016-08-15 09:22:18');
+        $date = new DateTimeImmutable('2016-08-15 09:22:18');
 
         static::assertSame($date->format('Y-m-d H:i:s'), $this->db->escape($date));
 
@@ -1888,7 +1888,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
             page_template = ?,
             page_type = ?
         ';
-        $tmpDate = new DateTime();
+        $tmpDate = new DateTimeImmutable();
         $tmpId = $this->db->query(
             $sql,
             [
@@ -1913,7 +1913,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
             page_template = :page_template,
             page_type = :page_type
         ';
-        $tmpDate = new DateTime();
+        $tmpDate = new DateTimeImmutable();
         $tmpId = $this->db->query(
             $sql,
             [
@@ -1963,7 +1963,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
             page_template = :page_template,
             page_type = :page_type
         ';
-        $tmpDate = new DateTime();
+        $tmpDate = new DateTimeImmutable();
         $tmpId = $this->db->query(
             $sql,
             [
@@ -2198,7 +2198,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
         static::assertTrue(
             $this->db->transact(
-                function (DB $db) use ($tableName) {
+                static function (DB $db) use ($tableName) {
                     return $db->insert(
                         $tableName,
                         [
@@ -2214,7 +2214,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
         static::assertTrue(
             $this->db->transact(
-                function (DB $db) use ($tableName) {
+                static function (DB $db) use ($tableName) {
                     return $db->insert(
                         $tableName,
                         [
@@ -2230,7 +2230,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
         static::assertFalse(
             $this->db->transact(
-                function (DB $db) {
+                static function (DB $db) {
                     /** @noinspection ThrowRawExceptionInspection */
                     throw new \Exception();
                 }
@@ -2242,7 +2242,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
         $this->db->beginTransaction(); // (1)
         static::assertFalse(
             $this->db->transact(
-                function (DB $db) {
+                static function (DB $db) {
                     return $db->beginTransaction(); // (2)
                 }
             )
@@ -2253,7 +2253,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
         static::assertFalse(
             $this->db->transact(
-                function (DB $db) use ($tableName) {
+                static function (DB $db) use ($tableName) {
                     return $db->insert(
                         $tableName,
                         [

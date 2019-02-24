@@ -215,7 +215,7 @@ final class DB
     public function __destruct()
     {
         // close the connection only if we don't save PHP-SESSION's in DB
-        if ($this->session_to_db === false) {
+        if (!$this->session_to_db) {
             $this->close();
         }
     }
@@ -413,7 +413,7 @@ final class DB
                 $_glueHelper = 'AND';
             }
 
-            if (\is_array($_value) === true) {
+            if (\is_array($_value)) {
                 $firstKey = null;
                 $firstValue = null;
                 foreach ($_value as $oldKey => $oldValue) {
@@ -621,7 +621,7 @@ final class DB
      */
     public function beginTransaction(): bool
     {
-        if ($this->in_transaction === true) {
+        if ($this->in_transaction) {
             $this->debug->displayError('Error: mysql server already in transaction!', false);
 
             return false;
@@ -632,18 +632,18 @@ final class DB
 
         if ($this->mysqli_link) {
             $return = \mysqli_autocommit($this->mysqli_link, false);
-        } elseif ($this->isDoctrinePDOConnection() === true) {
+        } elseif ($this->isDoctrinePDOConnection()) {
             $this->doctrine_connection->setAutoCommit(false);
             $this->doctrine_connection->beginTransaction();
 
-            if ($this->doctrine_connection->isTransactionActive() === true) {
+            if ($this->doctrine_connection->isTransactionActive()) {
                 $return = true;
             } else {
                 $return = false;
             }
         }
 
-        if ($return === false) {
+        if (!$return) {
             $this->in_transaction = false;
         }
 
@@ -682,7 +682,7 @@ final class DB
 
             $this->mysqli_link = null;
 
-            if ($connectedBefore === true) {
+            if ($connectedBefore) {
                 return !$this->doctrine_connection->isConnected();
             }
 
@@ -712,7 +712,7 @@ final class DB
      */
     public function commit(): bool
     {
-        if ($this->in_transaction === false) {
+        if (!$this->in_transaction) {
             $this->debug->displayError('Error: mysql server is not in transaction!', false);
 
             return false;
@@ -721,11 +721,11 @@ final class DB
         if ($this->mysqli_link) {
             $return = \mysqli_commit($this->mysqli_link);
             \mysqli_autocommit($this->mysqli_link, true);
-        } elseif ($this->isDoctrinePDOConnection() === true) {
+        } elseif ($this->isDoctrinePDOConnection()) {
             $this->doctrine_connection->commit();
             $this->doctrine_connection->setAutoCommit(true);
 
-            if ($this->doctrine_connection->isAutoCommit() === true) {
+            if ($this->doctrine_connection->isAutoCommit()) {
                 $return = true;
             } else {
                 $return = false;
@@ -755,7 +755,7 @@ final class DB
 
             $doctrineWrappedConnection = $this->doctrine_connection->getWrappedConnection();
 
-            if ($this->isDoctrineMySQLiConnection() === true) {
+            if ($this->isDoctrineMySQLiConnection()) {
                 /* @var $doctrineWrappedConnection \Doctrine\DBAL\Driver\Mysqli\MysqliConnection */
 
                 $this->mysqli_link = $doctrineWrappedConnection->getWrappedResourceHandle();
@@ -774,7 +774,7 @@ final class DB
                 return $this->isReady();
             }
 
-            if ($this->isDoctrinePDOConnection() === true) {
+            if ($this->isDoctrinePDOConnection()) {
                 $this->mysqli_link = null;
 
                 $this->connected = $this->doctrine_connection->isConnected();
@@ -799,11 +799,11 @@ final class DB
         try {
             $this->mysqli_link = \mysqli_init();
 
-            if (Helper::isMysqlndIsUsed() === true) {
+            if (Helper::isMysqlndIsUsed()) {
                 \mysqli_options($this->mysqli_link, \MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
             }
 
-            if ($this->ssl === true) {
+            if ($this->ssl) {
                 if (empty($this->clientcert)) {
                     throw new DBConnectException('Error connecting to mysql server: clientcert not defined');
                 }
@@ -909,7 +909,7 @@ final class DB
      */
     public function endTransaction(): bool
     {
-        if ($this->in_transaction === false) {
+        if (!$this->in_transaction) {
             $this->debug->displayError('Error: mysql server is not in transaction!', false);
 
             return false;
@@ -924,10 +924,10 @@ final class DB
 
         if ($this->mysqli_link) {
             \mysqli_autocommit($this->mysqli_link, true);
-        } elseif ($this->isDoctrinePDOConnection() === true) {
+        } elseif ($this->isDoctrinePDOConnection()) {
             $this->doctrine_connection->setAutoCommit(true);
 
-            if ($this->doctrine_connection->isAutoCommit() === true) {
+            if ($this->doctrine_connection->isAutoCommit()) {
                 $return = true;
             } else {
                 $return = false;
@@ -984,7 +984,7 @@ final class DB
         $type = \gettype($var);
 
         if ($type === 'object') {
-            if ($var instanceof \DateTime) {
+            if ($var instanceof \DateTimeInterface) {
                 $var = $var->format('Y-m-d H:i:s');
                 $type = 'string';
             } elseif (\method_exists($var, '__toString')) {
@@ -1004,11 +1004,11 @@ final class DB
                 break;
 
             case 'string':
-                if ($stripe_non_utf8 === true) {
+                if ($stripe_non_utf8) {
                     $var = UTF8::cleanup($var);
                 }
 
-                if ($html_entity_decode === true) {
+                if ($html_entity_decode) {
                     $var = UTF8::html_entity_decode($var);
                 }
 
@@ -1020,7 +1020,7 @@ final class DB
                     $this->mysqli_link instanceof \mysqli
                 ) {
                     $var = \mysqli_real_escape_string($this->mysqli_link, $var);
-                } elseif ($this->isDoctrinePDOConnection() === true) {
+                } elseif ($this->isDoctrinePDOConnection()) {
                     $var = $this->getDoctrinePDOConnection()->quote($var);
                     $var = \substr($var, 1, -1);
                 }
@@ -1029,7 +1029,7 @@ final class DB
 
             case 'array':
                 if ($convert_array === null) {
-                    if ($this->convert_null_to_empty_string === true) {
+                    if ($this->convert_null_to_empty_string) {
                         $var = "''";
                     } else {
                         $var = 'NULL';
@@ -1056,7 +1056,7 @@ final class DB
                 break;
 
             case 'NULL':
-                if ($this->convert_null_to_empty_string === true) {
+                if ($this->convert_null_to_empty_string) {
                     $var = "''";
                 } else {
                     $var = 'NULL';
@@ -1097,12 +1097,12 @@ final class DB
             $db = self::getInstance();
         }
 
-        if ($useCache === true) {
+        if ($useCache) {
             $cache = new Cache(null, null, false, $useCache);
             $cacheKey = 'sql-' . \md5($query);
 
             if (
-                $cache->getCacheIsReady() === true
+                $cache->getCacheIsReady()
                 &&
                 $cache->existsItem($cacheKey)
             ) {
@@ -1121,11 +1121,11 @@ final class DB
             if (
                 $cacheKey !== null
                 &&
-                $useCache === true
+                $useCache
                 &&
                 $cache instanceof Cache
                 &&
-                $cache->getCacheIsReady() === true
+                $cache->getCacheIsReady()
             ) {
                 $cache->setItem($cacheKey, $return, $cacheTTL);
             }
@@ -1152,7 +1152,7 @@ final class DB
     /**
      * @return array
      */
-    public function getConfig()
+    public function getConfig(): array
     {
         $config = [
             'hostname'   => $this->hostname,
@@ -1531,7 +1531,7 @@ final class DB
             return false;
         }
 
-        if ($this->isDoctrinePDOConnection() === true) {
+        if ($this->isDoctrinePDOConnection()) {
             $query_start_time = \microtime(true);
             $queryException = null;
             $query_result_doctrine = false;
@@ -1618,7 +1618,7 @@ final class DB
                     } else {
                         $result[] = false;
                     }
-                } while (\mysqli_more_results($this->mysqli_link) === true ? \mysqli_next_result($this->mysqli_link) : false);
+                } while (\mysqli_more_results($this->mysqli_link) ? \mysqli_next_result($this->mysqli_link) : false);
             } else {
 
                 // log the error query
@@ -1629,14 +1629,14 @@ final class DB
         }
 
         // return the result only if there was a "SELECT"-query
-        if ($returnTheResult === true) {
+        if ($returnTheResult) {
             return $result;
         }
 
         if (
             \count($result) > 0
             &&
-            \in_array(false, $result, true) === false
+            !\in_array(false, $result, true)
         ) {
             return true;
         }
@@ -1674,11 +1674,11 @@ final class DB
      */
     public function ping(): bool
     {
-        if ($this->connected === false) {
+        if (!$this->connected) {
             return false;
         }
 
-        if ($this->isDoctrinePDOConnection() === true) {
+        if ($this->isDoctrinePDOConnection()) {
             return $this->doctrine_connection->ping();
         }
 
@@ -1868,7 +1868,7 @@ final class DB
             return new Result($sql, $result);
         }
 
-        if ($query_result === true) {
+        if ($query_result) {
 
             // "INSERT" || "REPLACE"
             if (\preg_match('/^\s*?(?:INSERT|REPLACE)\s+/i', $sql)) {
@@ -1951,7 +1951,7 @@ final class DB
             $this->reconnect(true);
 
             // re-run the current (non multi) query
-            if ($sqlMultiQuery === false) {
+            if (!$sqlMultiQuery) {
                 return $this->query($sql, $sqlParams);
             }
 
@@ -1961,7 +1961,7 @@ final class DB
         $this->debug->mailToAdmin('SQL-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql);
 
         $force_exception_after_error = null; // auto
-        if ($this->in_transaction === true) {
+        if ($this->in_transaction) {
             $force_exception_after_error = false;
         }
         // this query returned an error, we must display it (only for dev) !!!
@@ -2002,11 +2002,11 @@ final class DB
     public function reconnect(bool $checkViaPing = false): bool
     {
         $ping = false;
-        if ($checkViaPing === true) {
+        if ($checkViaPing) {
             $ping = $this->ping();
         }
 
-        if ($ping === false) {
+        if (!$ping) {
             $this->connected = false;
             $this->connect();
         }
@@ -2074,20 +2074,23 @@ final class DB
      */
     public function rollback(): bool
     {
-        if ($this->in_transaction === false) {
+        if (!$this->in_transaction) {
             $this->debug->displayError('Error: mysql server is not in transaction!', false);
 
             return false;
         }
 
+        // init
+        $return = false;
+
         if ($this->mysqli_link) {
             $return = \mysqli_rollback($this->mysqli_link);
             \mysqli_autocommit($this->mysqli_link, true);
-        } elseif ($this->isDoctrinePDOConnection() === true) {
+        } elseif ($this->isDoctrinePDOConnection()) {
             $this->doctrine_connection->rollBack();
             $this->doctrine_connection->setAutoCommit(true);
 
-            if ($this->doctrine_connection->isAutoCommit() === true) {
+            if ($this->doctrine_connection->isAutoCommit()) {
                 $return = true;
             } else {
                 $return = false;
@@ -2147,7 +2150,7 @@ final class DB
     {
         if (\is_array($var)) {
             if ($convert_array === null) {
-                if ($this->convert_null_to_empty_string === true) {
+                if ($this->convert_null_to_empty_string) {
                     $var = "''";
                 } else {
                     $var = 'NULL';
@@ -2183,7 +2186,7 @@ final class DB
         }
 
         if ($var === null) {
-            if ($this->convert_null_to_empty_string === true) {
+            if ($this->convert_null_to_empty_string) {
                 return "''";
             }
 
@@ -2328,7 +2331,7 @@ final class DB
         if ($charsetLower === 'utf8' || $charsetLower === 'utf-8') {
             $charset = 'utf8';
         }
-        if ($charset === 'utf8' && Helper::isUtf8mb4Supported($this) === true) {
+        if ($charset === 'utf8' && Helper::isUtf8mb4Supported($this)) {
             $charset = 'utf8mb4';
         }
 
@@ -2345,7 +2348,7 @@ final class DB
             @\mysqli_query($this->mysqli_link, 'SET CHARACTER SET ' . $charset);
             /** @noinspection PhpUsageOfSilenceOperatorInspection */
             @\mysqli_query($this->mysqli_link, "SET NAMES '" . $charset . "'");
-        } elseif ($this->isDoctrinePDOConnection() === true) {
+        } elseif ($this->isDoctrinePDOConnection()) {
             $doctrineWrappedConnection = $this->getDoctrinePDOConnection();
 
             $doctrineWrappedConnection->exec('SET CHARACTER SET ' . $charset);
@@ -2511,7 +2514,7 @@ final class DB
     {
         try {
             $beginTransaction = $this->beginTransaction();
-            if ($beginTransaction === false) {
+            if (!$beginTransaction) {
                 $this->debug->displayError('Error: transact -> can not start transaction!', false);
 
                 return false;

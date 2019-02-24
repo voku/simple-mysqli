@@ -343,12 +343,12 @@ SQL;
         static::assertTrue($result() instanceof \MySQLi_Result);
         $ids = [];
         $result(
-        function ($result) use (&$ids) {
-            while ($row = \mysqli_fetch_assoc($result)) {
-                $ids[] = $row['id'];
+            static function ($result) use (&$ids) {
+                while ($row = \mysqli_fetch_assoc($result)) {
+                    $ids[] = $row['id'];
+                }
             }
-        }
-    );
+        );
         static::assertCount(3, $ids);
     }
 
@@ -359,12 +359,12 @@ SQL;
 
         $result = $db('SELECT * FROM post');
         $result(
-        function ($result) use (&$ids) {
-            while ($row = \mysqli_fetch_assoc($result)) {
-                $ids[] = $row['id'];
+            static function ($result) use (&$ids) {
+                while ($row = \mysqli_fetch_assoc($result)) {
+                    $ids[] = $row['id'];
+                }
             }
-        }
-    );
+        );
         static::assertCount(3, $ids);
     }
 
@@ -376,10 +376,10 @@ SQL;
         static::assertSame('Title #1', $row['title']);
 
         $result->map(
-        function ($row) {
-            return (object) $row;
-        }
-    );
+            static function ($row) {
+                return (object) $row;
+            }
+        );
         $row = $result->fetchCallable(0);
         static::assertTrue($row instanceof \stdClass);
         static::assertSame('Title #1', $row->title);

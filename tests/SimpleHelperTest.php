@@ -48,50 +48,50 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         $dbFields = Helper::getDbFields($this->tableName, false);
 
         static::assertSame(
-        [
-            0 => 'page_id',
-            1 => 'page_template',
-            2 => 'page_type',
-        ],
-        $dbFields
-    );
+            [
+                0 => 'page_id',
+                1 => 'page_template',
+                2 => 'page_type',
+            ],
+            $dbFields
+        );
 
         // fill static cache
 
         $dbFields = Helper::getDbFields($this->tableName, true);
 
         static::assertSame(
-        [
-            0 => 'page_id',
-            1 => 'page_template',
-            2 => 'page_type',
-        ],
-        $dbFields
-    );
+            [
+                0 => 'page_id',
+                1 => 'page_template',
+                2 => 'page_type',
+            ],
+            $dbFields
+        );
 
         // test static-cache
 
         $dbFields = Helper::getDbFields($this->tableName, true, $this->db);
 
         static::assertSame(
-        [
-            0 => 'page_id',
-            1 => 'page_template',
-            2 => 'page_type',
-        ],
-        $dbFields
-    );
+            [
+                0 => 'page_id',
+                1 => 'page_template',
+                2 => 'page_type',
+            ],
+            $dbFields
+        );
 
         $dbFields = Helper::getDbFields('mysql_test.test_page', true, $this->db);
 
         static::assertSame(
-        [
-            0 => 'page_id',
-            1 => 'page_template',
-            2 => 'page_type',
-        ],
-        $dbFields
-    );
+            [
+                0 => 'page_id',
+                1 => 'page_template',
+                2 => 'page_type',
+            ],
+            $dbFields
+        );
     }
 
     public function testCopyTableRow()
@@ -128,13 +128,13 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         $resultSelect = $this->db->select($this->tableName, ['page_id' => $new_page_id]);
         $resultSelect = $resultSelect->fetchArray();
         static::assertSame(
-        [
-            'page_id'       => $new_page_id,
-            'page_template' => 'tpl_test_new6',
-            'page_type'     => 'ö\'ä"ü',
-        ],
-        $resultSelect
-    );
+            [
+                'page_id'       => $new_page_id,
+                'page_template' => 'tpl_test_new6',
+                'page_type'     => 'ö\'ä"ü',
+            ],
+            $resultSelect
+        );
     }
 
     public function testPhoneticSearch()
@@ -165,22 +165,22 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         // ------------------------------
 
         $result = Helper::phoneticSearch(
-        'Moelleken Wosnitza',
-        'page_type',
-        'page_id',
-        'de',
-        $this->tableName,
-        $whereArray
-    );
+            'Moelleken Wosnitza',
+            'page_type',
+            'page_id',
+            'de',
+            $this->tableName,
+            $whereArray
+        );
 
         $resultValues = \array_values($result);
         static::assertSame(
-        [
-            'Moelleken' => 'Mölecken',
-            'Wosnitza'  => 'Wosnitsa',
-        ],
-        $resultValues[0]
-    );
+            [
+                'Moelleken' => 'Mölecken',
+                'Wosnitza'  => 'Wosnitsa',
+            ],
+            $resultValues[0]
+        );
     }
 
     public function testPhoneticSearchWithCache()
@@ -211,26 +211,26 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         // ------------------------------ save into cache (first call)
 
         $result = Helper::phoneticSearch(
-        'Moelleken Wosnitza',
-        'page_type',
-        'page_id',
-        'de',
-        $this->tableName,
-        $whereArray,
-        null,
-        null,
-        true,
-        200
-    );
+            'Moelleken Wosnitza',
+            'page_type',
+            'page_id',
+            'de',
+            $this->tableName,
+            $whereArray,
+            null,
+            null,
+            true,
+            200
+        );
 
         $resultValues = \array_values($result);
         static::assertSame(
-        [
-            'Moelleken' => 'Mölecken',
-            'Wosnitza'  => 'Wosnitsa',
-        ],
-        $resultValues[0]
-    );
+            [
+                'Moelleken' => 'Mölecken',
+                'Wosnitza'  => 'Wosnitsa',
+            ],
+            $resultValues[0]
+        );
 
         // ------------------------------ remove the db-value, so it's only in the cache
 
@@ -239,25 +239,25 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
         // ------------------------------ get result from cache (second call)
 
         $result = Helper::phoneticSearch(
-        'Moelleken Wosnitza',
-        'page_type',
-        'page_id',
-        'de',
-        $this->tableName,
-        $whereArray,
-        null,
-        null,
-        true,
-        200
-    );
+            'Moelleken Wosnitza',
+            'page_type',
+            'page_id',
+            'de',
+            $this->tableName,
+            $whereArray,
+            null,
+            null,
+            true,
+            200
+        );
 
         $resultValues = \array_values($result);
         static::assertSame(
-        [
-            'Moelleken' => 'Mölecken',
-            'Wosnitza'  => 'Wosnitsa',
-        ],
-        $resultValues[0]
-    );
+            [
+                'Moelleken' => 'Mölecken',
+                'Wosnitza'  => 'Wosnitsa',
+            ],
+            $resultValues[0]
+        );
     }
 }

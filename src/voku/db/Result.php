@@ -239,7 +239,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         if (
             !$this->doctrinePdoStmt // pdo only have limited support for types, so we try to improve it
             &&
-            Helper::isMysqlndIsUsed() === true
+            Helper::isMysqlndIsUsed()
         ) {
             return $data;
         }
@@ -292,7 +292,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             }
         }
 
-        if (\is_array($data) === true) {
+        if (\is_array($data)) {
             foreach ($TYPES_CACHE[$result_hash] as $type_name => $type) {
                 if (isset($data[$type_name])) {
                     \settype($data[$type_name], $type);
@@ -647,7 +647,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      */
     public function fetchArray(bool $reset = false)
     {
-        if ($reset === true) {
+        if ($reset) {
             $this->reset();
         }
 
@@ -691,9 +691,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
         foreach ($data as &$_row) {
             if (
-                \array_key_exists($key, $_row) === true
+                \array_key_exists($key, $_row)
                 &&
-                \array_key_exists($value, $_row) === true
+                \array_key_exists($value, $_row)
             ) {
                 $_key = $_row[$key];
                 $_value = $_row[$value];
@@ -713,7 +713,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      */
     public function fetchArrayy(bool $reset = false)
     {
-        if ($reset === true) {
+        if ($reset) {
             $this->reset();
         }
 
@@ -781,17 +781,16 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      */
     public function fetchColumn(string $column = '', bool $skipNullValues = true, bool $asArray = false)
     {
-        if ($asArray === false) {
+        if (!$asArray) {
             $columnData = '';
 
             $data = $this->fetchAllArrayy()->reverse()->getArray();
             foreach ($data as $_row) {
-
-                if ($skipNullValues === true) {
-                    if (isset($_row[$column]) === false) {
+                if ($skipNullValues) {
+                    if (!isset($_row[$column])) {
                         continue;
                     }
-                } elseif (\array_key_exists($column, $_row) === false) {
+                } elseif (!\array_key_exists($column, $_row)) {
                     break;
                 }
 
@@ -808,11 +807,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         $columnData = [];
 
         foreach ($this->fetchAllYield() as $_row) {
-            if ($skipNullValues === true) {
-                if (isset($_row->{$column}) === false) {
+            if ($skipNullValues) {
+                if (!isset($_row->{$column})) {
                     continue;
                 }
-            } elseif (\array_key_exists($column, $_row) === false) {
+            } elseif (!\array_key_exists($column, $_row)) {
                 break;
             }
 
@@ -833,7 +832,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     {
         if ($as_array) {
             return \array_map(
-                function ($object) {
+                static function ($object) {
                     return (array) $object;
                 },
                 $this->fetch_fields()
@@ -897,7 +896,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      */
     public function fetchObject($class = '', array $params = null, bool $reset = false)
     {
-        if ($reset === true) {
+        if ($reset) {
             $this->reset();
         }
 
@@ -998,7 +997,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         }
 
         return \array_map(
-            function ($values) use ($keys) {
+            static function ($values) use ($keys) {
                 return \array_combine($keys, $values);
             },
             $rows
@@ -1024,7 +1023,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      */
     public function fetchYield($class = '', array $params = null, bool $reset = false): \Generator
     {
-        if ($reset === true) {
+        if ($reset) {
             $this->reset();
         }
 

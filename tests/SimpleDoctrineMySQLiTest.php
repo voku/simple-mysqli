@@ -38,25 +38,25 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         ];
         $config = new \Doctrine\DBAL\Configuration();
         $doctrineConnection = \Doctrine\DBAL\DriverManager::getConnection(
-        $connectionParams,
-        $config
+            $connectionParams,
+            $config
     );
         $doctrineConnection->connect();
 
         $this->db = DB::getInstance(
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        false,
-        false,
-        '',
-        '',
-        [
-            'doctrine' => $doctrineConnection,
-        ]
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            false,
+            false,
+            '',
+            '',
+            [
+                'doctrine' => $doctrineConnection,
+            ]
     );
     }
 
@@ -289,11 +289,11 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         page_type = ?
     ';
         $tmpId = $this->db->query(
-        $sql,
-        [
-            '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
-            '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
-        ]
+            $sql,
+            [
+                '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
+                '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
+            ]
     );
 
         // select - true
@@ -455,14 +455,14 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
 
         /* @var $tmpPage Foobar */
         $tmpPage = $result->fetchObject(
-        'Foobar',
-        [
+            'Foobar',
             [
-                'foo' => 1,
-                'bar' => 2,
-            ],
-        ]
-    );
+                [
+                    'foo' => 1,
+                    'bar' => 2,
+                ],
+            ]
+        );
 
         static::assertSame(1, $tmpPage->foo);
         static::assertSame(2, $tmpPage->bar);
@@ -482,14 +482,14 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
 
         /* @var $tmpPages Foobar[] */
         $tmpPages = $result->fetchAllObject(
-        'Foobar',
-        [
+            'Foobar',
             [
-                'foo' => 1,
-                'bar' => 2,
-            ],
-        ]
-    );
+                [
+                    'foo' => 1,
+                    'bar' => 2,
+                ],
+            ]
+        );
 
         static::assertSame(1, $tmpPages[0]->foo);
         static::assertSame(2, $tmpPages[0]->bar);
@@ -692,7 +692,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
 
     public function testEscape()
     {
-        $date = new DateTime('2016-08-15 09:22:18');
+        $date = new DateTimeImmutable('2016-08-15 09:22:18');
 
         static::assertSame($date->format('Y-m-d H:i:s'), $this->db->escape($date));
 
@@ -747,48 +747,48 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertSame('NOW(),fooo,123,κόσμε,<abcd>\\\'$1\\\'(\"&2\"),öäü', $this->db->escape(\array_keys($testArray), true, true, true));
 
         static::assertSame(
-        [
-            0 => 'NOW()',
-            1 => 'fooo',
-            2 => 123,
-            3 => 'κόσμε',
-            4 => '<abcd>\\\'$1\\\'(\"&2\")',
-            5 => 'öäü',
-        ],
-        $this->db->escape(\array_keys($testArray), false, true, false)
+            [
+                0 => 'NOW()',
+                1 => 'fooo',
+                2 => 123,
+                3 => 'κόσμε',
+                4 => '<abcd>\\\'$1\\\'(\"&2\")',
+                5 => 'öäü',
+            ],
+            $this->db->escape(\array_keys($testArray), false, true, false)
     );
         static::assertSame(
-        [
-            0 => 'NOW()',
-            1 => 'fooo',
-            2 => 123,
-            3 => 'κόσμε',
-            4 => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
-            5 => '&#246;&#228;&#252;',
-        ],
-        $this->db->escape(\array_keys($testArray), true, false, false)
+            [
+                0 => 'NOW()',
+                1 => 'fooo',
+                2 => 123,
+                3 => 'κόσμε',
+                4 => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
+                5 => '&#246;&#228;&#252;',
+            ],
+            $this->db->escape(\array_keys($testArray), true, false, false)
     );
         static::assertSame(
-        [
-            0 => 'NOW()',
-            1 => 'fooo',
-            2 => 123,
-            3 => 'κόσμε',
-            4 => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
-            5 => '&#246;&#228;&#252;',
-        ],
-        $this->db->escape(\array_keys($testArray), false, false, false)
+            [
+                0 => 'NOW()',
+                1 => 'fooo',
+                2 => 123,
+                3 => 'κόσμε',
+                4 => '&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)',
+                5 => '&#246;&#228;&#252;',
+            ],
+            $this->db->escape(\array_keys($testArray), false, false, false)
     );
         static::assertSame(
-        [
-            0 => 'NOW()',
-            1 => 'fooo',
-            2 => 123,
-            3 => 'κόσμε',
-            4 => '<abcd>\\\'$1\\\'(\"&2\")',
-            5 => 'öäü',
-        ],
-        $this->db->escape(\array_keys($testArray), true, true, false)
+            [
+                0 => 'NOW()',
+                1 => 'fooo',
+                2 => 123,
+                3 => 'κόσμε',
+                4 => '<abcd>\\\'$1\\\'(\"&2\")',
+                5 => 'öäü',
+            ],
+            $this->db->escape(\array_keys($testArray), true, true, false)
     );
 
         static::assertSame('NULL', $this->db->escape(\array_keys($testArray), false, true, null));
@@ -903,72 +903,72 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
     public function testFormatQuery()
     {
         $result = $this->invokeMethod(
-        $this->db,
-        '_parseQueryParamsByName',
-        [
-            'SELECT * FROM post WHERE id = :id',
-            ['id' => 1],
-        ]
-    );
+            $this->db,
+            '_parseQueryParamsByName',
+            [
+                'SELECT * FROM post WHERE id = :id',
+                ['id' => 1],
+            ]
+        );
         static::assertSame(
-        'SELECT * FROM post WHERE id = 1',
-        $result['sql']
-    );
+            'SELECT * FROM post WHERE id = 1',
+            $result['sql']
+        );
         static::assertSame(
-        [],
-        $result['params']
-    );
+            [],
+            $result['params']
+        );
 
         $result = $this->invokeMethod(
-        $this->db,
-        '_parseQueryParamsByName',
-        [
-            'SELECT * FROM post WHERE id=:id',
-            ['id' => 1],
-        ]
-    );
+            $this->db,
+            '_parseQueryParamsByName',
+            [
+                'SELECT * FROM post WHERE id=:id',
+                ['id' => 1],
+            ]
+        );
         static::assertSame(
-        'SELECT * FROM post WHERE id=1',
-        $result['sql']
-    );
+            'SELECT * FROM post WHERE id=1',
+            $result['sql']
+        );
         static::assertSame(
-        [],
-        $result['params']
-    );
+            [],
+            $result['params']
+        );
 
         $result = $this->invokeMethod(
-        $this->db,
-        '_parseQueryParamsByName',
-        [
-            'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
-            ['id' => 1],
-        ]
-    );
+            $this->db,
+            '_parseQueryParamsByName',
+            [
+                'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
+                ['id' => 1],
+            ]
+        );
         static::assertSame(
-        'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
-        $result['sql']
-    );
+            'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
+            $result['sql']
+        );
         static::assertSame(
-        [],
-        $result['params']
-    );
+            [],
+            $result['params']
+        );
 
         $result = $this->invokeMethod(
-        $this->db,
-        '_parseQueryParamsByName',
-        [
-            'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
-            ['id' => 1, 'foo' => 'bar'],
-        ]
-    );
+            $this->db,
+            '_parseQueryParamsByName',
+            [
+                'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
+                ['id' => 1, 'foo' => 'bar'],
+            ]
+        );
         static::assertSame(
-        'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
-        $result['sql']
-    );
+            'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
+            $result['sql']
+        );
         static::assertSame(
-        ['foo' => 'bar'],
-        $result['params']
-    );
+            ['foo' => 'bar'],
+            $result['params']
+        );
     }
 
     public function testConnector()
@@ -1593,21 +1593,21 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertSame(0, $this->db->escape(false, false));
         static::assertSame('NOW()', $this->db->escape('NOW()'));
         static::assertSame(
-        [
-            \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
-            1,
-            'NULL',
-        ],
-        $this->db->escape(["O'Toole", true, null])
-    );
+            [
+                \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
+                1,
+                'NULL',
+            ],
+            $this->db->escape(["O'Toole", true, null])
+        );
         static::assertSame(
-        [
-            \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
-            1,
-            'NULL',
-        ],
-        $this->db->escape(["O'Toole", true, null], false)
-    );
+            [
+                \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
+                1,
+                'NULL',
+            ],
+            $this->db->escape(["O'Toole", true, null], false)
+        );
     }
 
     public function testInvoke()
@@ -1682,7 +1682,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
     {
         // --- object: DateTime
 
-        $date = new DateTime('2016-08-15 09:22:18');
+        $date = new DateTimeImmutable('2016-08-15 09:22:18');
 
         static::assertSame("'" . $date->format('Y-m-d H:i:s') . "'", $this->db->secure($date));
 
@@ -1773,95 +1773,95 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         page_type = ?
     ';
         $return = $this->db->query(
-        $sql,
-        [
-            1.1,
-            1,
-        ]
-    );
+            $sql,
+            [
+                1.1,
+                1,
+            ]
+        );
         static::assertTrue($return > 1, \print_r($return, true));
 
         //
         // query - true
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = :foo,
-        page_type = ?
-    ';
+          SET
+            page_template = :foo,
+            page_type = ?
+        ';
         $return = $this->db->query(
-        $sql,
-        [
-            'foo' => 1.1,
-            1,
-        ]
-    );
+            $sql,
+            [
+                'foo' => 1.1,
+                1,
+            ]
+        );
         static::assertTrue($return > 1, \print_r($return, true));
 
         //
         // query - true
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = :page_template,
-        page_type = :page_type
-    ';
+          SET
+            page_template = :page_template,
+            page_type = :page_type
+        ';
         $return = $this->db->query(
-        $sql,
-        [
-            'page_template' => 1.1,
-            'page_type'     => 1,
-        ]
-    );
+            $sql,
+            [
+                'page_template' => 1.1,
+                'page_type'     => 1,
+            ]
+        );
         static::assertTrue($return > 1, \print_r($return, true));
 
         //
         // query + UTF-8 - true
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = :page_template,
-        page_type = :page_type
-    ';
+          SET
+            page_template = :page_template,
+            page_type = :page_type
+        ';
         $return = $this->db->query(
-        $sql,
-        [
-            'page_template' => 'Iñtërnâtiônàlizætiøn',
-            'page_type'     => '中文空白-ÖÄÜ-中文空白',
-        ]
-    );
+            $sql,
+            [
+                'page_template' => 'Iñtërnâtiônàlizætiøn',
+                'page_type'     => '中文空白-ÖÄÜ-中文空白',
+            ]
+        );
         static::assertTrue($return > 1, \print_r($return, true));
 
         //
         // query - true (with empty array)
         //
         $sql = 'INSERT INTO ' . $this->tableName . "
-      SET
-        page_template = '1.1',
-        page_type = '1'
-    ";
+          SET
+            page_template = '1.1',
+            page_type = '1'
+        ";
         $return = $this->db->query(
-        $sql,
-        []
-    );
+            $sql,
+            []
+        );
         static::assertTrue($return > 1);
 
         //
         // query - true
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = ?,
-        page_type = ?
-    ';
-        $tmpDate = new DateTime();
+          SET
+            page_template = ?,
+            page_type = ?
+        ';
+        $tmpDate = new DateTimeImmutable();
         $tmpId = $this->db->query(
-        $sql,
-        [
-            'dateTest',
-            $tmpDate,
-        ]
-    );
+            $sql,
+            [
+                'dateTest',
+                $tmpDate,
+            ]
+        );
         static::assertTrue($tmpId > 1);
         //
         // select - true
@@ -1875,18 +1875,18 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         // query - true
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = :page_template,
-        page_type = :page_type
-    ';
-        $tmpDate = new DateTime();
+          SET
+            page_template = :page_template,
+            page_type = :page_type
+        ';
+        $tmpDate = new DateTimeImmutable();
         $tmpId = $this->db->query(
-        $sql,
-        [
-            'page_template' => 'dateTest',
-            'page_type'     => $tmpDate,
-        ]
-    );
+            $sql,
+            [
+                'page_template' => 'dateTest',
+                'page_type'     => $tmpDate,
+            ]
+        );
         static::assertTrue($tmpId > 1);
         //
         // select - true
@@ -1900,18 +1900,18 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         // query - true
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = ?,
-        page_type = :page_type
-    ';
-        $tmpDate = new DateTime();
+          SET
+            page_template = ?,
+            page_type = :page_type
+        ';
+        $tmpDate = new DateTimeImmutable();
         $tmpId = $this->db->query(
-        $sql,
-        [
-            0           => 'dateTest',
-            'page_type' => $tmpDate,
-        ]
-    );
+            $sql,
+            [
+                0           => 'dateTest',
+                'page_type' => $tmpDate,
+            ]
+        );
         static::assertTrue($tmpId > 1);
         //
         // select - true
@@ -1925,18 +1925,18 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         // query - true
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = :page_template,
-        page_type = :page_type
-    ';
-        $tmpDate = new DateTime();
+          SET
+            page_template = :page_template,
+            page_type = :page_type
+        ';
+        $tmpDate = new DateTimeImmutable();
         $tmpId = $this->db->query(
-        $sql,
-        [
-            'page_template' => ':page_type',
-            'page_type'     => $tmpDate,
-        ]
-    );
+            $sql,
+            [
+                'page_template' => ':page_type',
+                'page_type'     => $tmpDate,
+            ]
+        );
         static::assertTrue($tmpId > 1);
         //
         // select - true
@@ -1950,17 +1950,17 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         // query - true (with '?' in the string)
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = ?,
-        page_type = ?
-    ';
+          SET
+            page_template = ?,
+            page_type = ?
+        ';
         $tmpId = $this->db->query(
-        $sql,
-        [
-            'http://foo.com/?foo=1',
-            'foo\'bar',
-        ]
-    );
+            $sql,
+            [
+                'http://foo.com/?foo=1',
+                'foo\'bar',
+            ]
+        );
         static::assertTrue($tmpId > 1);
         // select - true
         $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
@@ -1972,17 +1972,17 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         // query - true (with '?' in the string)
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = :page_template,
-        page_type = :page_type
-    ';
+          SET
+            page_template = :page_template,
+            page_type = :page_type
+        ';
         $tmpId = $this->db->query(
-        $sql,
-        [
-            'page_template' => 'http://foo.com/?foo=1',
-            'page_type'     => 'foo\'bar',
-        ]
-    );
+            $sql,
+            [
+                'page_template' => 'http://foo.com/?foo=1',
+                'page_type'     => 'foo\'bar',
+            ]
+        );
         static::assertTrue($tmpId > 1);
         // select - true
         $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
@@ -1994,46 +1994,46 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         // query - ok
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = ?,
-        page_type = ?
-    ';
+          SET
+            page_template = ?,
+            page_type = ?
+        ';
         $return = $this->db->query(
-        $sql,
-        [
-            true,
-            ['test'],
-        ]
-    );
+            $sql,
+            [
+                true,
+                ['test'],
+            ]
+        );
         static::assertTrue($return > 0);
 
         //
         // query - false
         //
         $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template_lall = ?,
-        page_type = ?
-    ';
+          SET
+            page_template_lall = ?,
+            page_type = ?
+        ';
         $return = $this->db->query(
-        $sql,
-        [
-            'tpl_test_new15',
-            1,
-        ]
-    );
+            $sql,
+            [
+                'tpl_test_new15',
+                1,
+            ]
+        );
         static::assertFalse($return);
 
         //
         // query - false
         //
         $return = $this->db->query(
-        '',
-        [
-            'tpl_test_new15',
-            1,
-        ]
-    );
+            '',
+            [
+                'tpl_test_new15',
+                1,
+            ]
+        );
         static::assertFalse($return);
     }
 
@@ -2082,14 +2082,14 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         $this->db->close();
         static::assertFalse($this->db->isReady());
         $this->invokeMethod(
-        $this->db,
-        'queryErrorHandling',
-        [
-            'DB server has gone away',
-            2006,
-            'SELECT * FROM ' . $this->tableName . ' WHERE page_id = 1',
-        ]
-    );
+            $this->db,
+            'queryErrorHandling',
+            [
+                'DB server has gone away',
+                2006,
+                'SELECT * FROM ' . $this->tableName . ' WHERE page_id = 1',
+            ]
+        );
         static::assertTrue($this->db->isReady());
     }
 
@@ -2166,43 +2166,43 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         // --------------------
 
         static::assertTrue(
-        $this->db->transact(
-            function (DB $db) use ($tableName) {
-                return $db->insert(
-                  $tableName,
-                  [
-                      'page_template' => '',
-                      'page_type'     => 'foo!',
-                  ]
-              );
-            }
+            $this->db->transact(
+                static function (DB $db) use ($tableName) {
+                    return $db->insert(
+                        $tableName,
+                        [
+                            'page_template' => '',
+                            'page_type'     => 'foo!',
+                        ]
+                    );
+                }
         )
     );
 
         // --------------------
 
         static::assertTrue(
-        $this->db->transact(
-            function (DB $db) use ($tableName) {
-                return $db->insert(
-                  $tableName,
-                  [
-                      'page_template' => 'page' . \mt_rand(),
-                      'page_type'     => 'foo!',
-                  ]
-              );
-            }
+            $this->db->transact(
+                static function (DB $db) use ($tableName) {
+                    return $db->insert(
+                        $tableName,
+                        [
+                            'page_template' => 'page' . \mt_rand(),
+                            'page_type'     => 'foo!',
+                        ]
+                    );
+                }
         )
     );
 
         // --------------------
 
         static::assertFalse(
-        $this->db->transact(
-            function (DB $db) {
-                /** @noinspection ThrowRawExceptionInspection */
-                throw new \Exception();
-            }
+            $this->db->transact(
+                static function (DB $db) {
+                    /** @noinspection ThrowRawExceptionInspection */
+                    throw new \Exception();
+                }
         )
     );
 
@@ -2210,29 +2210,29 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
 
         $this->db->beginTransaction(); // (1)
         static::assertFalse(
-        $this->db->transact(
-            function (DB $db) {
-                return $db->beginTransaction(); // (2)
-            }
-        )
-    );
+            $this->db->transact(
+                static function (DB $db) {
+                    return $db->beginTransaction(); // (2)
+                }
+            )
+        );
         $this->db->endTransaction();
 
         // --------------------
 
         static::assertFalse(
-        $this->db->transact(
-            function (DB $db) use ($tableName) {
-                return $db->insert(
-                  $tableName,
-                  [
-                      'page_template_noop' => 'page' . \mt_rand(),
-                      'page_type'          => 'foo!',
-                  ]
-              );
-            }
-        )
-    );
+            $this->db->transact(
+                static function (DB $db) use ($tableName) {
+                    return $db->insert(
+                        $tableName,
+                        [
+                            'page_template_noop' => 'page' . \mt_rand(),
+                            'page_type'          => 'foo!',
+                        ]
+                    );
+                }
+            )
+        );
 
         // --------------------
     }

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+8.0.3 (2019-02-24)
+
+- "DB" -> replace "DateTime" check to "DateTimeInterface"
+- update "simple-cache" v3.2 -> v4.0
+
+
 8.0.2 (2019-02-13)
 
 - fix php warning, if the db config contains multi-array

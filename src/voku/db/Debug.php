@@ -340,9 +340,10 @@ class Debug
      */
     public function logger(array $log)
     {
+        // init
         $logMethod = '';
         $logText = '';
-        $logType = '';
+        $logType = 'sql';
         $logClass = $this->logger_class_name;
 
         if (isset($log[0])) {
@@ -358,10 +359,16 @@ class Debug
         if (
             $logClass
             &&
+            $logMethod
+            &&
             \class_exists($logClass)
             &&
             \method_exists($logClass, $logMethod)
         ) {
+            if (\method_exists($logClass, 'getInstance')) {
+                return $logClass::getInstance()->$logMethod($logText, ['log_type' => $logType]);
+            }
+
             return $logClass::$logMethod($logText, $logType);
         }
 

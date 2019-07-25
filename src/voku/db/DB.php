@@ -311,7 +311,13 @@ final class DB
         }
 
         /** @noinspection PhpUsageOfSilenceOperatorInspection */
-        if (!$this->socket && $defaultSocket = @\ini_get('mysqli.default_socket')) {
+        if (
+            !$this->socket
+            &&
+            ($defaultSocket = @\ini_get('mysqli.default_socket'))
+            &&
+            is_readable($defaultSocket)
+        ) {
             $this->socket = $defaultSocket;
         }
 

@@ -1,6 +1,13 @@
 Changelog
 =========
 
+8.0.4 (2019-07-25)
+
+- update dependencies
+- extend "Debug::logger"
+- fix errors reported by phpstan (level 7)
+
+
 8.0.3 (2019-02-24)
 
 - "DB" -> replace "DateTime" check to "DateTimeInterface"

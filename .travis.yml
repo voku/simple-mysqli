@@ -1,7 +1,9 @@
 
 language: php
 
-sudo: false
+# Temporarily use legacy infrastructure until Travis resolves MySQL issues with their containerized infrastructure.
+# @see https://github.com/travis-ci/travis-ci/issues/6842
+sudo: required
 
 git:
   depth: 2

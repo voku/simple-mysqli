@@ -1140,11 +1140,23 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
         $resultSelectArray = $resultSelect->fetchAllArrayy()->filterBy('page_type', 'öäü')->first();
         static::assertSame('öäü', $resultSelectArray['page_type']);
 
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->fetchAllArrayyYield()->filterBy('page_type', 'öäü')->first();
+        static::assertSame('öäü', $resultSelectArray['page_type']);
+
         $i = 0;
         $resultSelect = $this->db->select($this->tableName, $where);
         foreach ($resultSelect->fetchAllYield('Foobar') as $tmpResult) {
             $i++;
             static::assertSame('öäü', $tmpResult->page_type);
+        }
+        static::assertTrue($i > 0);
+
+        $i = 0;
+        $resultSelect = $this->db->select($this->tableName, $where);
+        foreach ($resultSelect->fetchAllArrayyYield() as $tmpResult) {
+            $i++;
+            static::assertSame('öäü', $tmpResult['page_type']);
         }
         static::assertTrue($i > 0);
 
@@ -1716,7 +1728,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
     {
         // --- object: DateTime
 
-        $date = new DateTime('2016-08-15 09:22:18');
+        $date = new DateTimeImmutable('2016-08-15 09:22:18');
 
         static::assertSame("'" . $date->format('Y-m-d H:i:s') . "'", $this->db->secure($date));
 
@@ -1938,7 +1950,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
             page_template = ?,
             page_type = :page_type
         ';
-        $tmpDate = new DateTime();
+        $tmpDate = new DateTimeImmutable();
         $tmpId = $this->db->query(
             $sql,
             [

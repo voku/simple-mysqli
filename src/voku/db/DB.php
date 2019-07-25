@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace voku\db;
 
+use Doctrine\DBAL\Connection;
 use voku\cache\Cache;
 use voku\db\exceptions\DBConnectException;
 use voku\db\exceptions\DBGoneAwayException;
@@ -122,9 +123,9 @@ final class DB
     private $doctrine_connection;
 
     /**
-     * @var int|null
+     * @var int
      */
-    private $affected_rows;
+    private $affected_rows = 0;
 
     /**
      * __construct()
@@ -224,10 +225,11 @@ final class DB
      * @param string|null $sql
      * @param array       $bindings
      *
-     * @return bool|DB|int|Result           <p>
+     * @return bool|DB|int|Result|string
+     *                                      <p>
      *                                      "DB" by "$sql" === null<br />
      *                                      "Result" by "<b>SELECT</b>"-queries<br />
-     *                                      "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+     *                                      "int|string" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
      *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
      *                                      "true" by e.g. "DROP"-queries<br />
      *                                      "false" on error
@@ -308,9 +310,9 @@ final class DB
             $this->port = 3306;
         }
 
-        if (!$this->socket) {
-            /** @noinspection PhpUsageOfSilenceOperatorInspection */
-            $this->socket = @\ini_get('mysqli.default_socket');
+        /** @noinspection PhpUsageOfSilenceOperatorInspection */
+        if (!$this->socket && $defaultSocket = @\ini_get('mysqli.default_socket')) {
+            $this->socket = $defaultSocket;
         }
 
         $this->debug->setExitOnError($exit_on_error);
@@ -347,7 +349,7 @@ final class DB
         foreach ($arrayPair as $_key => $_value) {
             $_connector = '=';
             $_glueHelper = '';
-            $_key_upper = \strtoupper($_key);
+            $_key_upper = \strtoupper((string) $_key);
 
             if (\strpos($_key_upper, ' NOT') !== false) {
                 $_connector = 'NOT';
@@ -433,13 +435,13 @@ final class DB
                 } elseif ($_connector === 'NOT BETWEEN' || $_connector === 'BETWEEN') {
                     $_value = '(' . \implode(' AND ', $_value) . ')';
                 } elseif ($firstKey && $firstValue) {
-                    if (\strpos($firstKey, ' +') !== false) {
-                        $firstKey = \str_replace(' +', '', $firstKey);
+                    if (\strpos((string) $firstKey, ' +') !== false) {
+                        $firstKey = \str_replace(' +', '', (string) $firstKey);
                         $_value = $firstKey . ' + ' . $firstValue;
                     }
 
-                    if (\strpos($firstKey, ' -') !== false) {
-                        $firstKey = \str_replace(' -', '', $firstKey);
+                    if (\strpos((string) $firstKey, ' -') !== false) {
+                        $firstKey = \str_replace(' -', '', (string) $firstKey);
                         $_value = $firstKey . ' - ' . $firstValue;
                     }
                 }
@@ -449,13 +451,13 @@ final class DB
 
             $quoteString = $this->quote_string(
                 \trim(
-                    \str_ireplace(
+                    (string) \str_ireplace(
                         [
                             $_connector,
                             $_glueHelper,
                         ],
                         '',
-                        $_key
+                        (string) $_key
                     )
                 )
             );
@@ -504,7 +506,8 @@ final class DB
      * @param string $sql
      * @param array  $params
      *
-     * @return array <p>with the keys -> 'sql', 'params'</p>
+     * @return array
+     *               <p>with the keys -> 'sql', 'params'</p>
      */
     private function _parseQueryParams(string $sql, array $params = []): array
     {
@@ -544,10 +547,11 @@ final class DB
     /**
      * Returns the SQL by replacing :placeholders with SQL-escaped values.
      *
-     * @param mixed $sql    <p>The SQL string.</p>
-     * @param array $params <p>An array of key-value bindings.</p>
+     * @param string $sql    <p>The SQL string.</p>
+     * @param array  $params <p>An array of key-value bindings.</p>
      *
-     * @return array <p>with the keys -> 'sql', 'params'</p>
+     * @return array
+     *               <p>with the keys -> 'sql', 'params'</p>
      */
     private function _parseQueryParamsByName(string $sql, array $params = []): array
     {
@@ -617,7 +621,8 @@ final class DB
     /**
      * Begins a transaction, by turning off auto commit.
      *
-     * @return bool <p>This will return true or false indicating success of transaction</p>
+     * @return bool
+     *              <p>This will return true or false indicating success of transaction</p>
      */
     public function beginTransaction(): bool
     {
@@ -632,7 +637,7 @@ final class DB
 
         if ($this->mysqli_link) {
             $return = \mysqli_autocommit($this->mysqli_link, false);
-        } elseif ($this->isDoctrinePDOConnection()) {
+        } elseif ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
             $this->doctrine_connection->setAutoCommit(false);
             $this->doctrine_connection->beginTransaction();
 
@@ -641,6 +646,8 @@ final class DB
             } else {
                 $return = false;
             }
+        } else {
+            $return = false;
         }
 
         if (!$return) {
@@ -708,7 +715,8 @@ final class DB
     /**
      * Commits the current transaction and end the transaction.
      *
-     * @return bool <p>bool true on success, false otherwise.</p>
+     * @return bool
+     *              <p>bool true on success, false otherwise.</p>
      */
     public function commit(): bool
     {
@@ -721,7 +729,7 @@ final class DB
         if ($this->mysqli_link) {
             $return = \mysqli_commit($this->mysqli_link);
             \mysqli_autocommit($this->mysqli_link, true);
-        } elseif ($this->isDoctrinePDOConnection()) {
+        } elseif ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
             $this->doctrine_connection->commit();
             $this->doctrine_connection->setAutoCommit(true);
 
@@ -730,6 +738,8 @@ final class DB
             } else {
                 $return = false;
             }
+        } else {
+            $return = false;
         }
 
         $this->in_transaction = false;
@@ -756,14 +766,14 @@ final class DB
             $doctrineWrappedConnection = $this->doctrine_connection->getWrappedConnection();
 
             if ($this->isDoctrineMySQLiConnection()) {
-                /* @var $doctrineWrappedConnection \Doctrine\DBAL\Driver\Mysqli\MysqliConnection */
+                \assert($doctrineWrappedConnection instanceof \Doctrine\DBAL\Driver\Mysqli\MysqliConnection);
 
                 $this->mysqli_link = $doctrineWrappedConnection->getWrappedResourceHandle();
 
                 $this->connected = $this->doctrine_connection->isConnected();
 
                 if (!$this->connected) {
-                    $error = 'Error connecting to mysql server: ' . $this->doctrine_connection->errorInfo();
+                    $error = 'Error connecting to mysql server: ' . \print_r($this->doctrine_connection->errorInfo(), false);
                     $this->debug->displayError($error, false);
 
                     throw new DBConnectException($error, 101);
@@ -780,7 +790,7 @@ final class DB
                 $this->connected = $this->doctrine_connection->isConnected();
 
                 if (!$this->connected) {
-                    $error = 'Error connecting to mysql server: ' . $this->doctrine_connection->errorInfo();
+                    $error = 'Error connecting to mysql server: ' . \print_r($this->doctrine_connection->errorInfo(), false);
                     $this->debug->displayError($error, false);
 
                     throw new DBConnectException($error, 101);
@@ -824,8 +834,8 @@ final class DB
                     $this->clientkey,
                     $this->clientcert,
                     $this->cacert,
-                    null,
-                    null
+                    '',
+                    ''
                 );
 
                 $flags = \MYSQLI_CLIENT_SSL;
@@ -872,7 +882,8 @@ final class DB
      *
      * @throws QueryException
      *
-     * @return false|int <p>false on error</p>
+     * @return false|int
+     *                   <p>false on error</p>
      */
     public function delete(string $table, $where, string $databaseName = null)
     {
@@ -899,13 +910,18 @@ final class DB
 
         $sql = 'DELETE FROM ' . $databaseName . $this->quote_string($table) . " WHERE (${WHERE})";
 
-        return $this->query($sql);
+        $return = $this->query($sql);
+
+        \assert(\is_int($return) || $return === false);
+
+        return $return;
     }
 
     /**
      * Ends a transaction and commits if no errors, then ends autocommit.
      *
-     * @return bool <p>This will return true or false indicating success of transactions.</p>
+     * @return bool
+     *              <p>This will return true or false indicating success of transactions.</p>
      */
     public function endTransaction(): bool
     {
@@ -924,7 +940,7 @@ final class DB
 
         if ($this->mysqli_link) {
             \mysqli_autocommit($this->mysqli_link, true);
-        } elseif ($this->isDoctrinePDOConnection()) {
+        } elseif ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
             $this->doctrine_connection->setAutoCommit(true);
 
             if ($this->doctrine_connection->isAutoCommit()) {
@@ -942,7 +958,8 @@ final class DB
     /**
      * Get all errors from "$this->errors".
      *
-     * @return array|false <p>false === on errors</p>
+     * @return array|false
+     *                     <p>false === on errors</p>
      */
     public function errors()
     {
@@ -1020,8 +1037,10 @@ final class DB
                     $this->mysqli_link instanceof \mysqli
                 ) {
                     $var = \mysqli_real_escape_string($this->mysqli_link, $var);
-                } elseif ($this->isDoctrinePDOConnection()) {
-                    $var = $this->getDoctrinePDOConnection()->quote($var);
+                } elseif ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
+                    $pdoConnection = $this->getDoctrinePDOConnection();
+                    \assert($pdoConnection !== false);
+                    $var = $pdoConnection->quote($var);
                     $var = \substr($var, 1, -1);
                 }
 
@@ -1081,13 +1100,16 @@ final class DB
      * @param int     $cacheTTL optional <p>cache-ttl in seconds</p>
      * @param DB|null $db       optional <p>the database connection</p>
      *
-     * @throws QueryException
+     *@throws QueryException
      *
-     * @return mixed "array" by "<b>SELECT</b>"-queries<br />
-     *               "int" (insert_id) by "<b>INSERT</b>"-queries<br />
-     *               "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-     *               "true" by e.g. "DROP"-queries<br />
-     *               "false" on error
+     * @return mixed
+     *               <ul>
+     *               <li>"array" by "<b>SELECT</b>"-queries</li>
+     *               <li>"int|string" (insert_id) by "<b>INSERT</b>"-queries</li>
+     *               <li>"int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries</li>
+     *               <li>"true" by e.g. "DROP"-queries</li>
+     *               <li>"false" on error</li>
+     *               </ul>
      */
     public static function execSQL(string $query, bool $useCache = false, int $cacheTTL = 3600, self $db = null)
     {
@@ -1145,6 +1167,8 @@ final class DB
     {
         $query = 'SHOW TABLES';
         $result = $this->query($query);
+
+        \assert($result instanceof Result);
 
         return $result->fetchAllArray();
     }
@@ -1260,7 +1284,7 @@ final class DB
         static $instance = [];
 
         /**
-         * @var self
+         * @var self|null
          */
         static $firstInstance = null;
 
@@ -1409,7 +1433,8 @@ final class DB
      *
      * @throws QueryException
      *
-     * @return false|int <p>false on error</p>
+     * @return false|int|string
+     *                   <p>false on error</p>
      */
     public function insert(string $table, array $data = [], string $databaseName = null)
     {
@@ -1436,13 +1461,20 @@ final class DB
 
         $sql = 'INSERT INTO ' . $databaseName . $this->quote_string($table) . " SET ${SET}";
 
-        return $this->query($sql);
+        $return = $this->query($sql);
+        if ($return === false) {
+            return false;
+        }
+
+        \assert(\is_int($return) || \is_string($return));
+
+        return $return;
     }
 
     /**
      * Returns the auto generated id used in the last query.
      *
-     * @return int|string
+     * @return int|string|false
      */
     public function insert_id()
     {
@@ -1450,9 +1482,12 @@ final class DB
             return \mysqli_insert_id($this->mysqli_link);
         }
 
-        if ($this->getDoctrinePDOConnection()) {
-            return $this->getDoctrinePDOConnection()->lastInsertId();
+        $doctrinePDOConnection = $this->getDoctrinePDOConnection();
+        if ($doctrinePDOConnection) {
+            return $doctrinePDOConnection->lastInsertId();
         }
+
+        return false;
     }
 
     /**
@@ -1498,7 +1533,8 @@ final class DB
     /**
      * Get the last sql-error.
      *
-     * @return false|string <p>false === there was no error</p>
+     * @return false|string
+     *                      <p>false === there was no error</p>
      */
     public function lastError()
     {
@@ -1512,12 +1548,15 @@ final class DB
      *
      * @param string $sql
      *
-     * @throws QueryException
+     *@throws QueryException
      *
-     * @return false|Result[] "Result"-Array by "<b>SELECT</b>"-queries<br />
-     *                        "bool" by only "<b>INSERT</b>"-queries<br />
-     *                        "bool" by only (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-     *                        "bool" by only by e.g. "DROP"-queries<br />
+     * @return bool|Result[]
+     *                        <ul>
+     *                        <li>"Result"-Array by "<b>SELECT</b>"-queries</li>
+     *                        <li>"bool" by only "<b>INSERT</b>"-queries</li>
+     *                        <li>"bool" by only (affected_rows) by "<b>UPDATE / DELETE</b>"-queries</li>
+     *                        <li>"bool" by only by e.g. "DROP"-queries</li>
+     *                        </ul>
      */
     public function multi_query(string $sql)
     {
@@ -1531,7 +1570,7 @@ final class DB
             return false;
         }
 
-        if ($this->isDoctrinePDOConnection()) {
+        if ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
             $query_start_time = \microtime(true);
             $queryException = null;
             $query_result_doctrine = false;
@@ -1592,7 +1631,7 @@ final class DB
                     return $this->queryErrorHandling($queryException->getMessage(), $queryException->getCode(), $sql, false, true);
                 }
             }
-        } else {
+        } elseif ($this->mysqli_link) {
             $query_start_time = \microtime(true);
             $resultTmp = \mysqli_multi_query($this->mysqli_link, $sql);
             $query_duration = \microtime(true) - $query_start_time;
@@ -1609,14 +1648,10 @@ final class DB
                     if ($resultTmpInner instanceof \mysqli_result) {
                         $returnTheResult = true;
                         $result[] = new Result($sql, $resultTmpInner);
-                    } elseif (
-                        $resultTmpInner === true
-                        ||
-                        !\mysqli_errno($this->mysqli_link)
-                    ) {
-                        $result[] = true;
-                    } else {
+                    } elseif (\mysqli_errno($this->mysqli_link)) {
                         $result[] = false;
+                    } else {
+                        $result[] = true;
                     }
                 } while (\mysqli_more_results($this->mysqli_link) ? \mysqli_next_result($this->mysqli_link) : false);
             } else {
@@ -1626,6 +1661,12 @@ final class DB
 
                 return $this->queryErrorHandling(\mysqli_error($this->mysqli_link), \mysqli_errno($this->mysqli_link), $sql, false, true);
             }
+        } else {
+
+            // log the error query
+            $this->debug->logQuery($sql, 0, 0, true);
+
+            return $this->queryErrorHandling('no database connection', 1, $sql, false, true);
         }
 
         // return the result only if there was a "SELECT"-query
@@ -1678,7 +1719,7 @@ final class DB
             return false;
         }
 
-        if ($this->isDoctrinePDOConnection()) {
+        if ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
             return $this->doctrine_connection->ping();
         }
 
@@ -1767,9 +1808,10 @@ final class DB
      *                                      "false" if you don't need any parameter (default)<br/>
      *                                      </p>
      *
-     * @throws QueryException
+     *@throws QueryException
      *
-     * @return bool|int|Result              <p>
+     * @return bool|int|Result|string
+     *                                      <p>
      *                                      "Result" by "<b>SELECT</b>"-queries<br />
      *                                      "int|string" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
      *                                      "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
@@ -1783,7 +1825,7 @@ final class DB
             return false;
         }
 
-        if (!$sql || $sql === '') {
+        if ($sql === '') {
             $this->debug->displayError('Can not execute an empty query.', false);
 
             return false;
@@ -1820,9 +1862,14 @@ final class DB
 
                 $queryException = $e;
             }
-        } else {
+        } elseif ($this->mysqli_link) {
             $query_result = \mysqli_real_query($this->mysqli_link, $sql);
             $mysqli_field_count = \mysqli_field_count($this->mysqli_link);
+        } else {
+            $query_result = false;
+            $mysqli_field_count = null;
+
+            $queryException = new DBConnectException('no mysql connection');
         }
 
         $query_duration = \microtime(true) - $query_start_time;
@@ -1839,8 +1886,10 @@ final class DB
                 ) {
                     $result = $query_result_doctrine;
                 }
-            } else {
+            } elseif ($this->mysqli_link) {
                 $result = \mysqli_store_result($this->mysqli_link);
+            } else {
+                $result = false;
             }
         } else {
             $result = $query_result;
@@ -1921,8 +1970,8 @@ final class DB
      * @param array|bool $sqlParams <p>false if there wasn't any parameter</p>
      * @param bool       $sqlMultiQuery
      *
-     * @throws QueryException
      * @throws DBGoneAwayException
+     * @throws QueryException
      *
      * @return false|mixed
      */
@@ -2023,7 +2072,8 @@ final class DB
      *
      * @throws QueryException
      *
-     * @return false|int <p>false on error</p>
+     * @return false|int
+     *                   <p>false on error</p>
      */
     public function replace(string $table, array $data = [], string $databaseName = null)
     {
@@ -2064,13 +2114,17 @@ final class DB
 
         $sql = 'REPLACE INTO ' . $databaseName . $this->quote_string($table) . " (${columns}) VALUES (${values})";
 
-        return $this->query($sql);
+        $return = $this->query($sql);
+        \assert(\is_int($return) || $return === false);
+
+        return $return;
     }
 
     /**
      * Rollback in a transaction and end the transaction.
      *
-     * @return bool <p>bool true on success, false otherwise.</p>
+     * @return bool
+     *              <p>bool true on success, false otherwise.</p>
      */
     public function rollback(): bool
     {
@@ -2086,7 +2140,7 @@ final class DB
         if ($this->mysqli_link) {
             $return = \mysqli_rollback($this->mysqli_link);
             \mysqli_autocommit($this->mysqli_link, true);
-        } elseif ($this->isDoctrinePDOConnection()) {
+        } elseif ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
             $this->doctrine_connection->rollBack();
             $this->doctrine_connection->setAutoCommit(true);
 
@@ -2219,7 +2273,8 @@ final class DB
      *
      * @throws QueryException
      *
-     * @return false|Result <p>false on error</p>
+     * @return false|Result
+     *                      <p>false on error</p>
      */
     public function select(string $table, $where = '1=1', string $databaseName = null)
     {
@@ -2246,7 +2301,10 @@ final class DB
 
         $sql = 'SELECT * FROM ' . $databaseName . $this->quote_string($table) . " WHERE (${WHERE})";
 
-        return $this->query($sql);
+        $return = $this->query($sql);
+        \assert($return instanceof Result || $return === false);
+
+        return $return;
     }
 
     /**
@@ -2254,7 +2312,8 @@ final class DB
      *
      * @param string $database <p>Database name to switch to.</p>
      *
-     * @return bool <p>bool true on success, false otherwise.</p>
+     * @return bool
+     *              <p>bool true on success, false otherwise.</p>
      */
     public function select_db(string $database): bool
     {
@@ -2266,8 +2325,11 @@ final class DB
             return \mysqli_select_db($this->mysqli_link, $database);
         }
 
-        if ($this->isDoctrinePDOConnection()) {
-            return $this->query('use :database', ['database' => $database]);
+        if ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
+            $return = $this->query('use :database', ['database' => $database]);
+            \assert(\is_bool($return));
+
+            return $return;
         }
 
         return false;
@@ -2348,15 +2410,20 @@ final class DB
             @\mysqli_query($this->mysqli_link, 'SET CHARACTER SET ' . $charset);
             /** @noinspection PhpUsageOfSilenceOperatorInspection */
             @\mysqli_query($this->mysqli_link, "SET NAMES '" . $charset . "'");
-        } elseif ($this->isDoctrinePDOConnection()) {
+        } elseif ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
             $doctrineWrappedConnection = $this->getDoctrinePDOConnection();
+            if (!$doctrineWrappedConnection instanceof Connection) {
+                return false;
+            }
 
-            $doctrineWrappedConnection->exec('SET CHARACTER SET ' . $charset);
-            $doctrineWrappedConnection->exec("SET NAMES '" . $charset . "'");
+            /** @noinspection PhpUsageOfSilenceOperatorInspection */
+            @$doctrineWrappedConnection->exec('SET CHARACTER SET ' . $charset);
+            /** @noinspection PhpUsageOfSilenceOperatorInspection */
+            @$doctrineWrappedConnection->exec("SET NAMES '" . $charset . "'");
 
             $return = true;
         } else {
-            throw new DBConnectException('Can not set the charset');
+            $return = false;
         }
 
         return $return;
@@ -2505,10 +2572,11 @@ final class DB
     /**
      * Execute a callback inside a transaction.
      *
-     * @param callback $callback <p>The callback to run inside the transaction, if it's throws an "Exception" or if it's
+     * @param \Closure $callback <p>The callback to run inside the transaction, if it's throws an "Exception" or if it's
      *                           returns "false", all SQL-statements in the callback will be rollbacked.</p>
      *
-     * @return bool <p>bool true on success, false otherwise.</p>
+     * @return bool
+     *              <p>bool true on success, false otherwise.</p>
      */
     public function transact($callback): bool
     {
@@ -2523,7 +2591,7 @@ final class DB
             $result = $callback($this);
             if ($result === false) {
                 /** @noinspection ThrowRawExceptionInspection */
-                throw new \Exception('call_user_func [' . $callback . '] === false');
+                throw new \Exception('call_user_func [' . \print_r($callback, true) . '] === false');
             }
 
             return $this->commit();
@@ -2544,7 +2612,8 @@ final class DB
      *
      * @throws QueryException
      *
-     * @return false|int <p>false on error</p>
+     * @return false|int
+     *                   <p>false on error</p>
      */
     public function update(string $table, array $data = [], $where = '1=1', string $databaseName = null)
     {
@@ -2585,6 +2654,9 @@ final class DB
 
         $sql = 'UPDATE ' . $databaseName . $this->quote_string($table) . " SET ${SET} WHERE (${WHERE})";
 
-        return $this->query($sql);
+        $return = $this->query($sql);
+        \assert(\is_int($return) || $return === false);
+
+        return $return;
     }
 }

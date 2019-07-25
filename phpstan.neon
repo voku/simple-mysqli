@@ -1,0 +1,21 @@
+parameters:
+    reportUnmatchedIgnoredErrors: false
+    excludes_analyse:
+        - %currentWorkingDirectory%/vendor/*
+        - %currentWorkingDirectory%/tests/*
+    autoload_files:
+        - %currentWorkingDirectory%/vendor/autoload.php
+    ignoreErrors:
+        # false-positive
+        - '/call_user_func_array expects callable/'
+        - '/Argument of an invalid type \(array\)\|object supplied for foreach, only iterables are supported\./'
+        - '/Argument of an invalid type array\|object supplied for foreach, only iterables are supported\./'
+        - '/Method voku\\db\\DB::multi_query\(\) should return/'
+        - '/Method mysqli_stmt::__construct\(\) invoked/'
+        - '/method mysqli_stmt::__construct\(\) expects/'
+        - "/Call to function method_exists\\(\\) with string and 'getInstance' will always evaluate to false\\./"
+        # ignored errors
+        - '/Result of \&\& is always false/'
+        - '/Function checkForDev not found/'
+        - '/Function mailToAdmin not found/'
+        - '/Method voku\\db\\Result::fetchAll\(\) should return array but returns array\|Arrayy\\Arrayy\|Generator\./'

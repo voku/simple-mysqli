@@ -26,12 +26,12 @@
   ],
   "require": {
     "php": ">=7.0",
-    "voku/arrayy": "~5.7",
+    "ext-mysqli": "*",
+    "voku/arrayy": "~5.9",
     "voku/simple-cache": "~4.",
     "voku/portable-utf8": "~5.4",
     "voku/phonetic-algorithms": "~4.0",
-    "symfony/property-access": "~2.8 || ~3.3 || ~4.0",
-    "ext-mysqli": "*"
+    "symfony/property-access": "~2.8 || ~3.3 || ~4.0"
   },
   "require-dev": {
     "phpunit/phpunit": "~6.0 || ~7.0",

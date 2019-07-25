@@ -1624,16 +1624,16 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
                 '99997',
                 '99999',
             ],
-            'page_id NOT IN'      => [
+            'page_id NOT IN' => [
                 'test',
                 'test123',
             ],
-            'page_type IN'        => [
+            'page_type IN' => [
                 'öäü',
                 '123',
                 'abc',
             ],
-            'page_type OR'        => [
+            'page_type OR' => [
                 'öäü',
                 '123',
                 'abc',

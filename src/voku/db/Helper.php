@@ -177,8 +177,18 @@ class Helper
      *
      * @return array
      */
-    public static function phoneticSearch(string $searchString, string $searchFieldName, string $idFieldName = null, string $language = 'de', string $table = '', array $whereArray = null, DB $dbConnection = null, string $databaseName = null, bool $useCache = false, int $cacheTTL = 3600): array
-    {
+    public static function phoneticSearch(
+        string $searchString,
+        string $searchFieldName,
+        string $idFieldName = null,
+        string $language = 'de',
+        string $table = '',
+        array $whereArray = null,
+        DB $dbConnection = null,
+        string $databaseName = null,
+        bool $useCache = false,
+        int $cacheTTL = 3600
+    ): array {
         // init
         $cacheKey = null;
 
@@ -195,6 +205,10 @@ class Helper
 
         if ($idFieldName === null) {
             $idFieldName = 'id';
+        }
+
+        if ($whereArray === null) {
+            $whereArray = [];
         }
 
         $whereSQL = $dbConnection->_parseArrayPair($whereArray, 'AND');
@@ -229,6 +243,10 @@ class Helper
         }
 
         $result = $dbConnection->query($query);
+
+        if (!$result instanceof Result) {
+            return [];
+        }
 
         // make sure the row exists
         if ($result->num_rows <= 0) {
@@ -286,11 +304,16 @@ class Helper
         if ($doctrineConnection) {
             $doctrineWrappedConnection = $doctrineConnection->getWrappedConnection();
             if ($doctrineWrappedConnection instanceof \Doctrine\DBAL\Driver\PDOConnection) {
-                return $MYSQL_CLIENT_VERSION_CACHE[$cacheKey] = '';
+                return $MYSQL_CLIENT_VERSION_CACHE[$cacheKey] = $doctrineWrappedConnection->getAttribute(5); // 5 = PDO::ATTR_CLIENT_VERSION
             }
         }
 
-        return $MYSQL_CLIENT_VERSION_CACHE[$cacheKey] = (string) \mysqli_get_client_version($dbConnection->getLink());
+        $mysqli_link = $dbConnection->getLink();
+        if (!$mysqli_link) {
+            return '';
+        }
+
+        return $MYSQL_CLIENT_VERSION_CACHE[$cacheKey] = (string) \mysqli_get_client_version($mysqli_link);
     }
 
     /**
@@ -322,7 +345,12 @@ class Helper
             }
         }
 
-        return $MYSQL_SERVER_VERSION_CACHE[$cacheKey] = (string) \mysqli_get_server_version($dbConnection->getLink());
+        $mysqli_link = $dbConnection->getLink();
+        if (!$mysqli_link) {
+            return '';
+        }
+
+        return $MYSQL_SERVER_VERSION_CACHE[$cacheKey] = (string) \mysqli_get_server_version($mysqli_link);
     }
 
     /**
@@ -369,7 +397,7 @@ class Helper
         $sql = 'SHOW COLUMNS FROM ' . $databaseName . $dbConnection->escape($table);
         $result = $dbConnection->query($sql);
 
-        if ($result && $result->num_rows > 0) {
+        if ($result instanceof Result && $result->num_rows > 0) {
             foreach ($result->fetchAllArray() as $tmpResult) {
                 $dbFields[] = $tmpResult['Field'];
             }
@@ -391,11 +419,17 @@ class Helper
      * @param DB|null     $dbConnection <p>Use <strong>null</strong> to get your first singleton instance.</p>
      * @param string|null $databaseName <p>use <strong>null</strong> if you will use the current database</p>
      *
-     * @return bool|int "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+     * @return false|int|string "int|string" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
      *                   "false" on error
      */
-    public static function copyTableRow(string $table, array $whereArray, array $updateArray = [], array $ignoreArray = [], DB $dbConnection = null, string $databaseName = null)
-    {
+    public static function copyTableRow(
+        string $table,
+        array $whereArray,
+        array $updateArray = [],
+        array $ignoreArray = [],
+        DB $dbConnection = null,
+        string $databaseName = null
+    ) {
         // init
         $table = \trim($table);
 
@@ -427,7 +461,7 @@ class Helper
         $result = $dbConnection->query($query);
 
         // make sure the row exists
-        if ($result->num_rows > 0) {
+        if ($result instanceof Result && $result->num_rows > 0) {
 
             /** @noinspection LoopWhichDoesNotLoopInspection */
             /** @noinspection PhpAssignmentInConditionInspection */
@@ -462,7 +496,10 @@ class Helper
                   (' . $insert_values . ')
                 ';
 
-                return $dbConnection->query($new_query, $bindings);
+                $return = $dbConnection->query($new_query, $bindings);
+                \assert(\is_int($return) || \is_string($return) || $return === false);
+
+                return $return;
             }
         }
 

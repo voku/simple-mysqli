@@ -272,14 +272,15 @@ class Debug
     /**
      * Log the current query via "$this->logger".
      *
-     * @param string $sql     sql-query
-     * @param int    $duration
-     * @param int    $results field_count | insert_id | affected_rows
-     * @param bool   $sql_error
+     * @param string     $sql sql-query
+     * @param float|int  $duration
+     * @param int|string|false|null $results field_count | insert_id | affected_rows
+     * @param bool       $sql_error
      *
-     * @return mixed <p>Will return false, if no logging was used.</p>
+     * @return false|mixed
+     *                     <p>Will return false, if no logging was used.</p>
      */
-    public function logQuery($sql, $duration, $results, $sql_error = false)
+    public function logQuery($sql, $duration, $results, bool $sql_error = false)
     {
         $logLevelUse = \strtolower($this->logger_level);
 
@@ -312,7 +313,7 @@ class Debug
         // logging
         //
 
-        $info = 'time => ' . \round($duration, 5) . ' | results => ' . (int) $results . $infoExtra . ' | SQL => ' . UTF8::htmlentities($sql);
+        $info = 'time => ' . \round($duration, 5) . ' | results => ' . print_r($results, true) . $infoExtra . ' | SQL => ' . UTF8::htmlentities($sql);
 
         $fileInfo = $this->getFileAndLineFromSql();
 
@@ -336,7 +337,8 @@ class Debug
      *
      * @param string[] $log [method, text, type]<br />e.g.: array('error', 'this is a error', 'sql')
      *
-     * @return mixed <p>Will return false, if no logging was used.</p>
+     * @return false|mixed
+     *                     <p>Will return false, if no logging was used.</p>
      */
     public function logger(array $log)
     {
@@ -366,7 +368,7 @@ class Debug
             \method_exists($logClass, $logMethod)
         ) {
             if (\method_exists($logClass, 'getInstance')) {
-                return $logClass::getInstance()->$logMethod($logText, ['log_type' => $logType]);
+                return $logClass::getInstance()->{$logMethod}($logText, ['log_type' => $logType]);
             }
 
             return $logClass::$logMethod($logText, $logType);

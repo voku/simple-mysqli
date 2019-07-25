@@ -15,12 +15,12 @@ final class Prepare extends \mysqli_stmt
     /**
      * @var string - the unchanged query string provided to the constructor
      */
-    private $_sql;
+    private $_sql = '';
 
     /**
      * @var string - the query string with bound parameters interpolated
      */
-    private $_sql_with_bound_parameters;
+    private $_sql_with_bound_parameters = '';
 
     /**
      * @var bool
@@ -98,7 +98,6 @@ final class Prepare extends \mysqli_stmt
         $type = $param['type']; // 'i', 'b', 's', 'd'
         $value = $param['value'];
 
-        /** @noinspection ReferenceMismatchInspection */
         $value = $this->_db->escape($value);
 
         if ($type === 's') {
@@ -184,8 +183,8 @@ final class Prepare extends \mysqli_stmt
      *
      * @see http://php.net/manual/en/mysqli-stmt.execute.php
      *
-     * @return bool|int|Result   "Result" by "<b>SELECT</b>"-queries<br />
-     *                           "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+     * @return bool|int|Result|string   "Result" by "<b>SELECT</b>"-queries<br />
+     *                           "int|string" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
      *                           "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
      *                           "true" by e.g. "DROP"-queries<br />
      *                           "false" on error
@@ -221,11 +220,19 @@ final class Prepare extends \mysqli_stmt
 
             // "SELECT"
             if (\preg_match('/^\s*"?(SELECT)\s+/i', $this->_sql)) {
-                $result = $this->get_result();
-                $num_rows = (int) $result->num_rows;
+                $select_result = $this->get_result();
+
+                if ($select_result === false) {
+                    // log the error query
+                    $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, 0, true);
+
+                    return $this->queryErrorHandling($this->error, $this->_sql_with_bound_parameters);
+                }
+
+                $num_rows = (int) $select_result->num_rows;
                 $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $num_rows);
 
-                return new Result($this->_sql_with_bound_parameters, $result);
+                return new Result($this->_sql_with_bound_parameters, $select_result);
             }
 
             // log the ? query
@@ -273,11 +280,12 @@ final class Prepare extends \mysqli_stmt
      *                      (DDL) statements.
      *                      </p>
      *
-     * @return bool <p>false on error</p>
+     * @return bool
+     *              <p>false on error</p>
      *
      * @since 5.0
      */
-    public function prepare($query): bool
+    public function prepare(string $query): bool
     {
         $this->_sql = $query;
         $this->_sql_with_bound_parameters = $query;
@@ -347,6 +355,7 @@ final class Prepare extends \mysqli_stmt
     {
         $testQuery = $this->_sql;
         if ($this->_boundParams) {
+            /** @noinspection AlterInForeachInspection */
             foreach ($this->_boundParams as &$param) {
                 $values = $this->_prepareValue($param);
 
@@ -355,9 +364,8 @@ final class Prepare extends \mysqli_stmt
                 // we need to replace the question mark "?" here
                 $values[1] = \str_replace('?', '###simple_mysqli__prepare_question_mark###', $values[1]);
                 // build the query (only for debugging)
-                $testQuery = \preg_replace("/\?/", $values[1], $testQuery, 1);
+                $testQuery = (string) \preg_replace("/\?/", $values[1], $testQuery, 1);
             }
-            unset($param);
             $testQuery = \str_replace('###simple_mysqli__prepare_question_mark###', '?', $testQuery);
         }
         $this->_sql_with_bound_parameters = $testQuery;
@@ -371,12 +379,16 @@ final class Prepare extends \mysqli_stmt
      * @param string $errorMsg
      * @param string $sql
      *
-     * @throws QueryException
      * @throws DBGoneAwayException
+     * @throws QueryException
      *
-     * @return bool
+     * @return bool|int|Result|string   "Result" by "<b>SELECT</b>"-queries<br />
+     *                           "int|string" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+     *                           "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+     *                           "true" by e.g. "DROP"-queries<br />
+     *                           "false" on error
      */
-    private function queryErrorHandling(string $errorMsg, string $sql): bool
+    private function queryErrorHandling(string $errorMsg, string $sql)
     {
         if ($errorMsg === 'DB server has gone away' || $errorMsg === 'MySQL server has gone away') {
             static $RECONNECT_COUNTER;

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+8.0.5 (2009-07-31)
+
+- "Prepare" -> fix type compatibility with "mysqli_stmt"
+
+
 8.0.4 (2019-07-25)
 
 - update dependencies

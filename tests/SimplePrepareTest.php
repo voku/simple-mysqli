@@ -194,7 +194,15 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
         static::assertSame('lall_foo', $result['page_type']);
     }
 
-    public function testSelectWithBindParamHelper()
+    public function testSelectWithBindParamHelperNoStringQuery()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('$query was no string: NULL');
+
+        (new Prepare($this->db, ''))->prepare(null);
+    }
+
+        public function testSelectWithBindParamHelper()
     {
         $data = [
             'page_template' => 'tpl_test_new123123',
@@ -208,8 +216,8 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
         // -------------
 
         $sql = 'SELECT * FROM ' . $this->tableName . ' 
-      WHERE page_id = ?
-    ';
+          WHERE page_id = ?
+        ';
 
         $prepare = $this->db->prepare($sql);
 

@@ -285,8 +285,12 @@ final class Prepare extends \mysqli_stmt
      *
      * @since 5.0
      */
-    public function prepare(string $query): bool
+    public function prepare($query): bool
     {
+        if (!is_string($query)) {
+            throw new \InvalidArgumentException('$query was no string: ' . \gettype($query));
+        }
+
         $this->_sql = $query;
         $this->_sql_with_bound_parameters = $query;
 

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+8.0.6
+
+- "Result" -> fix DECIMAL is a "string"-format for numbers
+
+
 8.0.5 (2009-07-31)
 
 - "Prepare" -> fix type compatibility with "mysqli_stmt"

@@ -271,12 +271,12 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
                         break;
                     case self::MYSQL_TYPE_DOUBLE:
-                    case self::MYSQL_TYPE_DECIMAL:
-                    case self::MYSQL_TYPE_NEWDECIMAL:
                     case self::MYSQL_TYPE_FLOAT:
                         $TYPES_CACHE[$result_hash][$field->name] = 'float';
 
                         break;
+                    case self::MYSQL_TYPE_DECIMAL: // INFO: DECIMAL is a "string"-format for numbers
+                    case self::MYSQL_TYPE_NEWDECIMAL:
                     default:
                         $TYPES_CACHE[$result_hash][$field->name] = 'string';
 

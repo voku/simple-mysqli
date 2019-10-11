@@ -27,7 +27,21 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
     protected function setUp()
     {
-        $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
+        $this->db = DB::getInstance(
+            'localhost',
+            'root',
+            '',
+            'mysql_test',
+            3306,
+            'utf8',
+            false,
+            false,
+            '',
+            '',
+            [
+                'flags' => \MYSQLI_CLIENT_COMPRESS,
+            ]
+        );
     }
 
     public function testLogQuery()

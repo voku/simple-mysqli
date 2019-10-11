@@ -274,7 +274,7 @@ class Debug
      *
      * @param string     $sql sql-query
      * @param float|int  $duration
-     * @param int|string|false|null $results field_count | insert_id | affected_rows
+     * @param false|int|string|null $results field_count | insert_id | affected_rows
      * @param bool       $sql_error
      *
      * @return false|mixed
@@ -313,7 +313,7 @@ class Debug
         // logging
         //
 
-        $info = 'time => ' . \round($duration, 5) . ' | results => ' . print_r($results, true) . $infoExtra . ' | SQL => ' . UTF8::htmlentities($sql);
+        $info = 'time => ' . \round($duration, 5) . ' | results => ' . \print_r($results, true) . $infoExtra . ' | SQL => ' . UTF8::htmlentities($sql);
 
         $fileInfo = $this->getFileAndLineFromSql();
 

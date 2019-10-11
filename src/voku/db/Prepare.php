@@ -287,7 +287,7 @@ final class Prepare extends \mysqli_stmt
      */
     public function prepare($query): bool
     {
-        if (!is_string($query)) {
+        if (!\is_string($query)) {
             throw new \InvalidArgumentException('$query was no string: ' . \gettype($query));
         }
 

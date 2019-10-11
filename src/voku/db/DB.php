@@ -72,6 +72,11 @@ final class DB
     private $socket = '';
 
     /**
+     * @var int|null
+     */
+    private $flags;
+
+    /**
      * @var bool
      */
     private $session_to_db = false;
@@ -144,15 +149,28 @@ final class DB
      * @param string $logger_level          <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
      * @param array  $extra_config          <p>
      *                                      'session_to_db' => bool<br>
-     *                                      'socket'        => 'string (path)'<br>
+     *                                      'doctrine'      => \Doctrine\DBAL\Connection<br>
+     *                                      'socket'        => string (path)<br>
+     *                                      'flags'         => null|int<br>
      *                                      'ssl'           => bool<br>
-     *                                      'clientkey'     => 'string (path)'<br>
-     *                                      'clientcert'    => 'string (path)'<br>
-     *                                      'cacert'        => 'string (path)'<br>
+     *                                      'clientkey'     => string (path)<br>
+     *                                      'clientcert'    => string (path)<br>
+     *                                      'cacert'        => string (path)<br>
      *                                      </p>
      */
-    private function __construct(string $hostname, string $username, string $password, string $database, $port, string $charset, bool $exit_on_error, bool $echo_on_error, string $logger_class_name, string $logger_level, array $extra_config = [])
-    {
+    private function __construct(
+        string $hostname,
+        string $username,
+        string $password,
+        string $database,
+        $port,
+        string $charset,
+        bool $exit_on_error,
+        bool $echo_on_error,
+        string $logger_class_name,
+        string $logger_level,
+        array $extra_config = []
+    ) {
         $this->debug = new Debug($this);
 
         $this->_loadConfig(
@@ -266,12 +284,14 @@ final class DB
      * @param string $logger_class_name
      * @param string $logger_level
      * @param array  $extra_config          <p>
-     *                                      'session_to_db' => false|true<br>
-     *                                      'socket' => 'string (path)'<br>
-     *                                      'ssl' => 'bool'<br>
-     *                                      'clientkey' => 'string (path)'<br>
-     *                                      'clientcert' => 'string (path)'<br>
-     *                                      'cacert' => 'string (path)'<br>
+     *                                      'session_to_db' => bool<br>
+     *                                      'doctrine'      => \Doctrine\DBAL\Connection<br>
+     *                                      'socket'        => string (path)<br>
+     *                                      'flags'         => null|int<br>
+     *                                      'ssl'           => bool<br>
+     *                                      'clientkey'     => string (path)<br>
+     *                                      'clientcert'    => string (path)<br>
+     *                                      'cacert'        => string (path)<br>
      *                                      </p>
      *
      * @return bool
@@ -316,7 +336,7 @@ final class DB
             &&
             ($defaultSocket = @\ini_get('mysqli.default_socket'))
             &&
-            is_readable($defaultSocket)
+            \is_readable($defaultSocket)
         ) {
             $this->socket = $defaultSocket;
         }
@@ -776,39 +796,17 @@ final class DB
 
                 $this->mysqli_link = $doctrineWrappedConnection->getWrappedResourceHandle();
 
-                $this->connected = $this->doctrine_connection->isConnected();
-
-                if (!$this->connected) {
-                    $error = 'Error connecting to mysql server: ' . \print_r($this->doctrine_connection->errorInfo(), false);
-                    $this->debug->displayError($error, false);
-
-                    throw new DBConnectException($error, 101);
-                }
-
-                $this->set_charset($this->charset);
-
-                return $this->isReady();
+                return $this->connect_helper();
             }
 
             if ($this->isDoctrinePDOConnection()) {
                 $this->mysqli_link = null;
 
-                $this->connected = $this->doctrine_connection->isConnected();
-
-                if (!$this->connected) {
-                    $error = 'Error connecting to mysql server: ' . \print_r($this->doctrine_connection->errorInfo(), false);
-                    $this->debug->displayError($error, false);
-
-                    throw new DBConnectException($error, 101);
-                }
-
-                $this->set_charset($this->charset);
-
-                return $this->isReady();
+                return $this->connect_helper();
             }
         }
 
-        $flags = null;
+        $flags = $this->flags;
 
         \mysqli_report(\MYSQLI_REPORT_STRICT);
 
@@ -834,7 +832,6 @@ final class DB
 
                 \mysqli_options($this->mysqli_link, \MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, true);
 
-                /** @noinspection PhpParamsInspection */
                 \mysqli_ssl_set(
                     $this->mysqli_link,
                     $this->clientkey,
@@ -844,7 +841,7 @@ final class DB
                     ''
                 );
 
-                $flags = \MYSQLI_CLIENT_SSL;
+                $flags |= \MYSQLI_CLIENT_SSL;
             }
 
             /** @noinspection PhpUsageOfSilenceOperatorInspection */
@@ -869,6 +866,25 @@ final class DB
         $errno = \mysqli_connect_errno();
         if (!$this->connected || $errno) {
             $error = 'Error connecting to mysql server: ' . \mysqli_connect_error() . ' (' . $errno . ')';
+            $this->debug->displayError($error, false);
+
+            throw new DBConnectException($error, 101);
+        }
+
+        $this->set_charset($this->charset);
+
+        return $this->isReady();
+    }
+
+    /**
+     * @return bool
+     */
+    private function connect_helper(): bool
+    {
+        $this->connected = $this->doctrine_connection->isConnected();
+
+        if (!$this->connected) {
+            $error = 'Error connecting to mysql server: ' . \print_r($this->doctrine_connection->errorInfo(), false);
             $this->debug->displayError($error, false);
 
             throw new DBConnectException($error, 101);
@@ -1106,7 +1122,7 @@ final class DB
      * @param int     $cacheTTL optional <p>cache-ttl in seconds</p>
      * @param DB|null $db       optional <p>the database connection</p>
      *
-     *@throws QueryException
+     * @throws QueryException
      *
      * @return mixed
      *               <ul>
@@ -1246,28 +1262,29 @@ final class DB
     }
 
     /**
-     * @param string $hostname             <p>Hostname of the mysql server</p>
-     * @param string $username             <p>Username for the mysql connection</p>
-     * @param string $password             <p>Password for the mysql connection</p>
-     * @param string $database             <p>Database for the mysql connection</p>
-     * @param int    $port                 <p>default is (int)3306</p>
-     * @param string $charset              <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
-     * @param bool   $exit_on_error        <p>Throw a 'Exception' when a query failed, otherwise it will return 'false'.
-     *                                     Use false to disable it.</p>
-     * @param bool   $echo_on_error        <p>Echo the error if "checkForDev()" returns true.
-     *                                     Use false to disable it.</p>
+     * @param string $hostname              <p>Hostname of the mysql server</p>
+     * @param string $username              <p>Username for the mysql connection</p>
+     * @param string $password              <p>Password for the mysql connection</p>
+     * @param string $database              <p>Database for the mysql connection</p>
+     * @param int    $port                  <p>default is (int)3306</p>
+     * @param string $charset               <p>default is 'utf8' or 'utf8mb4' (if supported)</p>
+     * @param bool   $exit_on_error         <p>Throw a 'Exception' when a query failed, otherwise it will return
+     *                                      'false'. Use false to disable it.</p>
+     * @param bool   $echo_on_error         <p>Echo the error if "checkForDev()" returns true.
+     *                                      Use false to disable it.</p>
      * @param string $logger_class_name
-     * @param string $logger_level         <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
-     * @param array  $extra_config         <p>
-     *                                     're_connect'    => bool<br>
-     *                                     'session_to_db' => bool<br>
-     *                                     'doctrine'      => \Doctrine\DBAL\Connection<br>
-     *                                     'socket'        => 'string (path)'<br>
-     *                                     'ssl'           => bool<br>
-     *                                     'clientkey'     => 'string (path)'<br>
-     *                                     'clientcert'    => 'string (path)'<br>
-     *                                     'cacert'        => 'string (path)'<br>
-     *                                     </p>
+     * @param string $logger_level          <p>'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'</p>
+     * @param array  $extra_config          <p>
+     *                                      're_connect'    => bool<br>
+     *                                      'session_to_db' => bool<br>
+     *                                      'doctrine'      => \Doctrine\DBAL\Connection<br>
+     *                                      'socket'        => string (path)<br>
+     *                                      'flags'         => null|int<br>
+     *                                      'ssl'           => bool<br>
+     *                                      'clientkey'     => string (path)<br>
+     *                                      'clientcert'    => string (path)<br>
+     *                                      'cacert'        => string (path)<br>
+     *                                      </p>
      *
      * @return self
      */
@@ -1364,12 +1381,12 @@ final class DB
      * @param array                     $extra_config  <p>
      *                                                 're_connect'    => bool<br>
      *                                                 'session_to_db' => bool<br>
-     *                                                 'doctrine'      => \Doctrine\DBAL\Connection<br>
-     *                                                 'socket'        => 'string (path)'<br>
+     *                                                 'socket'        => string (path)<br>
+     *                                                 'flags'         => null|int<br>
      *                                                 'ssl'           => bool<br>
-     *                                                 'clientkey'     => 'string (path)'<br>
-     *                                                 'clientcert'    => 'string (path)'<br>
-     *                                                 'cacert'        => 'string (path)'<br>
+     *                                                 'clientkey'     => string (path)<br>
+     *                                                 'clientcert'    => string (path)<br>
+     *                                                 'cacert'        => string (path)<br>
      *                                                 </p>
      *
      * @return self
@@ -1480,7 +1497,7 @@ final class DB
     /**
      * Returns the auto generated id used in the last query.
      *
-     * @return int|string|false
+     * @return false|int|string
      */
     public function insert_id()
     {
@@ -1554,7 +1571,7 @@ final class DB
      *
      * @param string $sql
      *
-     *@throws QueryException
+     * @throws QueryException
      *
      * @return bool|Result[]
      *                        <ul>
@@ -1814,7 +1831,7 @@ final class DB
      *                                      "false" if you don't need any parameter (default)<br/>
      *                                      </p>
      *
-     *@throws QueryException
+     * @throws QueryException
      *
      * @return bool|int|Result|string
      *                                      <p>
@@ -1976,8 +1993,8 @@ final class DB
      * @param array|bool $sqlParams <p>false if there wasn't any parameter</p>
      * @param bool       $sqlMultiQuery
      *
-     * @throws DBGoneAwayException
      * @throws QueryException
+     * @throws DBGoneAwayException
      *
      * @return false|mixed
      */
@@ -2101,7 +2118,6 @@ final class DB
         // extracting column names
         $columns = \array_keys($data);
         foreach ($columns as $k => $_key) {
-            /** @noinspection AlterInForeachInspection */
             $columns[$k] = $this->quote_string($_key);
         }
 
@@ -2109,7 +2125,6 @@ final class DB
 
         // extracting values
         foreach ($data as $k => $_value) {
-            /** @noinspection AlterInForeachInspection */
             $data[$k] = $this->secure($_value);
         }
         $values = \implode(',', $data);
@@ -2342,14 +2357,16 @@ final class DB
     }
 
     /**
-     * @param array $extra_config   <p>
-     *                              'session_to_db' => false|true<br>
-     *                              'socket' => 'string (path)'<br>
-     *                              'ssl' => 'bool'<br>
-     *                              'clientkey' => 'string (path)'<br>
-     *                              'clientcert' => 'string (path)'<br>
-     *                              'cacert' => 'string (path)'<br>
-     *                              </p>
+     * @param array  $extra_config          <p>
+     *                                      'session_to_db' => bool<br>
+     *                                      'doctrine'      => \Doctrine\DBAL\Connection<br>
+     *                                      'socket'        => string (path)<br>
+     *                                      'flags'         => null|int<br>
+     *                                      'ssl'           => bool<br>
+     *                                      'clientkey'     => string (path)<br>
+     *                                      'clientcert'    => string (path)<br>
+     *                                      'cacert'        => string (path)<br>
+     *                                      </p>
      */
     public function setConfigExtra(array $extra_config)
     {
@@ -2367,6 +2384,10 @@ final class DB
 
         if (isset($extra_config['socket'])) {
             $this->socket = $extra_config['socket'];
+        }
+
+        if (isset($extra_config['flags'])) {
+            $this->flags = $extra_config['flags'];
         }
 
         if (isset($extra_config['ssl'])) {

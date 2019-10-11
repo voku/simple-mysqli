@@ -1460,7 +1460,6 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      */
     public function offsetSet($offset, $value)
     {
-        /** @noinspection UselessReturnInspection */
     }
 
     /**
@@ -1470,7 +1469,6 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      */
     public function offsetUnset($offset)
     {
-        /** @noinspection UselessReturnInspection */
     }
 
     /**

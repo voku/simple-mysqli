@@ -202,7 +202,7 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
         (new Prepare($this->db, ''))->prepare(null);
     }
 
-        public function testSelectWithBindParamHelper()
+    public function testSelectWithBindParamHelper()
     {
         $data = [
             'page_template' => 'tpl_test_new123123',

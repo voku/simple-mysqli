@@ -40,7 +40,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         $doctrineConnection = \Doctrine\DBAL\DriverManager::getConnection(
             $connectionParams,
             $config
-    );
+        );
         $doctrineConnection->connect();
 
         $this->db = DB::getInstance(
@@ -57,7 +57,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
             [
                 'doctrine' => $doctrineConnection,
             ]
-    );
+        );
     }
 
     public function testLogQuery()
@@ -294,7 +294,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
                 '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
                 '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
             ]
-    );
+        );
 
         // select - true
         $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
@@ -756,7 +756,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
                 5 => 'öäü',
             ],
             $this->db->escape(\array_keys($testArray), false, true, false)
-    );
+        );
         static::assertSame(
             [
                 0 => 'NOW()',
@@ -767,7 +767,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
                 5 => '&#246;&#228;&#252;',
             ],
             $this->db->escape(\array_keys($testArray), true, false, false)
-    );
+        );
         static::assertSame(
             [
                 0 => 'NOW()',
@@ -778,7 +778,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
                 5 => '&#246;&#228;&#252;',
             ],
             $this->db->escape(\array_keys($testArray), false, false, false)
-    );
+        );
         static::assertSame(
             [
                 0 => 'NOW()',
@@ -789,7 +789,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
                 5 => 'öäü',
             ],
             $this->db->escape(\array_keys($testArray), true, true, false)
-    );
+        );
 
         static::assertSame('NULL', $this->db->escape(\array_keys($testArray), false, true, null));
         static::assertSame('NULL', $this->db->escape(\array_keys($testArray), true, false, null));
@@ -2176,8 +2176,8 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
                         ]
                     );
                 }
-        )
-    );
+            )
+        );
 
         // --------------------
 
@@ -2192,8 +2192,8 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
                         ]
                     );
                 }
-        )
-    );
+            )
+        );
 
         // --------------------
 
@@ -2203,8 +2203,8 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
                     /** @noinspection ThrowRawExceptionInspection */
                     throw new \Exception();
                 }
-        )
-    );
+            )
+        );
 
         // --------------------
 

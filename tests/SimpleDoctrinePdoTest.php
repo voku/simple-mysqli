@@ -109,7 +109,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
         // sql - false
         $false = $db_1->query();
-        $this->expectOutputRegex('/.*SimpleDoctrinePdoTest\.php.*/');
+        $this->expectOutputRegex('/.*SimpleDoctrinePdoTest::testEchoOnError.*/');
         static::assertFalse($false);
     }
 
@@ -120,7 +120,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
         // sql - false
         $false = $db_1->query();
-        $this->expectOutputRegex('/error:/');
+        $this->expectOutputRegex('/Error:/');
+        $this->expectOutputRegex('/testEchoOnError3:/');
         static::assertFalse($false);
     }
 
@@ -131,7 +132,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
         // sql - false
         $false = $db_1->query();
-        $this->expectOutputRegex('/.*SimpleDoctrinePdoTest\.php.*/');
+        $this->expectOutputRegex('/.*SimpleDoctrinePdoTest::testEchoOnError.*/');
         static::assertFalse($false);
 
         // close db-connection

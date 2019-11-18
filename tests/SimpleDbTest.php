@@ -102,7 +102,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
         // sql - false
         $false = $db_1->query();
-        $this->expectOutputRegex('/.*SimpleDbTest\.php.*/');
+        $this->expectOutputRegex('/.*SimpleDbTest::testEchoOnError4.*/');
         static::assertFalse($false);
     }
 
@@ -113,7 +113,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
 
         // sql - false
         $false = $db_1->query();
-        $this->expectOutputRegex('/error:/');
+        $this->expectOutputRegex('/Error:/');
         static::assertFalse($false);
     }
 
@@ -1158,6 +1158,18 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
         $resultSelectArray = $resultSelect->fetchAllArrayyYield()->filterBy('page_type', 'öäü')->first();
         static::assertSame('öäü', $resultSelectArray['page_type']);
 
+        $resultSelectArray = $resultSelect->fetchAllArrayyYield();
+        $value = '';
+        /** @noinspection MissingOrEmptyGroupStatementInspection */
+        foreach ($resultSelectArray as $key => $value) {
+            // nothing
+        }
+        /** @noinspection MissingOrEmptyGroupStatementInspection */
+        foreach ($resultSelectArray as $key => $value) {
+            // nothing
+        }
+        static::assertSame('öäü', $value['page_type']);
+
         $i = 0;
         $resultSelect = $this->db->select($this->tableName, $where);
         foreach ($resultSelect->fetchAllYield('Foobar') as $tmpResult) {
@@ -1294,7 +1306,8 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
         $error = $this->db->lastError();
         static::assertInternalType('string', $error);
         static::assertContains('Unknown column \'page_lall\' in \'field list', $error);
-
+        static::assertContains('SimpleDbTest::testRollback', $error);
+        
         $errors = $this->db->getErrors();
         static::assertInternalType('array', $errors);
         static::assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);

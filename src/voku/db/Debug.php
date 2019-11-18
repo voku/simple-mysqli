@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace voku\db;
 
 use voku\db\exceptions\QueryException;
-use voku\helper\UTF8;
 
 /**
  * Debug: This class can handle debug and error-logging for SQL-queries for the "Simple-MySQLi"-classes.
@@ -55,6 +54,35 @@ class Debug
      * 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'
      */
     private $logger_level;
+
+    /**
+     * define what a slow query is in ms
+     *
+     * @var float
+     */
+    private $slowQueryTimeWarning = 0.005;
+
+    /**
+     * define what a slow query is in ms
+     *
+     * @var float
+     */
+    private $slowQueryTimeError = 0.1;
+
+    /**
+     * define what a max query repeat is
+     *
+     * @var int
+     */
+    private $maxQueryRepeatWarning = 20;
+
+    /**
+     * define what a max query repeat is
+     *
+     * @var int
+     */
+    private $maxQueryRepeatError = 50;
+
 
     /**
      * Debug constructor.
@@ -134,16 +162,11 @@ class Debug
     {
         $fileInfo = $this->getFileAndLineFromSql();
 
-        $this->logger(
-            [
-                'error',
-                '<strong>' . \date(
-                    'd. m. Y G:i:s'
-                ) . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . ') (sql-error):</strong> ' . $error . '<br>',
-            ]
-        );
+        $log = '[' . \date('Y-m-d H:i:s') . ']: SQL-Error: ' . $error . ' | Trace: ' . $fileInfo['path'] . '<br>';
 
-        $this->_errors[] = $error;
+        $this->logger(['error', $log]);
+
+        $this->_errors[] = $log;
 
         if (
             $this->echo_on_error
@@ -155,19 +178,20 @@ class Debug
 
             if (\PHP_SAPI === 'cli') {
                 echo "\n";
-                echo 'file:line -> ' . $fileInfo['file'] . ':' . $fileInfo['line'] . "\n";
-                echo 'error: ' . \str_replace(["\r\n", "\n", "\r"], '', $error);
+                echo 'Error: ' . $error . "\n";
+                echo 'Trace: ' . $fileInfo['path'] . "\n";
                 echo "\n";
             } else {
                 echo '
-        <div class="OBJ-mysql-box" style="border: ' . $box_border . '; background: ' . $box_bg . '; padding: 10px; margin: 10px;">
-          <b style="font-size: 14px;">MYSQL Error:</b>
-          <code style="display: block;">
-            file:line -> ' . $fileInfo['file'] . ':' . $fileInfo['line'] . '
-            ' . $error . '
-          </code>
-        </div>
-        ';
+                <div class="OBJ-mysql-box" style="border: ' . $box_border . '; background: ' . $box_bg . '; padding: 10px; margin: 10px;">
+                  <b style="font-size: 14px;">MYSQL Error:</b>
+                  <code style="display: block;">
+                    Error:' . $error . '
+                    <br><br>
+                    Trace: ' . $fileInfo['path'] . '
+                  </code>
+                </div>
+                ';
             }
         }
 
@@ -197,42 +221,32 @@ class Debug
     /**
      * Try to get the file & line from the current sql-query.
      *
-     * @return array will return array['file'] and array['line']
+     * @return array will return array['path']
      */
-    private function getFileAndLineFromSql(): array
-    {
+    private function getFileAndLineFromSql(): array {
         // init
         $return = [];
-        $file = '[unknown]';
-        $line = '[unknown]';
-
-        $referrer = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+        $path = '';
+        $referrer = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
 
         foreach ($referrer as $key => $ref) {
+
             if (
-                $ref['function'] === 'execSQL'
-                ||
-                $ref['function'] === 'query'
-                ||
-                $ref['function'] === 'qry'
-                ||
-                $ref['function'] === 'execute'
-                ||
-                $ref['function'] === 'insert'
-                ||
-                $ref['function'] === 'update'
-                ||
-                $ref['function'] === 'replace'
-                ||
-                $ref['function'] === 'delete'
+                isset($ref['class'])
+                &&
+                (
+                    $ref['class'] === DB::class
+                    ||
+                    $ref['class'] === self::class
+                )
             ) {
-                $file = $referrer[$key]['file'];
-                $line = $referrer[$key]['line'];
+                continue;
             }
+
+            $path .= ($referrer[$key]['class'] ?? $referrer[$key]['file']) . '::' . ($referrer[$key]['function'] ?? '') . ':' . ($referrer[$key - 1]['line'] ?? '') . ' <- ';
         }
 
-        $return['file'] = $file;
-        $return['line'] = $line;
+        $return['path'] = $path;
 
         return $return;
     }
@@ -298,32 +312,52 @@ class Debug
             $logLevel = 'error';
         }
 
-        // get extra info
-        $infoExtra = '';
-        $tmpLink = $this->_db->getLink();
-        if ($tmpLink && $tmpLink instanceof \mysqli) {
-            /** @noinspection PhpUsageOfSilenceOperatorInspection */
-            $infoExtra = @\mysqli_info($tmpLink);
-            if ($infoExtra) {
-                $infoExtra = ' | info => ' . $infoExtra;
-            }
-        }
-
         //
         // logging
         //
 
-        $info = 'time => ' . \round($duration, 5) . ' | results => ' . \print_r($results, true) . $infoExtra . ' | SQL => ' . UTF8::htmlentities($sql);
+        $traceStringExtra = '';
+        if ($logLevelUse === 'trace') {
+            $tmpLink = $this->_db->getLink();
+            if ($tmpLink && $tmpLink instanceof \mysqli) {
+                /** @noinspection PhpUsageOfSilenceOperatorInspection */
+                $traceStringExtra = @\mysqli_info($tmpLink);
+                if ($traceStringExtra) {
+                    $traceStringExtra = ' | info => ' . $traceStringExtra;
+                }
+            }
+
+            $traceStringExtra = ' | results => ' . \print_r($results, true) . $traceStringExtra;
+        }
+
+        static $SLOW_QUERY_WARNING = null;
+        static $QUERY_LOG_FILE_INFO = [];
+
+        $queryStatus = '';
+        if ($duration >= $this->slowQueryTimeWarning) {
+            $queryStatus = ' WARN (DURATION) ';
+        }
+        if ($duration >= $this->slowQueryTimeError) {
+            $queryStatus = ' ERROR (DURATION) ';
+        }
 
         $fileInfo = $this->getFileAndLineFromSql();
+        $cacheKey = \md5($fileInfo['path']);
+        if (empty($QUERY_LOG_FILE_INFO[$cacheKey])) {
+            $QUERY_LOG_FILE_INFO[$cacheKey] = 0;
+        }
+        ++$QUERY_LOG_FILE_INFO[$cacheKey];
 
-        return $this->logger(
-            [
-                $logLevel,
-                '<strong>' . \date('d. m. Y G:i:s') . ' (' . $fileInfo['file'] . ' line: ' . $fileInfo['line'] . '):</strong> ' . $info . '<br>',
-                'sql',
-            ]
-        );
+        if ($QUERY_LOG_FILE_INFO[$cacheKey] >= $this->maxQueryRepeatWarning) {
+            $queryStatus = ' WARN (REPEAT) ';
+        }
+        if ($QUERY_LOG_FILE_INFO[$cacheKey] >= $this->maxQueryRepeatError) {
+            $queryStatus = ' ERROR (REPEAT) ';
+        }
+
+        $queryLog = '[' . \date('Y-m-d H:i:s') . ']: ' . $queryStatus . ' Duration: SQL::::DURATION-START' . \round($duration, 5) . 'SQL::::DURATION-END | Repeat: ' . $QUERY_LOG_FILE_INFO[$cacheKey] . ' | Host: ' . $this->_db->getConfig()['hostname'] . ' | Trace: ' . $fileInfo['path'] . ' | SQL: SQL::::QUERY-START ' . \str_replace("\n", '', $sql) . ' SQL::::QUERY-END' . $traceStringExtra . "\n";
+
+        return $this->logger([$logLevel, $queryLog, 'sql',]);
     }
 
     /**
@@ -351,9 +385,11 @@ class Debug
         if (isset($log[0])) {
             $logMethod = $log[0];
         }
+
         if (isset($log[1])) {
             $logText = $log[1];
         }
+
         if (isset($log[2])) {
             $logType = $log[2];
         }
@@ -390,26 +426,11 @@ class Debug
             mailToAdmin($subject, $htmlBody, $priority);
         } else {
             if ($priority === 3) {
-                $this->logger(
-                    [
-                        'debug',
-                        $subject . ' | ' . $htmlBody,
-                    ]
-                );
+                $this->logger(['debug', $subject . ' | ' . $htmlBody]);
             } elseif ($priority > 3) {
-                $this->logger(
-                    [
-                        'error',
-                        $subject . ' | ' . $htmlBody,
-                    ]
-                );
+                $this->logger(['error', $subject . ' | ' . $htmlBody]);
             } elseif ($priority < 3) {
-                $this->logger(
-                    [
-                        'info',
-                        $subject . ' | ' . $htmlBody,
-                    ]
-                );
+                $this->logger(['info', $subject . ' | ' . $htmlBody]);
             }
         }
     }

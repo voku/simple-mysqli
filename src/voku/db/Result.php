@@ -518,10 +518,10 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             return Arrayy::create([]);
         }
 
-        $this->reset();
-
         return Arrayy::createFromGeneratorFunction(
             function () {
+                $this->reset();
+
                 /** @noinspection PhpAssignmentInConditionInspection */
                 while ($row = $this->fetch_assoc()) {
                     yield $this->cast($row);

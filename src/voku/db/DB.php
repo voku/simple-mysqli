@@ -1055,7 +1055,8 @@ final class DB
                     $var = UTF8::html_entity_decode($var);
                 }
 
-                $var = \get_magic_quotes_gpc() ? \stripslashes($var) : $var;
+                /** @noinspection PhpUsageOfSilenceOperatorInspection */
+                $var = @\get_magic_quotes_gpc() ? \stripslashes($var) : $var;
 
                 if (
                     $this->mysqli_link

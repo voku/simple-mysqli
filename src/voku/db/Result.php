@@ -851,7 +851,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
                 if (!isset($_row->{$column})) {
                     continue;
                 }
-            } elseif (!\array_key_exists($column, $_row)) {
+            } elseif (!\property_exists($_row, $column)) {
                 break;
             }
 

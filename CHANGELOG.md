@@ -1,6 +1,11 @@
 Changelog
 =========
 
+8.1.0
+
+- add more debug
+
+
 8.0.6
 
 - "Result" -> fix DECIMAL is a "string"-format for numbers

@@ -881,10 +881,14 @@ final class DB
      */
     private function connect_helper(): bool
     {
-        $this->connected = $this->doctrine_connection->isConnected();
+        if (!$this->doctrine_connection) {
+            $this->connected = false;
+        } else {
+            $this->connected = $this->doctrine_connection->isConnected();
+        }
 
         if (!$this->connected) {
-            $error = 'Error connecting to mysql server: ' . \print_r($this->doctrine_connection->errorInfo(), false);
+            $error = 'Error connecting to mysql server: ' . \print_r($this->doctrine_connection ? $this->doctrine_connection->errorInfo() : [], false);
             $this->debug->displayError($error, false);
 
             throw new DBConnectException($error, 101);

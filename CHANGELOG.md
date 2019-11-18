@@ -3,7 +3,9 @@ Changelog
 
 8.1.0
 
-- add more debug
+- fix errors reported by phpstan (level 7)
+- "Result" -> add more log + debug information
+- "DB" -> add support for "flags"
 
 
 8.0.6

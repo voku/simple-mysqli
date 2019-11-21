@@ -1172,8 +1172,6 @@ final class DB
         $result = $db->query($query);
 
         if ($result instanceof Result) {
-            $return = $result->fetchAllArrayyYield();
-
             // save into the cache
             if (
                 $cacheKey !== null
@@ -1184,7 +1182,11 @@ final class DB
                 &&
                 $cache->getCacheIsReady()
             ) {
+                $return = $result->fetchAllArrayy();
+
                 $cache->setItem($cacheKey, $return, $cacheTTL);
+            } else {
+                $return = $result->fetchAllArrayyYield();
             }
         } else {
             $return = $result;

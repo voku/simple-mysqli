@@ -1,6 +1,10 @@
 Changelog
 =========
 
+8.2.1
+
+- fix caching of query results
+
 8.2.0 
 
 - use "yield" and "references" to save more memory 

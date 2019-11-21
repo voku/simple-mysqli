@@ -227,7 +227,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * @return array|false|object
      *                            <p><strong>false</strong> on error</p>
      */
-    private function cast(&$data)
+    private function &cast(&$data)
     {
         if (
             !$this->doctrinePdoStmt // pdo only have limited support for types, so we try to improve it
@@ -242,7 +242,6 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         static $TYPES_CACHE = [];
 
         $result_hash = \spl_object_hash($this->_result);
-
         if (!isset($FIELDS_CACHE[$result_hash])) {
             $FIELDS_CACHE[$result_hash] = $this->fetch_fields();
         }
@@ -252,7 +251,10 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             ||
             $FIELDS_CACHE[$result_hash] === false
         ) {
-            return false;
+            /** @noinspection PhpUnnecessaryLocalVariableInspection */
+            $dataTmp = false;
+
+            return $dataTmp;
         }
 
         if (!isset($TYPES_CACHE[$result_hash])) {
@@ -418,8 +420,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * @return array|false|object
      *                            <p><strong>false</strong> on error</p>
      */
-    public function fetch(bool $reset = false)
+    public function &fetch(bool $reset = false)
     {
+        // init
         $return = false;
 
         if ($this->_default_result_type === self::RESULT_TYPE_OBJECT) {
@@ -446,8 +449,9 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return array
      */
-    public function fetchAll(): array
+    public function &fetchAll(): array
     {
+        // init
         $return = [];
 
         if ($this->_default_result_type === self::RESULT_TYPE_OBJECT) {
@@ -468,15 +472,17 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return array
      */
-    public function fetchAllArray(): array
+    public function &fetchAllArray(): array
     {
+        // init
+        $data = [];
+
         if ($this->is_empty()) {
-            return [];
+            return $data;
         }
 
         $this->reset();
 
-        $data = [];
         /** @noinspection PhpAssignmentInConditionInspection */
         while ($row = $this->fetch_assoc()) {
             $data[] = $this->cast($row);
@@ -490,21 +496,23 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return Arrayy
      */
-    public function fetchAllArrayy(): Arrayy
+    public function &fetchAllArrayy(): Arrayy
     {
+        // init
+        $arrayy = Arrayy::create();
+
         if ($this->is_empty()) {
-            return Arrayy::create([]);
+            return $arrayy;
         }
 
         $this->reset();
 
-        $data = [];
         /** @noinspection PhpAssignmentInConditionInspection */
         while ($row = $this->fetch_assoc()) {
-            $data[] = $this->cast($row);
+            $arrayy[] = $this->cast($row);
         }
 
-        return Arrayy::create($data);
+        return $arrayy;
     }
 
     /**
@@ -541,7 +549,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      */
     public function fetchAllColumn(string $column, bool $skipNullValues = false): array
     {
-        $return = $this->fetchColumn($column, $skipNullValues, true);
+        $return = $this->fetchColumn(
+            $column,
+            $skipNullValues,
+            true
+        );
 
         \assert(\is_array($return));
 
@@ -562,48 +574,15 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *                              string.
      *                              </p>
      *
-     * @return array
+     * @return object[]
      */
-    public function fetchAllObject($class = '', array $params = null): array
+    public function &fetchAllObject($class = '', array $params = null): array
     {
-        if ($this->is_empty()) {
-            return [];
-        }
-
-        // fallback
-        if (!$class || $class === 'stdClass') {
-            $class = \stdClass::class;
-        }
-
         // init
         $data = [];
-        $this->reset();
 
-        if (\is_object($class)) {
-            $classTmpOrig = new $class();
-        } elseif ($class && $params) {
-            $reflectorTmp = new \ReflectionClass($class);
-            $classTmpOrig = $reflectorTmp->newInstanceArgs($params);
-        } else {
-            $classTmpOrig = new $class();
-        }
-
-        $propertyAccessor = PropertyAccess::createPropertyAccessor();
-        /** @noinspection PhpAssignmentInConditionInspection */
-        while ($row = $this->fetch_assoc()) {
-            $classTmp = clone $classTmpOrig;
-            $row = $this->cast($row);
-            if ($row !== false) {
-                foreach ($row as $key => $value) {
-                    if ($class === \stdClass::class) {
-                        $classTmp->{$key} = $value;
-                    } else {
-                        $propertyAccessor->setValue($classTmp, $key, $value);
-                    }
-                }
-            }
-
-            $data[] = $classTmp;
+        foreach ($this->fetchAllYield($class, $params) as $object) {
+            $data[] = $object;
         }
 
         return $data;
@@ -625,7 +604,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return \Generator
      */
-    public function fetchAllYield($class = '', array $params = null): \Generator
+    public function &fetchAllYield($class = '', array $params = null): \Generator
     {
         if ($this->is_empty()) {
             return;
@@ -648,7 +627,12 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             $classTmpOrig = new $class();
         }
 
-        $propertyAccessor = PropertyAccess::createPropertyAccessor();
+        if ($class === \stdClass::class) {
+            $propertyAccessor = null;
+        } else {
+            $propertyAccessor = PropertyAccess::createPropertyAccessor();
+        }
+
         /** @noinspection PhpAssignmentInConditionInspection */
         while ($row = $this->fetch_assoc()) {
             $classTmp = clone $classTmpOrig;
@@ -717,14 +701,15 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * @param string $key
      * @param string $value
      *
-     * @return array
+     * @return Arrayy
      */
-    public function fetchArrayPair(string $key, string $value): array
+    public function fetchArrayPair(string $key, string $value): Arrayy
     {
-        $arrayPair = [];
-        $data = $this->fetchAllArray();
+        // init
+        $arrayPair = new Arrayy();
+        $data = $this->fetchAllArrayyYield();
 
-        foreach ($data as &$_row) {
+        foreach ($data as $_row) {
             if (
                 \array_key_exists($key, $_row)
                 &&
@@ -816,16 +801,17 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *                      <p>Return a empty string or an empty array if the "$column" wasn't found, depend on
      *                      "$asArray"</p>
      */
-    public function fetchColumn(
+    public function &fetchColumn(
         string $column = '',
         bool $skipNullValues = true,
         bool $asArray = false
     ) {
         if (!$asArray) {
+            // init
             $columnData = '';
 
             $data = $this->fetchAllArrayy()->reverse()->getArray();
-            foreach ($data as $_row) {
+            foreach ($data as &$_row) {
                 if ($skipNullValues) {
                     if (!isset($_row[$column])) {
                         continue;
@@ -844,6 +830,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
         // -- return as array -->
 
+        // init
         $columnData = [];
 
         foreach ($this->fetchAllYield() as $_row) {
@@ -869,20 +856,24 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * @return array
      *               <p>Array of field information each as an associative array.</p>
      */
-    public function fetchFields(bool $as_array = false): array
+    public function &fetchFields(bool $as_array = false): array
     {
         $fields = $this->fetch_fields();
         if ($fields === false) {
-            return [];
+            $fields = [];
+
+            return $fields;
         }
 
         if ($as_array) {
-            return \array_map(
+            $fields = \array_map(
                 static function ($object) {
                     return (array) $object;
                 },
                 $fields
             );
+
+            return $fields;
         }
 
         return $fields;
@@ -897,13 +888,13 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * @return array
      *               <p>A grouped array of scalar values or arrays.</p>
      */
-    public function fetchGroups(string $group, string $column = null): array
+    public function &fetchGroups(string $group, string $column = null): array
     {
         // init
         $groups = [];
         $pos = $this->current_row;
 
-        foreach ($this as $row) {
+        foreach ($this->fetchAllArrayyYield() as $row) {
             if (!\array_key_exists($group, $row)) {
                 continue;
             }
@@ -942,8 +933,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * @return false|object
      *                      <p><strong>false</strong> on error</p>
      */
-    public function fetchObject($class = '', array $params = null, bool $reset = false)
-    {
+    public function &fetchObject(
+        $class = '',
+        array $params = null,
+        bool $reset = false
+    ) {
         if ($reset) {
             $this->reset();
         }
@@ -957,7 +951,10 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         $row = $row ? $this->cast($row) : false;
 
         if (!$row) {
-            return false;
+            /** @noinspection PhpUnnecessaryLocalVariableInspection */
+            $dataTmp = false;
+
+            return $dataTmp;
         }
 
         if (\is_object($class)) {
@@ -969,8 +966,13 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             $classTmp = new $class();
         }
 
-        $propertyAccessor = PropertyAccess::createPropertyAccessor();
-        foreach ($row as $key => $value) {
+        if ($class === \stdClass::class) {
+            $propertyAccessor = null;
+        } else {
+            $propertyAccessor = PropertyAccess::createPropertyAccessor();
+        }
+
+        foreach ($row as $key => &$value) {
             if ($class === \stdClass::class) {
                 $classTmp->{$key} = $value;
             } else {
@@ -996,7 +998,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         $pairs = [];
         $pos = $this->current_row;
 
-        foreach ($this as $row) {
+        foreach ($this->fetchAllArrayyYield() as $row) {
             if (!\array_key_exists($key, $row)) {
                 continue;
             }
@@ -1033,8 +1035,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         $rows = [];
         $pos = $this->current_row;
 
-        foreach ($this as $row) {
-            foreach ($row as $key => $value) {
+        foreach ($this->fetchAllYield() as $row) {
+            foreach ($row as $key => &$value) {
                 $rows[$key][] = $value;
             }
         }
@@ -1070,8 +1072,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return \Generator
      */
-    public function fetchYield($class = '', array $params = null, bool $reset = false): \Generator
-    {
+    public function fetchYield(
+        $class = '',
+        array $params = null,
+        bool $reset = false
+    ): \Generator {
         if ($reset) {
             $this->reset();
         }
@@ -1097,8 +1102,14 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             return;
         }
 
-        $propertyAccessor = PropertyAccess::createPropertyAccessor();
-        foreach ($row as $key => $value) {
+        if ($class === \stdClass::class) {
+            $propertyAccessor = null;
+        } else {
+            $propertyAccessor = PropertyAccess::createPropertyAccessor();
+        }
+
+        /** @noinspection AlterInForeachInspection */
+        foreach ($row as $key => &$value) {
             if ($class === \stdClass::class) {
                 $classTmp->{$key} = $value;
             } else {
@@ -1325,7 +1336,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         bool $skipNullValues = true,
         bool $asArray = false
     ) {
-        return $this->fetchColumn($column, $skipNullValues, $asArray);
+        return $this->fetchColumn(
+            $column,
+            $skipNullValues,
+            $asArray
+        );
     }
 
     /**
@@ -1522,8 +1537,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return array
      */
-    public function slice(int $offset = 0, int $length = null, bool $preserve_keys = false): array
-    {
+    public function &slice(
+        int $offset = 0,
+        int $length = null,
+        bool $preserve_keys = false
+    ): array {
         // init
         $slice = [];
 

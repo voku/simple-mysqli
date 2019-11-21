@@ -187,7 +187,7 @@ return PhpCsFixer\Config::create()
                                 'pow_to_exponentiation'                         => true,
                                 'pre_increment'                                 => false,
                                 'protected_to_private'                          => true,
-                                'return_assignment'                             => true,
+                                'return_assignment'                             => false, // error from "Only variable references should be returned by reference ..."
                                 'return_type_declaration'                       => true,
                                 'self_accessor'                                 => true,
                                 'semicolon_after_instruction'                   => true,

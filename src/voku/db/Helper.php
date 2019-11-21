@@ -97,17 +97,17 @@ class Helper
      */
     public static function isMysqlndIsUsed(): bool
     {
-        static $_mysqlnd_is_used = null;
+        static $MYSQLND_IS_USED_CACHE = null;
 
-        if ($_mysqlnd_is_used === null) {
-            $_mysqlnd_is_used = (
+        if ($MYSQLND_IS_USED_CACHE === null) {
+            $MYSQLND_IS_USED_CACHE = (
                 \extension_loaded('mysqlnd')
                 &&
                 \function_exists('mysqli_fetch_all')
             );
         }
 
-        return $_mysqlnd_is_used;
+        return $MYSQLND_IS_USED_CACHE;
     }
 
     /**

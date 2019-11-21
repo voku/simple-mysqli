@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace voku\db;
 
+use Arrayy\Arrayy;
 use Doctrine\DBAL\Connection;
 use voku\cache\Cache;
 use voku\db\exceptions\DBConnectException;
@@ -911,8 +912,11 @@ final class DB
      * @return false|int
      *                   <p>false on error</p>
      */
-    public function delete(string $table, $where, string $databaseName = null)
-    {
+    public function delete(
+        string $table,
+        $where,
+        string $databaseName = null
+    ) {
         // init
         $table = \trim($table);
 
@@ -1011,8 +1015,12 @@ final class DB
      *
      * @return mixed
      */
-    public function escape($var = '', bool $stripe_non_utf8 = true, bool $html_entity_decode = false, $convert_array = false)
-    {
+    public function escape(
+        $var = '',
+        bool $stripe_non_utf8 = true,
+        bool $html_entity_decode = false,
+        $convert_array = false
+    ) {
         // [empty]
         if ($var === '') {
             return '';
@@ -1164,7 +1172,7 @@ final class DB
         $result = $db->query($query);
 
         if ($result instanceof Result) {
-            $return = $result->fetchAllArray();
+            $return = $result->fetchAllArrayyYield();
 
             // save into the cache
             if (
@@ -1188,16 +1196,16 @@ final class DB
     /**
      * Get all table-names via "SHOW TABLES".
      *
-     * @return array
+     * @return Arrayy
      */
-    public function getAllTables(): array
+    public function getAllTables(): Arrayy
     {
         $query = 'SHOW TABLES';
         $result = $this->query($query);
 
         \assert($result instanceof Result);
 
-        return $result->fetchAllArray();
+        return $result->fetchAllArrayyYield();
     }
 
     /**
@@ -1464,8 +1472,11 @@ final class DB
      * @return false|int|string
      *                   <p>false on error</p>
      */
-    public function insert(string $table, array $data = [], string $databaseName = null)
-    {
+    public function insert(
+        string $table,
+        array $data = [],
+        string $databaseName = null
+    ) {
         // init
         $table = \trim($table);
 
@@ -1805,7 +1816,7 @@ final class DB
         $result = $db->query($query);
 
         if ($result instanceof Result) {
-            return $result->fetchAllArray();
+            return $result->fetchAllArrayyYield();
         }
 
         return $result;
@@ -2302,8 +2313,11 @@ final class DB
      * @return false|Result
      *                      <p>false on error</p>
      */
-    public function select(string $table, $where = '1=1', string $databaseName = null)
-    {
+    public function select(
+        string $table,
+        $where = '1=1',
+        string $databaseName = null
+    ) {
         // init
         $table = \trim($table);
 
@@ -2647,8 +2661,12 @@ final class DB
      * @return false|int
      *                   <p>false on error</p>
      */
-    public function update(string $table, array $data = [], $where = '1=1', string $databaseName = null)
-    {
+    public function update(
+        string $table,
+        array $data = [],
+        $where = '1=1',
+        string $databaseName = null
+    ) {
         // init
         $table = \trim($table);
 

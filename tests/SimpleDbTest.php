@@ -634,7 +634,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
         ';
         /** @noinspection StaticInvocationViaThisInspection */
         /** @noinspection PhpStaticAsDynamicMethodCallInspection */
-        $result = (array) $this->db->qry($sql);
+        $result = $this->db->qry($sql);
         static::assertSame('tpl_test_?', $result[0]['page_template']);
 
         $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
@@ -1307,7 +1307,7 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
         static::assertInternalType('string', $error);
         static::assertContains('Unknown column \'page_lall\' in \'field list', $error);
         static::assertContains('SimpleDbTest::testRollback', $error);
-        
+
         $errors = $this->db->getErrors();
         static::assertInternalType('array', $errors);
         static::assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);

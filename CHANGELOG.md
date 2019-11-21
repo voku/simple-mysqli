@@ -1,6 +1,10 @@
 Changelog
 =========
 
+8.2.0 
+
+- use "yield" and "references" to save more memory 
+
 8.1.0
 
 - fix errors reported by phpstan (level 7)

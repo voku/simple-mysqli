@@ -83,7 +83,6 @@ class Debug
      */
     private $maxQueryRepeatError = 50;
 
-
     /**
      * Debug constructor.
      *
@@ -223,14 +222,14 @@ class Debug
      *
      * @return array will return array['path']
      */
-    private function getFileAndLineFromSql(): array {
+    private function getFileAndLineFromSql(): array
+    {
         // init
         $return = [];
         $path = '';
         $referrer = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
 
         foreach ($referrer as $key => $ref) {
-
             if (
                 isset($ref['class'])
                 &&
@@ -357,7 +356,7 @@ class Debug
 
         $queryLog = '[' . \date('Y-m-d H:i:s') . ']: ' . $queryStatus . ' Duration: SQL::::DURATION-START' . \round($duration, 5) . 'SQL::::DURATION-END | Repeat: ' . $QUERY_LOG_FILE_INFO[$cacheKey] . ' | Host: ' . $this->_db->getConfig()['hostname'] . ' | Trace: ' . $fileInfo['path'] . ' | SQL: SQL::::QUERY-START ' . \str_replace("\n", '', $sql) . ' SQL::::QUERY-END' . $traceStringExtra . "\n";
 
-        return $this->logger([$logLevel, $queryLog, 'sql',]);
+        return $this->logger([$logLevel, $queryLog, 'sql']);
     }
 
     /**

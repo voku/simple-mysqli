@@ -650,7 +650,7 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
     ';
         /** @noinspection StaticInvocationViaThisInspection */
         /** @noinspection PhpStaticAsDynamicMethodCallInspection */
-        $result = (array) $this->db->qry($sql);
+        $result = $this->db->qry($sql);
         static::assertSame('tpl_test_?', $result[0]['page_template']);
 
         $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '

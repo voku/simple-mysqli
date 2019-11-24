@@ -1,13 +1,17 @@
 Changelog
 =========
 
+8.2.2
+
+- fix php notice -> "Undefined index: file"
+
 8.2.1
 
 - fix caching of query results
 
-8.2.0 
+8.2.0
 
-- use "yield" and "references" to save more memory 
+- use "yield" and "references" to save more memory
 
 8.1.0
 
@@ -51,7 +55,7 @@ Changelog
 
 8.0.0 (2018-12-21)
 
-- move "Active Record"-classes into a separate repository 
+- move "Active Record"-classes into a separate repository
   -> https://github.com/voku/simple-active-record
 
 
@@ -106,7 +110,7 @@ Changelog
 7.1.0 (2018-01-21)
 
 - "define constants for default_result_type"
-- add usage of "yield" via "Result->fetchAllYield()"  
+- add usage of "yield" via "Result->fetchAllYield()"
 
 
 7.0.2 (2018-01-07)
@@ -123,7 +127,7 @@ Changelog
 
 - update "Portable UTF8" from v4 -> v5
 
--> this is a breaking change without API-changes - but the requirement from 
+-> this is a breaking change without API-changes - but the requirement from
    "Portable UTF8" has been changed (it no longer requires all polyfills from Symfony)
 
 
@@ -154,7 +158,7 @@ Changelog
 
 
 6.0.0 (2017-11-13)
-- "php": ">=7.0" 
+- "php": ">=7.0"
   * drop support for PHP < 7.0
   * use "strict_types"
 
@@ -322,7 +326,7 @@ Changelog
 
 - edit "Prepare->execute()" -> the method will now return an "Result"-object for SELECT queries
 
-WARNING: If you already use "Prepare->execute()" for SELECT-queries, you need to change your code, 
+WARNING: If you already use "Prepare->execute()" for SELECT-queries, you need to change your code,
          because the method will now return an "Result"-object instead of true on success.
 
 3.0.4 (2016-11-02)

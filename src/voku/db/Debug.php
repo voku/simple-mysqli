@@ -242,7 +242,7 @@ class Debug
                 continue;
             }
 
-            $path .= ($referrer[$key]['class'] ?? $referrer[$key]['file']) . '::' . ($referrer[$key]['function'] ?? '') . ':' . ($referrer[$key - 1]['line'] ?? '') . ' <- ';
+            $path .= ($referrer[$key]['class'] ?? $referrer[$key]['file'] ?? '') . '::' . ($referrer[$key]['function'] ?? '') . ':' . ($referrer[$key - 1]['line'] ?? '') . ' <- ';
         }
 
         $return['path'] = $path;

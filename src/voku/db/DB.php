@@ -1764,6 +1764,18 @@ final class DB
             return $this->doctrine_connection->ping();
         }
 
+        if (!$this->mysqli_link) {
+            return false;
+        }
+
+        if (
+            $this->mysqli_link
+            &&
+            $this->mysqli_link->connect_errno
+        ) {
+            return false;
+        }
+
         if (
             $this->mysqli_link
             &&

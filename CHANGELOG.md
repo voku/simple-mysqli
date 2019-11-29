@@ -1,6 +1,10 @@
 Changelog
 =========
 
+8.2.4
+
+- update dependencies
+
 8.2.3
 
 - fix error handling for "MySQL server has gone away"

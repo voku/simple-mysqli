@@ -27,7 +27,7 @@
   "require": {
     "php": ">=7.0",
     "ext-mysqli": "*",
-    "voku/arrayy": "~6.0",
+    "voku/arrayy": "~6.0 || ~7.0",
     "voku/simple-cache": "~4.0",
     "voku/portable-utf8": "~5.4",
     "voku/phonetic-algorithms": "~4.0",

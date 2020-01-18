@@ -1,5 +1,10 @@
 parameters:
+    level: max
+    paths:
+        - %currentWorkingDirectory%/src/
     reportUnmatchedIgnoredErrors: false
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
     excludes_analyse:
         - %currentWorkingDirectory%/vendor/*
         - %currentWorkingDirectory%/tests/*
@@ -11,9 +16,7 @@ parameters:
         - '/Argument of an invalid type \(array\)\|object supplied for foreach, only iterables are supported\./'
         - '/Argument of an invalid type array\|object supplied for foreach, only iterables are supported\./'
         - '/Method voku\\db\\DB::multi_query\(\) should return/'
-        - '/Method mysqli_stmt::__construct\(\) invoked/'
         - '/method mysqli_stmt::__construct\(\) expects/'
-        - "/Call to function method_exists\\(\\) with string and 'getInstance' will always evaluate to false\\./"
         # ignored errors
         - '/Result of \&\& is always false/'
         - '/Function checkForDev not found/'

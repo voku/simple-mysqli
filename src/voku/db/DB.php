@@ -476,18 +476,10 @@ final class DB
                 $_value = $this->secure($_value);
             }
 
-            $quoteString = $this->quote_string(
-                \trim(
-                    (string) \str_ireplace(
-                        [
-                            $_connector,
-                            $_glueHelper,
-                        ],
-                        '',
-                        (string) $_key
-                    )
-                )
-            );
+            $_key = UTF8::str_replace_last($_glueHelper, '', (string) $_key);
+            $_key = UTF8::str_replace_last($_connector, '', $_key);
+
+            $quoteString = $this->quote_string(\trim($_key));
 
             $_value = (array) $_value;
 
@@ -717,6 +709,8 @@ final class DB
             $this->mysqli_link = null;
 
             if ($connectedBefore) {
+                assert($this->doctrine_connection instanceof \Doctrine\DBAL\Connection);
+
                 return !$this->doctrine_connection->isConnected();
             }
 
@@ -1120,8 +1114,6 @@ final class DB
 
             default:
                 throw new \InvalidArgumentException(\sprintf('Not supported value "%s" of type %s.', \print_r($var, true), $type));
-
-                break;
         }
 
         return $var;
@@ -1768,23 +1760,13 @@ final class DB
             return false;
         }
 
-        if (
-            $this->mysqli_link
-            &&
-            $this->mysqli_link->connect_errno
-        ) {
+        if ($this->mysqli_link->connect_errno) {
             return false;
         }
 
-        if (
-            $this->mysqli_link
-            &&
-            $this->mysqli_link instanceof \mysqli
-        ) {
+        if ($this->mysqli_link instanceof \mysqli) {
             return \mysqli_ping($this->mysqli_link);
         }
-
-        return false;
     }
 
     /**
@@ -1994,7 +1976,7 @@ final class DB
                 return $this->affected_rows;
             }
 
-            // log the ? query
+            // log the query
             $this->debug->logQuery($sql, $query_duration, 0);
 
             return true;
@@ -2400,6 +2382,8 @@ final class DB
      *                                      'clientcert'    => string (path)<br>
      *                                      'cacert'        => string (path)<br>
      *                                      </p>
+     *
+     * @return void
      */
     public function setConfigExtra(array $extra_config)
     {

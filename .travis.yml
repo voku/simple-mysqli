@@ -31,7 +31,7 @@ matrix:
       env: DB=mariadb
       addons:
         mariadb: 10.3
-    - php: 7.4snapshot
+    - php: 7.4
       env: DB=mariadb
       addons:
         mariadb: 10.3
@@ -47,11 +47,13 @@ before_script:
   - travis_retry composer self-update
   - travis_retry composer require satooshi/php-coveralls:1.0.0
   - travis_retry composer install --no-interaction --prefer-source
+  - if [ "$(phpenv version-name)" == 7.3 ]; then travis_retry composer require phpstan/phpstan; fi
   - composer dump-autoload -o
 
 script:
   - mkdir -p build/logs
   - php vendor/bin/phpunit --verbose -c phpunit.xml
+  - if [ "$(phpenv version-name)" == 7.3 ]; then php vendor/bin/phpstan analyse; fi
 
 after_script:
   - php vendor/bin/coveralls -v

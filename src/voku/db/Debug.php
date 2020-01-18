@@ -155,6 +155,8 @@ class Debug
      *                                                  on "$this->exit_on_error (default: true)".
      *                                                  </p>
      *
+     * @return void
+     *
      * @throws QueryException
      */
     public function displayError($error, $force_exception_after_error = null)
@@ -418,6 +420,8 @@ class Debug
      * @param string $subject
      * @param string $htmlBody
      * @param int    $priority
+     *
+     * @return void
      */
     public function mailToAdmin($subject, $htmlBody, $priority = 3)
     {
@@ -428,7 +432,7 @@ class Debug
                 $this->logger(['debug', $subject . ' | ' . $htmlBody]);
             } elseif ($priority > 3) {
                 $this->logger(['error', $subject . ' | ' . $htmlBody]);
-            } elseif ($priority < 3) {
+            } else {
                 $this->logger(['info', $subject . ' | ' . $htmlBody]);
             }
         }
@@ -436,6 +440,8 @@ class Debug
 
     /**
      * @param bool $echo_on_error
+     *
+     * @return void
      */
     public function setEchoOnError($echo_on_error)
     {
@@ -444,6 +450,8 @@ class Debug
 
     /**
      * @param bool $exit_on_error
+     *
+     * @return void
      */
     public function setExitOnError($exit_on_error)
     {
@@ -452,6 +460,8 @@ class Debug
 
     /**
      * @param string $logger_class_name
+     *
+     * @return void
      */
     public function setLoggerClassName($logger_class_name)
     {
@@ -460,6 +470,8 @@ class Debug
 
     /**
      * @param string $logger_level
+     *
+     * @return void
      */
     public function setLoggerLevel($logger_level)
     {

@@ -27,6 +27,7 @@ CREATE TABLE post (
     title VARCHAR(255) NOT NULL DEFAULT '',
     body TEXT NOT NULL,
     comments_count INT(11) NOT NULL DEFAULT 0,
+    instrument_id INT(11) NOT NULL DEFAULT 0,
     `when` DATETIME DEFAULT NULL,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -84,7 +85,7 @@ SQL;
     {
         $fields = $result->fetchFields(true);
         static::assertInternalType('array', $fields);
-        static::assertCount(5, $fields);
+        static::assertCount(6, $fields);
     }
 
     /**
@@ -136,7 +137,7 @@ SQL;
     public function testFetchTranspose($result)
     {
         $transposed = $result->fetchTranspose();
-        static::assertCount(5, $transposed);
+        static::assertCount(6, $transposed);
         foreach ($transposed as $column => $rows) {
             static::assertCount(3, $rows);
         }
@@ -335,6 +336,13 @@ SQL;
     {
         $result = $this->db->query('SELECT * FROM post');
         static::assertTrue($result->free());
+    }
+
+    public function testIssue46()
+    {
+        $select = $this->db->select('post', ['instrument_id IN' => [0]]);
+
+        static::assertCount(3, $select->getArray());
     }
 
     public function testInvokeV1()

@@ -426,13 +426,13 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         $return = false;
 
         if ($this->_default_result_type === self::RESULT_TYPE_OBJECT) {
-            $return = $this->fetchObject('', null, $reset);
+            $return = $this->fetchObject(null, null, $reset);
         } elseif ($this->_default_result_type === self::RESULT_TYPE_ARRAY) {
             $return = $this->fetchArray($reset);
         } elseif ($this->_default_result_type === self::RESULT_TYPE_ARRAYY) {
             $return = $this->fetchArrayy($reset);
         } elseif ($this->_default_result_type === self::RESULT_TYPE_YIELD) {
-            $return = $this->fetchYield('', null, $reset);
+            $return = $this->fetchYield(null, null, $reset);
         }
 
         return $return;
@@ -563,7 +563,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     /**
      * Fetch all results as array with objects.
      *
-     * @param object|string $class  <p>
+     * @param object|string|null $class  <p>
      *                              <strong>string</strong>: create a new object (with optional constructor
      *                              parameter)<br>
      *                              <strong>object</strong>: use a object and fill the the data into
@@ -575,8 +575,14 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *                              </p>
      *
      * @return object[]
+     *
+     * @psalm-param class-string|object|null $class
+     * @psalm-param array<int, mixed>|null $params
      */
-    public function &fetchAllObject($class = '', array $params = null): array
+    public function &fetchAllObject(
+        $class = null,
+        array $params = null
+    ): array
     {
         // init
         $data = [];
@@ -591,7 +597,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     /**
      * Fetch all results as "\Generator" via yield.
      *
-     * @param object|string $class  <p>
+     * @param object|string|null $class  <p>
      *                              <strong>string</strong>: create a new object (with optional constructor
      *                              parameter)<br>
      *                              <strong>object</strong>: use a object and fill the the data into
@@ -603,8 +609,14 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *                              </p>
      *
      * @return \Generator
+     *
+      @psalm-param class-string|object|null $class
+     * @psalm-param array<int, mixed>|null $params
      */
-    public function &fetchAllYield($class = '', array $params = null): \Generator
+    public function &fetchAllYield(
+        $class = null,
+        array $params = null
+    ): \Generator
     {
         if ($this->is_empty()) {
             return;
@@ -643,6 +655,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
                     if ($class === \stdClass::class) {
                         $classTmp->{$key} = $value;
                     } else {
+                        assert($propertyAccessor instanceof \Symfony\Component\PropertyAccess\PropertyAccessor);
                         $propertyAccessor->setValue($classTmp, $key, $value);
                     }
                 }
@@ -918,7 +931,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     /**
      * Fetch as object.
      *
-     * @param object|string $class  <p>
+     * @param object|string|null $class  <p>
      *                              <strong>string</strong>: create a new object (with optional constructor
      *                              parameter)<br>
      *                              <strong>object</strong>: use a object and fill the the data into
@@ -932,9 +945,12 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return false|object
      *                      <p><strong>false</strong> on error</p>
+     *
+     * @psalm-param class-string|object|null $class
+     * @psalm-param array<int, mixed>|null $params
      */
     public function &fetchObject(
-        $class = '',
+        $class = null,
         array $params = null,
         bool $reset = false
     ) {
@@ -976,6 +992,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             if ($class === \stdClass::class) {
                 $classTmp->{$key} = $value;
             } else {
+                assert($propertyAccessor instanceof \Symfony\Component\PropertyAccess\PropertyAccessor);
                 $propertyAccessor->setValue($classTmp, $key, $value);
             }
         }
@@ -1058,7 +1075,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     /**
      * Fetch as "\Generator" via yield.
      *
-     * @param object|string $class  <p>
+     * @param object|string|null $class  <p>
      *                              <strong>string</strong>: create a new object (with optional constructor
      *                              parameter)<br>
      *                              <strong>object</strong>: use a object and fill the the data into
@@ -1071,9 +1088,12 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * @param bool          $reset  optional <p>Reset the \mysqli_result counter.</p>
      *
      * @return \Generator
+     *
+     * @psalm-param class-string|object|null $class
+     * @psalm-param array<int, mixed>|null $params
      */
     public function fetchYield(
-        $class = '',
+        $class = null,
         array $params = null,
         bool $reset = false
     ): \Generator {
@@ -1113,6 +1133,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             if ($class === \stdClass::class) {
                 $classTmp->{$key} = $value;
             } else {
+                assert($propertyAccessor instanceof \Symfony\Component\PropertyAccess\PropertyAccessor);
                 $propertyAccessor->setValue($classTmp, $key, $value);
             }
         }
@@ -1231,6 +1252,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
     /**
      * free the memory
+     *
+     * @return bool
      */
     public function free()
     {
@@ -1472,6 +1495,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @param mixed $offset
      * @param mixed $value
+     *
+     * @return void
      */
     public function offsetSet($offset, $value)
     {
@@ -1481,6 +1506,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * ArrayAccess interface implementation. Not implemented by design.
      *
      * @param mixed $offset
+     *
+     * @return void
      */
     public function offsetUnset($offset)
     {
@@ -1514,6 +1541,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * INFO: used for "fetch()" and "fetchAll()"
      *
      * @param string $default_result_type
+     *
+     * @return void
      */
     public function setDefaultResultType(string $default_result_type = self::RESULT_TYPE_OBJECT)
     {

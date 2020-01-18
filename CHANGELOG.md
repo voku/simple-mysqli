@@ -1,39 +1,43 @@
 Changelog
 =========
 
-8.2.4
+8.2.5 (2020-01-19)
+
+- fix "Select IN causing issues" (#46)
+
+8.2.4 (2019-11-29)
 
 - update dependencies
 
-8.2.3
+8.2.3 (2019-11-28)
 
 - fix error handling for "MySQL server has gone away"
 
-8.2.2
+8.2.2 (2019-11-24)
 
 - fix php notice -> "Undefined index: file"
 
-8.2.1
+8.2.1 (2019-11-21)
 
 - fix caching of query results
 
-8.2.0
+8.2.0 (2019-11-21)
 
 - use "yield" and "references" to save more memory
 
-8.1.0
+8.1.0 (2019-11-18)
 
 - fix errors reported by phpstan (level 7)
 - "Result" -> add more log + debug information
 - "DB" -> add support for "flags"
 
 
-8.0.6
+8.0.6 (2019-10-08)
 
 - "Result" -> fix DECIMAL is a "string"-format for numbers
 
 
-8.0.5 (2009-07-31)
+8.0.5 (2019-07-31)
 
 - "Prepare" -> fix type compatibility with "mysqli_stmt"
 

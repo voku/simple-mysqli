@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace voku\db;
 
-use Arrayy\Arrayy;
-use Doctrine\DBAL\Connection;
-use voku\cache\Cache;
 use voku\db\exceptions\DBConnectException;
 use voku\db\exceptions\DBGoneAwayException;
 use voku\db\exceptions\QueryException;
@@ -709,7 +706,7 @@ final class DB
             $this->mysqli_link = null;
 
             if ($connectedBefore) {
-                assert($this->doctrine_connection instanceof \Doctrine\DBAL\Connection);
+                \assert($this->doctrine_connection instanceof \Doctrine\DBAL\Connection);
 
                 return !$this->doctrine_connection->isConnected();
             }
@@ -1147,7 +1144,7 @@ final class DB
         }
 
         if ($useCache) {
-            $cache = new Cache(null, null, false, $useCache);
+            $cache = new \voku\cache\Cache(null, null, false, $useCache);
             $cacheKey = 'sql-' . \md5($query);
 
             if (
@@ -1170,7 +1167,7 @@ final class DB
                 &&
                 $useCache
                 &&
-                $cache instanceof Cache
+                $cache instanceof \voku\cache\Cache
                 &&
                 $cache->getCacheIsReady()
             ) {
@@ -1190,9 +1187,9 @@ final class DB
     /**
      * Get all table-names via "SHOW TABLES".
      *
-     * @return Arrayy
+     * @return \Arrayy\Arrayy
      */
-    public function getAllTables(): Arrayy
+    public function getAllTables(): \Arrayy\Arrayy
     {
         $query = 'SHOW TABLES';
         $result = $this->query($query);
@@ -1236,7 +1233,7 @@ final class DB
     }
 
     /**
-     * @return \Doctrine\DBAL\Connection|null|null
+     * @return \Doctrine\DBAL\Connection|null
      */
     public function getDoctrineConnection()
     {
@@ -1631,7 +1628,7 @@ final class DB
                     if (
                         $query_result_doctrine
                         &&
-                        $query_result_doctrine instanceof \Doctrine\DBAL\Statement
+                        $query_result_doctrine instanceof \Doctrine\DBAL\Driver\Statement
                     ) {
                         $result = $query_result_doctrine;
                     }
@@ -1640,7 +1637,7 @@ final class DB
                 }
 
                 if (
-                    $result instanceof \Doctrine\DBAL\Statement
+                    $result instanceof \Doctrine\DBAL\Driver\Statement
                     &&
                     $result->columnCount() > 0
                 ) {
@@ -1745,6 +1742,8 @@ final class DB
      * if the connection has gone down.
      *
      * @return bool
+     *
+     * @noinspection PhpInconsistentReturnPointsInspection - false-positive
      */
     public function ping(): bool
     {
@@ -1917,7 +1916,7 @@ final class DB
                 if (
                     $query_result_doctrine
                     &&
-                    $query_result_doctrine instanceof \Doctrine\DBAL\Statement
+                    $query_result_doctrine instanceof \Doctrine\DBAL\Driver\Statement
                 ) {
                     $result = $query_result_doctrine;
                 }
@@ -1931,7 +1930,7 @@ final class DB
         }
 
         if (
-            $result instanceof \Doctrine\DBAL\Statement
+            $result instanceof \Doctrine\DBAL\Driver\Statement
             &&
             $result->columnCount() > 0
         ) {
@@ -2456,7 +2455,7 @@ final class DB
             @\mysqli_query($this->mysqli_link, "SET NAMES '" . $charset . "'");
         } elseif ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
             $doctrineWrappedConnection = $this->getDoctrinePDOConnection();
-            if (!$doctrineWrappedConnection instanceof Connection) {
+            if (!$doctrineWrappedConnection instanceof \Doctrine\DBAL\Connection) {
                 return false;
             }
 

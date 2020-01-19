@@ -17,6 +17,7 @@ parameters:
         - '/Argument of an invalid type array\|object supplied for foreach, only iterables are supported\./'
         - '/Method voku\\db\\DB::multi_query\(\) should return/'
         - '/method mysqli_stmt::__construct\(\) expects/'
+        - '/Call to an undefined method Doctrine\\DBAL\\Driver\\Statement::getWrappedStatement\(\)\./'
         # ignored errors
         - '/Result of \&\& is always false/'
         - '/Function checkForDev not found/'

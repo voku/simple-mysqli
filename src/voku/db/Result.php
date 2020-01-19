@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace voku\db;
 
-use Arrayy\Arrayy;
-use Symfony\Component\PropertyAccess\PropertyAccess;
-use voku\helper\UTF8;
-
 /**
  * Result: This class can handle the results from the "DB"-class.
  */
@@ -88,7 +84,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     public $sql;
 
     /**
-     * @var \Doctrine\DBAL\Statement|\mysqli_result
+     * @var \Doctrine\DBAL\Driver\Statement|\mysqli_result
      */
     private $_result;
 
@@ -136,7 +132,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * Result constructor.
      *
      * @param string                                  $sql
-     * @param \Doctrine\DBAL\Statement|\mysqli_result $result
+     * @param \Doctrine\DBAL\Driver\Statement|\mysqli_result $result
      * @param \Closure                                $mapper Optional callback mapper for the "fetchCallable()" method
      */
     public function __construct(string $sql, $result, \Closure $mapper = null)
@@ -146,14 +142,18 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         if (
             !$result instanceof \mysqli_result
             &&
-            !$result instanceof \Doctrine\DBAL\Statement
+            !$result instanceof \Doctrine\DBAL\Driver\Statement
         ) {
-            throw new \InvalidArgumentException('$result must be ' . \mysqli_result::class . ' or ' . \Doctrine\DBAL\Statement::class . ' !');
+            throw new \InvalidArgumentException('$result must be ' . \mysqli_result::class . ' or ' . \Doctrine\DBAL\Driver\Statement::class . ' !');
         }
 
         $this->_result = $result;
 
-        if ($this->_result instanceof \Doctrine\DBAL\Statement) {
+        if ($this->_result instanceof \Doctrine\DBAL\Driver\Statement) {
+            if (\method_exists($this->_result, 'getWrappedStatement')) {
+                throw new \InvalidArgumentException('$result (' . \Doctrine\DBAL\Driver\Statement::class . ') must implement "getWrappedStatement()"!');
+            }
+
             $doctrineDriver = $this->_result->getWrappedStatement();
 
             if ($doctrineDriver instanceof \Doctrine\DBAL\Driver\PDOStatement) {
@@ -193,7 +193,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @param callable $callback User-provided callback (optional)
      *
-     * @return \Doctrine\DBAL\Statement|mixed|\mysqli_result
+     * @return \Doctrine\DBAL\Driver\Statement|mixed|\mysqli_result
      */
     public function __invoke(callable $callback = null)
     {
@@ -494,12 +494,12 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     /**
      * Fetch all results as "Arrayy"-object.
      *
-     * @return Arrayy
+     * @return \Arrayy\Arrayy
      */
-    public function &fetchAllArrayy(): Arrayy
+    public function &fetchAllArrayy(): \Arrayy\Arrayy
     {
         // init
-        $arrayy = Arrayy::create();
+        $arrayy = \Arrayy\Arrayy::create();
 
         if ($this->is_empty()) {
             return $arrayy;
@@ -518,15 +518,15 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     /**
      * Fetch all results as "Arrayy"-object.
      *
-     * @return Arrayy
+     * @return \Arrayy\Arrayy
      */
-    public function fetchAllArrayyYield(): Arrayy
+    public function fetchAllArrayyYield(): \Arrayy\Arrayy
     {
         if ($this->is_empty()) {
-            return Arrayy::create([]);
+            return \Arrayy\Arrayy::create([]);
         }
 
-        return Arrayy::createFromGeneratorFunction(
+        return \Arrayy\Arrayy::createFromGeneratorFunction(
             function () {
                 $this->reset();
 
@@ -582,8 +582,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     public function &fetchAllObject(
         $class = null,
         array $params = null
-    ): array
-    {
+    ): array {
         // init
         $data = [];
 
@@ -609,15 +608,13 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *                              </p>
      *
      * @return \Generator
-     *
-      @psalm-param class-string|object|null $class
+     * @psalm-param class-string|object|null $class
      * @psalm-param array<int, mixed>|null $params
      */
     public function &fetchAllYield(
         $class = null,
         array $params = null
-    ): \Generator
-    {
+    ): \Generator {
         if ($this->is_empty()) {
             return;
         }
@@ -642,7 +639,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         if ($class === \stdClass::class) {
             $propertyAccessor = null;
         } else {
-            $propertyAccessor = PropertyAccess::createPropertyAccessor();
+            $propertyAccessor = \Symfony\Component\PropertyAccess\PropertyAccess::createPropertyAccessor();
         }
 
         /** @noinspection PhpAssignmentInConditionInspection */
@@ -655,7 +652,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
                     if ($class === \stdClass::class) {
                         $classTmp->{$key} = $value;
                     } else {
-                        assert($propertyAccessor instanceof \Symfony\Component\PropertyAccess\PropertyAccessor);
+                        \assert($propertyAccessor instanceof \Symfony\Component\PropertyAccess\PropertyAccessor);
                         $propertyAccessor->setValue($classTmp, $key, $value);
                     }
                 }
@@ -714,12 +711,12 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * @param string $key
      * @param string $value
      *
-     * @return Arrayy
+     * @return \Arrayy\Arrayy
      */
-    public function fetchArrayPair(string $key, string $value): Arrayy
+    public function fetchArrayPair(string $key, string $value): \Arrayy\Arrayy
     {
         // init
-        $arrayPair = new Arrayy();
+        $arrayPair = new \Arrayy\Arrayy();
         $data = $this->fetchAllArrayyYield();
 
         foreach ($data as $_row) {
@@ -742,7 +739,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @param bool $reset optional <p>Reset the \mysqli_result counter.</p>
      *
-     * @return Arrayy|false
+     * @return \Arrayy\Arrayy|false
      *                      <p><strong>false</strong> on error</p>
      */
     public function fetchArrayy(bool $reset = false)
@@ -753,11 +750,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
 
         $row = $this->fetch_assoc();
         if ($row) {
-            return Arrayy::create($this->cast($row));
+            return \Arrayy\Arrayy::create($this->cast($row));
         }
 
         if ($row === null || $row === false) {
-            return Arrayy::create();
+            return \Arrayy\Arrayy::create();
         }
 
         return false;
@@ -985,14 +982,14 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         if ($class === \stdClass::class) {
             $propertyAccessor = null;
         } else {
-            $propertyAccessor = PropertyAccess::createPropertyAccessor();
+            $propertyAccessor = \Symfony\Component\PropertyAccess\PropertyAccess::createPropertyAccessor();
         }
 
         foreach ($row as $key => &$value) {
             if ($class === \stdClass::class) {
                 $classTmp->{$key} = $value;
             } else {
-                assert($propertyAccessor instanceof \Symfony\Component\PropertyAccess\PropertyAccessor);
+                \assert($propertyAccessor instanceof \Symfony\Component\PropertyAccess\PropertyAccessor);
                 $propertyAccessor->setValue($classTmp, $key, $value);
             }
         }
@@ -1125,7 +1122,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         if ($class === \stdClass::class) {
             $propertyAccessor = null;
         } else {
-            $propertyAccessor = PropertyAccess::createPropertyAccessor();
+            $propertyAccessor = \Symfony\Component\PropertyAccess\PropertyAccess::createPropertyAccessor();
         }
 
         /** @noinspection AlterInForeachInspection */
@@ -1133,7 +1130,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             if ($class === \stdClass::class) {
                 $classTmp->{$key} = $value;
             } else {
-                assert($propertyAccessor instanceof \Symfony\Component\PropertyAccess\PropertyAccessor);
+                \assert($propertyAccessor instanceof \Symfony\Component\PropertyAccess\PropertyAccessor);
                 $propertyAccessor->setValue($classTmp, $key, $value);
             }
         }
@@ -1146,7 +1143,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      */
     private function fetch_assoc()
     {
-        if ($this->_result instanceof \Doctrine\DBAL\Statement) {
+        if ($this->_result instanceof \Doctrine\DBAL\Driver\Statement) {
             if (
                 $this->doctrinePdoStmt
                 &&
@@ -1332,11 +1329,11 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     /**
      * alias for "Result->fetchAllArrayy()"
      *
-     * @return Arrayy
+     * @return \Arrayy\Arrayy
      *
      * @see Result::fetchAllArrayy()
      */
-    public function getArrayy(): Arrayy
+    public function getArrayy(): \Arrayy\Arrayy
     {
         return $this->fetchAllArrayy();
     }
@@ -1417,7 +1414,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     {
         $data = $this->fetchAllArray();
 
-        return UTF8::json_encode($data);
+        return \voku\helper\UTF8::json_encode($data);
     }
 
     /**

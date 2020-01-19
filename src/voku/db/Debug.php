@@ -155,9 +155,9 @@ class Debug
      *                                                  on "$this->exit_on_error (default: true)".
      *                                                  </p>
      *
-     * @return void
-     *
      * @throws QueryException
+     *
+     * @return void
      */
     public function displayError($error, $force_exception_after_error = null)
     {

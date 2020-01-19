@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace voku\db;
 
-use voku\cache\Cache;
-use voku\helper\Phonetic;
-
 /**
  * Helper: This class can handle extra functions that use the "Simple-MySQLi"-classes.
  */
@@ -228,7 +225,7 @@ class Helper
         ';
 
         if ($useCache) {
-            $cache = new Cache(null, null, false, $useCache);
+            $cache = new \voku\cache\Cache(null, null, false, $useCache);
             $cacheKey = 'sql-phonetic-search-' . \md5($query);
 
             if (
@@ -254,13 +251,12 @@ class Helper
         }
 
         $dataToSearchIn = [];
-        /** @noinspection LoopWhichDoesNotLoopInspection */
         /** @noinspection PhpAssignmentInConditionInspection */
         while ($tmpArray = $result->fetchArray()) {
             $dataToSearchIn[$tmpArray[$idFieldName]] = $tmpArray[$searchFieldName];
         }
 
-        $phonetic = new Phonetic($language);
+        $phonetic = new \voku\helper\Phonetic($language);
         $return = $phonetic->phonetic_matches($searchString, $dataToSearchIn);
 
         // save into the cache
@@ -269,7 +265,7 @@ class Helper
             &&
             $useCache
             &&
-            $cache instanceof Cache
+            $cache instanceof \voku\cache\Cache
             &&
             $cache->getCacheIsReady()
         ) {

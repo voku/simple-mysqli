@@ -1,6 +1,10 @@
 Changelog
 =========
 
+8.2.6 (2020-02-05)
+
+- check for mysql warnings
+
 8.2.5 (2020-01-19)
 
 - fix "Select IN causing issues" (#46)

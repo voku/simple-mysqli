@@ -1938,6 +1938,9 @@ final class DB
             // log the select query
             $this->debug->logQuery($sql, $query_duration, $mysqli_field_count);
 
+            // check for mysql warnings
+            $this->queryWarningHandling($sql);
+
             // return query result object
             return new Result($sql, $result);
         }
@@ -1946,6 +1949,9 @@ final class DB
 
             // log the select query
             $this->debug->logQuery($sql, $query_duration, $mysqli_field_count);
+
+            // check for mysql warnings
+            $this->queryWarningHandling($sql);
 
             // return query result object
             return new Result($sql, $result);
@@ -1957,7 +1963,11 @@ final class DB
             if (\preg_match('/^\s*?(?:INSERT|REPLACE)\s+/i', $sql)) {
                 $insert_id = $this->insert_id();
 
+                // log the query
                 $this->debug->logQuery($sql, $query_duration, $insert_id);
+
+                // check for mysql warnings
+                $this->queryWarningHandling($sql);
 
                 return $insert_id;
             }
@@ -1970,13 +1980,20 @@ final class DB
                     $this->affected_rows = $query_result_doctrine->rowCount();
                 }
 
+                // log the query
                 $this->debug->logQuery($sql, $query_duration, $this->affected_rows);
+
+                // check for mysql warnings
+                $this->queryWarningHandling($sql);
 
                 return $this->affected_rows;
             }
 
             // log the query
             $this->debug->logQuery($sql, $query_duration, 0);
+
+            // check for mysql warnings
+            $this->queryWarningHandling($sql);
 
             return true;
         }
@@ -1996,6 +2013,32 @@ final class DB
     }
 
     /**
+     * @param string $sql
+     *
+     * @return void
+     */
+    private function queryWarningHandling($sql)
+    {
+        if ($this->mysqli_link && $this->mysqli_link->warning_count > 0) {
+            $warningTmp = $this->mysqli_link->get_warnings();
+            do {
+                $warningTmpStr = \print_r($warningTmp, true);
+                // e.g.: sql mode 'NO_AUTO_CREATE_USER' is deprecated)
+                if (\strpos($warningTmpStr, 'is deprecated') === false) {
+                    $this->queryErrorHandling(
+                        $warningTmp->message,
+                        $warningTmp->errno,
+                        $sql,
+                        false,
+                        false,
+                        false
+                    );
+                }
+            } while ($warningTmp->next());
+        }
+    }
+
+    /**
      * Error-handling for the sql-query.
      *
      * @param string     $errorMessage
@@ -2003,14 +2046,21 @@ final class DB
      * @param string     $sql
      * @param array|bool $sqlParams <p>false if there wasn't any parameter</p>
      * @param bool       $sqlMultiQuery
+     * @param bool       $force_exception_after_error
      *
      * @throws QueryException
      * @throws DBGoneAwayException
      *
      * @return false|mixed
      */
-    private function queryErrorHandling(string $errorMessage, int $errorNumber, string $sql, $sqlParams = false, bool $sqlMultiQuery = false)
-    {
+    private function queryErrorHandling(
+        string $errorMessage,
+        int $errorNumber,
+        string $sql,
+        $sqlParams = false,
+        bool $sqlMultiQuery = false,
+        bool $force_exception_after_error = null
+    ) {
         if (
             $errorMessage === 'DB server has gone away'
             ||
@@ -2043,12 +2093,15 @@ final class DB
 
         $this->debug->mailToAdmin('SQL-Error', $errorMessage . '(' . $errorNumber . ') ' . ":\n<br />" . $sql);
 
-        $force_exception_after_error = null; // auto
-        if ($this->in_transaction) {
+        if (
+            $force_exception_after_error === null
+            &&
+            $this->in_transaction
+        ) {
             $force_exception_after_error = false;
         }
-        // this query returned an error, we must display it (only for dev) !!!
 
+        // this query returned an error, we must display it (only for dev) !!!
         $this->debug->displayError($errorMessage . '(' . $errorNumber . ') ' . ' | ' . $sql, $force_exception_after_error);
 
         return false;

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+8.2.7 (2020-02-23)
+
+- update "symfony/property-access"
+
 8.2.6 (2020-02-05)
 
 - check for mysql warnings

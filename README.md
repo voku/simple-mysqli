@@ -510,6 +510,48 @@ To iterate a result-set you can use any fetch() method listed above.
   // INFO: "while + fetch()" and "fetchAllYield()" will use less memory that "foreach + "fetchAllObject()", because we will fetch each result entry seperatly
 ```
 
+#### Executing Multi Queries
+To execute multiple queries you can use the ```$db->multi_query()``` method. You can use multiple queries separated by "```;```".
+
+Return-Types:     
+<ul>
+<li>"Result"-Array by "<b>SELECT</b>"-queries</li>
+<li>"bool" by only "<b>INSERT</b>"-queries</li>
+<li>"bool" by only (affected_rows) by "<b>UPDATE / DELETE</b>"-queries</li>
+<li>"bool" by only by e.g. "DROP"-queries</li>
+</ul>
+
+e.g.:
+
+```php
+$sql = "
+    INSERT INTO foo
+      SET
+        page_template = 'lall1',
+        page_type = 'test1';
+    INSERT INTO lall
+      SET
+        page_template = 'lall2',
+        page_type = 'test2';
+    INSERT INTO bar
+      SET
+        page_template = 'lall3',
+        page_type = 'test3';
+";
+$result = $this->db->multi_query($sql); // true
+
+$sql = "
+    SELECT * FROM foo;
+    SELECT * FROM lall;
+    SELECT * FROM bar;
+";
+$result = $this->db->multi_query($sql); // Result[]
+foreach ($result as $resultForEach) {
+    $tmpArray = $resultForEach->fetchArray();
+    ...
+}
+```
+
 ## Using the "Prepare"-Class
 
 Prepare statements have the advantage that they are built together in the MySQL-Server, so the performance is better.

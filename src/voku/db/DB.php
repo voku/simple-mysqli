@@ -655,7 +655,6 @@ final class DB
             $return = \mysqli_autocommit($this->mysqli_link, false);
         } elseif ($this->doctrine_connection && $this->isDoctrinePDOConnection()) {
             $this->doctrine_connection->setAutoCommit(false);
-            $this->doctrine_connection->beginTransaction();
 
             if ($this->doctrine_connection->isTransactionActive()) {
                 $return = true;

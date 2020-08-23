@@ -1,13 +1,18 @@
 Changelog
 =========
 
+8.2.8 (2020-08-23)
+
+- "DB" -> ignore more invalid mysql warnings
+- "DB" -> sync behavior of "beginTransaction()" for mysqli & doctrine 
+
 8.2.7 (2020-02-23)
 
 - update "symfony/property-access"
 
 8.2.6 (2020-02-05)
 
-- check for mysql warnings
+- "DB" -> check for mysql warnings
 
 8.2.5 (2020-01-19)
 

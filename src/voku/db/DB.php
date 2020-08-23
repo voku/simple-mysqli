@@ -2023,7 +2023,26 @@ final class DB
             do {
                 $warningTmpStr = \print_r($warningTmp, true);
                 // e.g.: sql mode 'NO_AUTO_CREATE_USER' is deprecated)
-                if (\strpos($warningTmpStr, 'is deprecated') === false) {
+                if (
+                    \strpos($warningTmpStr, 'is deprecated') !== false
+                    &&
+                    // MySQL throws warnings about non existing tables, also if you use "IF [NOT] EXISTS" :/
+                    (
+                        (
+                            \strpos($query, 'TABLE IF EXISTS') !== false
+                            ||
+                            \strpos($query, 'TABLE IF NOT EXISTS') !== false
+                        )
+                        &&
+                        (
+                            \strpos($warningTmpStr, 'Unknown table') !== false
+                            ||
+                            \strpos($warningTmpStr, 'already exists') !== false
+                        )
+                    )
+                ) {
+                    // no warning
+                } else {
                     $this->queryErrorHandling(
                         $warningTmp->message,
                         $warningTmp->errno,

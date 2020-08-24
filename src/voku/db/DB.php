@@ -2012,11 +2012,11 @@ final class DB
     }
 
     /**
-     * @param string $sql
+     * @param string $query
      *
      * @return void
      */
-    private function queryWarningHandling($sql)
+    private function queryWarningHandling($query)
     {
         if ($this->mysqli_link && $this->mysqli_link->warning_count > 0) {
             $warningTmp = $this->mysqli_link->get_warnings();
@@ -2046,7 +2046,7 @@ final class DB
                     $this->queryErrorHandling(
                         $warningTmp->message,
                         $warningTmp->errno,
-                        $sql,
+                        $query,
                         false,
                         false,
                         false

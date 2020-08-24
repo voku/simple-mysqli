@@ -2022,7 +2022,7 @@ final class DB
             $warningTmp = $this->mysqli_link->get_warnings();
             do {
                 $warningTmpStr = \print_r($warningTmp, true);
-                // e.g.: sql mode 'NO_AUTO_CREATE_USER' is deprecated)
+                // e.g.: sql mode 'NO_qqqAUTO_CREATE_USER' is deprecated)
                 if (
                     \strpos($warningTmpStr, 'is deprecated') !== false
                     &&

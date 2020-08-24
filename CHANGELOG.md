@@ -1,6 +1,10 @@
 Changelog
 =========
 
+8.2.9 (2020-08-23)
+
+- "DB" -> ignore more invalid mysql warnings (fix typo)
+
 8.2.8 (2020-08-23)
 
 - "DB" -> ignore more invalid mysql warnings

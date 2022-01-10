@@ -334,7 +334,7 @@ final class DB
             &&
             ($defaultSocket = @\ini_get('mysqli.default_socket'))
             &&
-            \is_readable($defaultSocket)
+            @\is_readable($defaultSocket)
         ) {
             $this->socket = $defaultSocket;
         }
@@ -1072,9 +1072,6 @@ final class DB
                 if ($html_entity_decode) {
                     $var = UTF8::html_entity_decode($var);
                 }
-
-                /** @noinspection PhpUsageOfSilenceOperatorInspection */
-                $var = @\get_magic_quotes_gpc() ? \stripslashes($var) : $var;
 
                 if (
                     $this->mysqli_link

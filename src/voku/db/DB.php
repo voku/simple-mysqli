@@ -329,6 +329,7 @@ final class DB
         }
 
         /** @noinspection PhpUsageOfSilenceOperatorInspection */
+        /** @noinspection PhpAssignmentInConditionInspection */
         if (
             !$this->socket
             &&
@@ -936,7 +937,7 @@ final class DB
             $databaseName = $this->quote_string(\trim($databaseName)) . '.';
         }
 
-        $sql = 'DELETE FROM ' . $databaseName . $this->quote_string($table) . " WHERE (${WHERE})";
+        $sql = 'DELETE FROM ' . $databaseName . $this->quote_string($table) . " WHERE (" . $WHERE . ")";
 
         $return = $this->query($sql);
 
@@ -1209,7 +1210,7 @@ final class DB
     /**
      * Get all table-names via "SHOW TABLES".
      *
-     * @return \Arrayy\Arrayy
+     * @return \Arrayy\Arrayy<\Arrayy\Arrayy<string, scalar>>
      */
     public function getAllTables(): \Arrayy\Arrayy
     {
@@ -1511,7 +1512,7 @@ final class DB
             $databaseName = $this->quote_string(\trim($databaseName)) . '.';
         }
 
-        $sql = 'INSERT INTO ' . $databaseName . $this->quote_string($table) . " SET ${SET}";
+        $sql = 'INSERT INTO ' . $databaseName . $this->quote_string($table) . " SET " . $SET;
 
         $return = $this->query($sql);
         if ($return === false) {
@@ -1914,9 +1915,10 @@ final class DB
         $query_result_doctrine = false;
 
         if ($this->doctrine_connection) {
+
             try {
                 $query_result_doctrine = $this->doctrine_connection->prepare($sql);
-                $query_result = $query_result_doctrine->execute();
+                $query_result = method_exists($query_result_doctrine, 'executeQuery') ? $query_result_doctrine->executeQuery() : $query_result_doctrine->execute();
                 $mysqli_field_count = $query_result_doctrine->columnCount();
             } catch (\Exception $e) {
                 $query_result = false;
@@ -1924,14 +1926,19 @@ final class DB
 
                 $queryException = $e;
             }
+
         } elseif ($this->mysqli_link) {
+
             $query_result = \mysqli_real_query($this->mysqli_link, $sql);
             $mysqli_field_count = \mysqli_field_count($this->mysqli_link);
+
         } else {
+
             $query_result = false;
             $mysqli_field_count = null;
 
             $queryException = new DBConnectException('no mysql connection');
+
         }
 
         $query_duration = \microtime(true) - $query_start_time;
@@ -1941,11 +1948,7 @@ final class DB
         if ($mysqli_field_count) {
             if ($this->doctrine_connection) {
                 $result = false;
-                if (
-                    $query_result_doctrine
-                    &&
-                    $query_result_doctrine instanceof \Doctrine\DBAL\Driver\Statement
-                ) {
+                if ($query_result_doctrine instanceof \Doctrine\DBAL\Driver\Statement) {
                     $result = $query_result_doctrine;
                 }
             } elseif ($this->mysqli_link) {
@@ -2005,7 +2008,7 @@ final class DB
                 if ($this->mysqli_link) {
                     $this->affected_rows = $this->affected_rows();
                 } elseif ($query_result_doctrine) {
-                    $this->affected_rows = $query_result_doctrine->rowCount();
+                    $this->affected_rows = $query_result->rowCount();
                 }
 
                 // log the query
@@ -2252,7 +2255,7 @@ final class DB
             $databaseName = $this->quote_string(\trim($databaseName)) . '.';
         }
 
-        $sql = 'REPLACE INTO ' . $databaseName . $this->quote_string($table) . " (${columns}) VALUES (${values})";
+        $sql = 'REPLACE INTO ' . $databaseName . $this->quote_string($table) . " (" . $columns . ") VALUES (" . $values . ")";
 
         $return = $this->query($sql);
         \assert(\is_int($return) || $return === false);
@@ -2444,7 +2447,7 @@ final class DB
             $databaseName = $this->quote_string(\trim($databaseName)) . '.';
         }
 
-        $sql = 'SELECT * FROM ' . $databaseName . $this->quote_string($table) . " WHERE (${WHERE})";
+        $sql = 'SELECT * FROM ' . $databaseName . $this->quote_string($table) . " WHERE (" . $WHERE . ")";
 
         $return = $this->query($sql);
         \assert($return instanceof Result || $return === false);
@@ -2810,7 +2813,7 @@ final class DB
             $databaseName = $this->quote_string(\trim($databaseName)) . '.';
         }
 
-        $sql = 'UPDATE ' . $databaseName . $this->quote_string($table) . " SET ${SET} WHERE (${WHERE})";
+        $sql = 'UPDATE ' . $databaseName . $this->quote_string($table) . " SET " . $SET . " WHERE (" . $WHERE . ")";
 
         $return = $this->query($sql);
         \assert(\is_int($return) || $return === false);

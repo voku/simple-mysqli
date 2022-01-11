@@ -1,6 +1,10 @@
 Changelog
 =========
 
+UNRELEASED
+
+- remove get_magic_quotes_gpc() -> fix for php8 (thanks @etlam)
+
 8.2.10 (2021-11-12)
 
 - "Helper" -> fix for php8
@@ -12,7 +16,7 @@ Changelog
 8.2.8 (2020-08-23)
 
 - "DB" -> ignore more invalid mysql warnings
-- "DB" -> sync behavior of "beginTransaction()" for mysqli & doctrine 
+- "DB" -> sync behavior of "beginTransaction()" for mysqli & doctrine
 
 8.2.7 (2020-02-23)
 

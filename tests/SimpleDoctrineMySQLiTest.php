@@ -1506,7 +1506,9 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
 
         $return = false;
         foreach ($tableArray as $table) {
-            if (\in_array($this->tableName, $table, true) === true) {
+            assert($table instanceof \Arrayy\Arrayy);
+
+            if ($table->contains($this->tableName)) {
                 $return = true;
 
                 break;

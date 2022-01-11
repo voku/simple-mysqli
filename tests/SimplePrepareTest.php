@@ -59,7 +59,7 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
         $result = $prepare->execute();
 
-        static::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
+        static::assertSame('Unknown column \'page_template_error\' in \'field list\'', $prepare->error);
         static::assertFalse($result);
 
         // -------------
@@ -70,7 +70,7 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
         /** @noinspection PhpUnusedLocalVariableInspection */
         $type = 'lall_foo';
 
-        static::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
+        static::assertSame('Unknown column \'page_template_error\' in \'field list\'', $prepare->error);
         $result = $prepare->execute();
 
         static::assertFalse($result);
@@ -95,7 +95,7 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
         $result = $prepare->execute();
 
-        static::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
+        static::assertSame('Unknown column \'page_template_error\' in \'field list\'', $prepare->error);
         static::assertFalse($result);
 
         // -------------
@@ -106,7 +106,7 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
         /** @noinspection PhpUnusedLocalVariableInspection */
         $type = 'lall_foo';
 
-        static::assertSame('Commands out of sync; you can\'t run this command now', $prepare->error);
+        static::assertSame('Unknown column \'page_template_error\' in \'field list\'', $prepare->error);
         $result = $prepare->execute();
 
         static::assertFalse($result);

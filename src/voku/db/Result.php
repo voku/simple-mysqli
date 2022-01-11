@@ -518,7 +518,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     /**
      * Fetch all results as "Arrayy"-object.
      *
-     * @return \Arrayy\Arrayy
+     * @return \Arrayy\Arrayy<\Arrayy\Arrayy<string, scalar>>
      */
     public function fetchAllArrayyYield(): \Arrayy\Arrayy
     {
@@ -720,10 +720,12 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         $data = $this->fetchAllArrayyYield();
 
         foreach ($data as $_row) {
+            assert($_row instanceof \Arrayy\Arrayy);
+
             if (
-                \array_key_exists($key, $_row)
+                $_row->offsetExists($key)
                 &&
-                \array_key_exists($value, $_row)
+                $_row->offsetExists($value)
             ) {
                 $_key = $_row[$key];
                 $_value = $_row[$value];
@@ -905,12 +907,14 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         $pos = $this->current_row;
 
         foreach ($this->fetchAllArrayyYield() as $row) {
-            if (!\array_key_exists($group, $row)) {
+            assert($row instanceof \Arrayy\Arrayy);
+
+            if (!$row->offsetExists($group)) {
                 continue;
             }
 
             if ($column !== null) {
-                if (!\array_key_exists($column, $row)) {
+                if (!$row->offsetExists($column)) {
                     continue;
                 }
 
@@ -1013,12 +1017,14 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
         $pos = $this->current_row;
 
         foreach ($this->fetchAllArrayyYield() as $row) {
-            if (!\array_key_exists($key, $row)) {
+            assert($row instanceof \Arrayy\Arrayy);
+
+            if (!$row->offsetExists($key)) {
                 continue;
             }
 
             if ($column !== null) {
-                if (!\array_key_exists($column, $row)) {
+                if (!$row->offsetExists($column)) {
                     continue;
                 }
 

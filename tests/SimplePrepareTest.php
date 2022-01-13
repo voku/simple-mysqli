@@ -22,22 +22,9 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
      */
     protected $tableName = 'test_page';
 
-    /**
-     * @var int
-     */
-    protected $errorLevelOld;
-
     protected function setUpNonVoid()
     {
         $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
-
-        // INFO: we need this because of "bind_param()"
-        $this->errorLevelOld = \error_reporting(\E_ERROR);
-    }
-
-    protected function tearDownNonVoid()
-    {
-        \error_reporting($this->errorLevelOld);
     }
 
     public function testInsertErrorWithBindParamHelper()
@@ -58,7 +45,7 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
         page_type = ?
     ';
 
-        $prepare = new Prepare($this->db, $query);
+        new Prepare($this->db, $query);
     }
 
     public function testInsertErrorWithoutBindParamHelper()
@@ -171,7 +158,7 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
         $this->setUpNonVoid();
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('$query was no string: NULL');
+        $this->expectExceptionMessage('Can not prepare an empty query.');
 
         (new Prepare($this->db, ''))->prepare(null);
     }

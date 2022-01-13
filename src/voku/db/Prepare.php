@@ -55,6 +55,10 @@ final class Prepare extends \mysqli_stmt
         $this->_db = $db;
         $this->_debug = $db->getDebugger();
 
+        if (!$query) {
+            throw new \InvalidArgumentException('Can not prepare an empty query.');
+        }
+
         parent::__construct($db->getLink(), $query);
 
         $this->prepare($query);
@@ -65,12 +69,8 @@ final class Prepare extends \mysqli_stmt
      */
     public function __destruct()
     {
-        try {
-            /** @noinspection PhpUsageOfSilenceOperatorInspection */
-            @$this->close();
-        } catch (\Throwable $e) {
-            // ignore
-        }
+        /** @noinspection PhpUsageOfSilenceOperatorInspection */
+        @$this->close();
     }
 
     /**
@@ -193,7 +193,8 @@ final class Prepare extends \mysqli_stmt
      *                           "true" by e.g. "DROP"-queries<br />
      *                           "false" on error
      */
-    public function execute()
+    #[\ReturnTypeWillChange]
+    public function execute() // TODO: php 8.1 use "?array $params = null" here
     {
         if ($this->_use_bound_parameters_interpolated === true) {
             $this->interpolateQuery();

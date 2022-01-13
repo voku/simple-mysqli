@@ -320,6 +320,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return mixed The current element
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
         return $this->fetchCallable($this->current_row);
@@ -340,6 +341,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return void
      */
+    #[\ReturnTypeWillChange]
     public function next()
     {
         $this->current_row++;
@@ -352,6 +354,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return void
      */
+    #[\ReturnTypeWillChange]
     public function rewind($row = 0)
     {
         if ($this->seek($row)) {
@@ -367,6 +370,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      * @return bool
      *              <p>true on success, false otherwise</p>
      */
+    #[\ReturnTypeWillChange]
     public function seek($row = 0): bool
     {
         if (\is_int($row) && $row >= 0 && $row < $this->num_rows) {
@@ -1492,6 +1496,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return mixed
      */
+    #[\ReturnTypeWillChange]
     public function offsetGet($offset)
     {
         if ($this->offsetExists($offset)) {
@@ -1509,6 +1514,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return void
      */
+    #[\ReturnTypeWillChange]
     public function offsetSet($offset, $value)
     {
     }
@@ -1520,6 +1526,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      *
      * @return void
      */
+    #[\ReturnTypeWillChange]
     public function offsetUnset($offset)
     {
     }

@@ -15,7 +15,7 @@ final class SimpleResultTest extends \PHPUnit\Framework\TestCase
      */
     private $db;
 
-    protected function setUp()
+    protected function setUpNonVoid()
     {
         $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, true);
 
@@ -41,6 +41,8 @@ SQL;
 
     public function testResult()
     {
+        $this->setUpNonVoid();
+
         $result = $this->db->query('SELECT * FROM post ORDER BY id ASC');
         static::assertTrue($result instanceof Result);
 
@@ -54,6 +56,8 @@ SQL;
      */
     public function testSeek($result)
     {
+        $this->setUpNonVoid();
+
         $result->seek(1);
         static::assertSame(2, $result->fetchCallable(null, 'id'));
         $result->seek();
@@ -67,11 +71,15 @@ SQL;
      */
     public function testSeek2($result)
     {
+        $this->setUpNonVoid();
+
         static::assertFalse($result->seek(3));
     }
 
     public function testSeek3()
     {
+        $this->setUpNonVoid();
+
         $result = $this->db->query('SELECT * FROM post WHERE id > 100');
         static::assertFalse($result->seek());
     }
@@ -83,8 +91,14 @@ SQL;
      */
     public function testFetchFields($result)
     {
+        $this->setUpNonVoid();
+
         $fields = $result->fetchFields(true);
-        static::assertInternalType('array', $fields);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $fields);
+        } else {
+            static::assertIsArray($fields);
+        }
         static::assertCount(6, $fields);
     }
 
@@ -95,8 +109,14 @@ SQL;
      */
     public function testFetchCallable($result)
     {
+        $this->setUpNonVoid();
+
         $result->seek();
-        static::assertInternalType('array', $result->fetchCallable());
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $result->fetchCallable());
+        } else {
+            static::assertIsArray($result->fetchCallable());
+        }
         static::assertSame(2, $result->fetchCallable(null, 'id'));
         static::assertSame(3, $result->fetchCallable(2, 'id'));
     }
@@ -108,8 +128,14 @@ SQL;
      */
     public function testFetchExtra($result)
     {
+        $this->setUpNonVoid();
+
         $result->seek();
-        static::assertInternalType('array', $result->fetchAllArray());
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $result->fetchAllArray());
+        } else {
+            static::assertIsArray($result->fetchAllArray());
+        }
         $result->seek();
         static::assertSame(3, $result->fetchColumn('id'));
     }
@@ -121,11 +147,21 @@ SQL;
      */
     public function testFetchAll($result)
     {
+        $this->setUpNonVoid();
+
         $posts = $result->fetchAllArray();
-        static::assertInternalType('array', $posts);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $posts);
+        } else {
+            static::assertIsArray($posts);
+        }
         static::assertCount(3, $posts);
         $post_ids = $result->fetchAllColumn('id');
-        static::assertInternalType('array', $post_ids);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $post_ids);
+        } else {
+            static::assertIsArray($post_ids);
+        }
         static::assertCount(3, $post_ids);
     }
 
@@ -136,6 +172,8 @@ SQL;
      */
     public function testFetchTranspose($result)
     {
+        $this->setUpNonVoid();
+
         $transposed = $result->fetchTranspose();
         static::assertCount(6, $transposed);
         foreach ($transposed as $column => $rows) {
@@ -156,6 +194,8 @@ SQL;
      */
     public function testFetchPairs($result)
     {
+        $this->setUpNonVoid();
+
         $pairs = $result->fetchPairs('id');
         foreach ($pairs as $id => $row) {
             static::assertSame($id, $row['id']);
@@ -174,6 +214,8 @@ SQL;
      */
     public function testFetchGroups($result)
     {
+        $this->setUpNonVoid();
+
         $groups = $result->fetchGroups('id');
         foreach ($groups as $id => $group) {
             static::assertCount(1, $group);
@@ -191,12 +233,20 @@ SQL;
      */
     public function testFirst($result)
     {
-        static::assertInternalType('array', $result->first());
+        $this->setUpNonVoid();
+
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $result->first());
+        } else {
+            static::assertIsArray($result->first());
+        }
         static::assertSame(1, $result->first('id'));
     }
 
     public function testFirst2()
     {
+        $this->setUpNonVoid();
+
         $result = $this->db->query('SELECT * FROM post WHERE id > 100');
         static::assertNull($result->first());
     }
@@ -208,12 +258,20 @@ SQL;
      */
     public function testLast($result)
     {
-        static::assertInternalType('array', $result->last());
+        $this->setUpNonVoid();
+
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $result->last());
+        } else {
+            static::assertIsArray($result->last());
+        }
         static::assertSame(3, $result->last('id'));
     }
 
     public function testLast2()
     {
+        $this->setUpNonVoid();
+
         $result = $this->db->query('SELECT * FROM post WHERE id > 100');
         static::assertNull($result->last());
     }
@@ -225,47 +283,85 @@ SQL;
      */
     public function testSlice($result)
     {
+        $this->setUpNonVoid();
+
         $slice = $result->slice(1);
-        static::assertInternalType('array', $slice);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $slice);
+        } else {
+            static::assertIsArray($slice);
+        }
         static::assertCount(2, $slice);
         static::assertSame(3, $slice[1]['id']);
 
         $slice = $result->slice(-1);
-        static::assertInternalType('array', $slice);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $slice);
+        } else {
+            static::assertIsArray($slice);
+        }
         static::assertCount(1, $slice);
         static::assertSame(3, $slice[0]['id']);
 
         $slice = $result->slice();
-        static::assertInternalType('array', $slice);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $slice);
+        } else {
+            static::assertIsArray($slice);
+        }
         static::assertCount(3, $slice);
         static::assertSame(2, $slice[1]['id']);
 
         $slice = $result->slice(0, 100);
-        static::assertInternalType('array', $slice);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $slice);
+        } else {
+            static::assertIsArray($slice);
+        }
         static::assertCount(3, $slice);
         static::assertSame(2, $slice[1]['id']);
 
         $slice = $result->slice(-100, 100);
-        static::assertInternalType('array', $slice);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $slice);
+        } else {
+            static::assertIsArray($slice);
+        }
         static::assertCount(3, $slice);
         static::assertSame(2, $slice[1]['id']);
 
         $slice = $result->slice(-100);
-        static::assertInternalType('array', $slice);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $slice);
+        } else {
+            static::assertIsArray($slice);
+        }
         static::assertCount(3, $slice);
         static::assertSame(2, $slice[1]['id']);
 
         $slice = $result->slice(100, 100);
-        static::assertInternalType('array', $slice);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $slice);
+        } else {
+            static::assertIsArray($slice);
+        }
         static::assertCount(0, $slice);
 
         $slice = $result->slice(1, 1);
-        static::assertInternalType('array', $slice);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $slice);
+        } else {
+            static::assertIsArray($slice);
+        }
         static::assertCount(1, $slice);
         static::assertSame(2, $slice[0]['id']);
 
         $slice = $result->slice(1, 1, true);
-        static::assertInternalType('array', $slice);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $slice);
+        } else {
+            static::assertIsArray($slice);
+        }
         static::assertCount(1, $slice);
         static::assertSame(2, $slice[1]['id']);
     }
@@ -277,6 +373,8 @@ SQL;
      */
     public function testCount($result)
     {
+        $this->setUpNonVoid();
+
         static::assertSame(3, $result->count());
         static::assertCount(3, $result);
     }
@@ -288,6 +386,8 @@ SQL;
      */
     public function testNumRows($result)
     {
+        $this->setUpNonVoid();
+
         static::assertSame(3, $result->num_rows());
         static::assertSame(3, $result->num_rows);
     }
@@ -299,8 +399,14 @@ SQL;
      */
     public function testIterator($result)
     {
+        $this->setUpNonVoid();
+
         foreach ($result as $row) {
-            static::assertInternalType('array', $row);
+            if (method_exists($this, 'assertInternalType')) {
+                static::assertInternalType('array', $row);
+            } else {
+                static::assertIsArray($row);
+            }
         }
     }
 
@@ -311,6 +417,8 @@ SQL;
      */
     public function testFetchInIterator($result)
     {
+        $this->setUpNonVoid();
+
         foreach ($result as $i => $row) {
             static::assertSame($i + 1, $row['id']);
             static::assertCount(3, $result->fetchAllArray());
@@ -327,19 +435,29 @@ SQL;
      */
     public function testArrayAccess($result)
     {
+        $this->setUpNonVoid();
+
         static::assertTrue(isset($result[0]));
-        static::assertInternalType('array', $result[0]);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $result[0]);
+        } else {
+            static::assertIsArray($result[0]);
+        }
         static::assertSame($result[0]['id'], 1);
     }
 
     public function testFree()
     {
+        $this->setUpNonVoid();
+
         $result = $this->db->query('SELECT * FROM post');
         static::assertTrue($result->free());
     }
 
     public function testIssue46()
     {
+        $this->setUpNonVoid();
+
         $select = $this->db->select('post', ['instrument_id IN' => [0]]);
 
         static::assertCount(3, $select->getArray());
@@ -347,6 +465,8 @@ SQL;
 
     public function testInvokeV1()
     {
+        $this->setUpNonVoid();
+
         $result = $this->db->query('SELECT * FROM post');
         static::assertTrue($result() instanceof \MySQLi_Result);
         $ids = [];
@@ -362,6 +482,8 @@ SQL;
 
     public function testInvokeV2()
     {
+        $this->setUpNonVoid();
+
         $db = $this->db;
         $ids = [];
 
@@ -378,6 +500,8 @@ SQL;
 
     public function testMap()
     {
+        $this->setUpNonVoid();
+
         $result = $this->db->query('SELECT * FROM post');
         $row = $result->fetchCallable(0);
         static::assertFalse($row instanceof \stdClass);

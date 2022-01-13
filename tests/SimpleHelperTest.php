@@ -22,13 +22,15 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
      */
     protected $tableName = 'test_page';
 
-    protected function setUp()
+    protected function setUpNonVoid()
     {
         $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
     }
 
     public function testOptimizeTables()
     {
+        $this->setUpNonVoid();
+
         $result = Helper::optimizeTables([$this->tableName]);
 
         static::assertSame(1, $result);
@@ -36,6 +38,8 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
 
     public function testRepairTables()
     {
+        $this->setUpNonVoid();
+
         $result = Helper::repairTables([$this->tableName]);
 
         static::assertSame(1, $result);
@@ -43,6 +47,8 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
 
     public function testGetDbFields()
     {
+        $this->setUpNonVoid();
+
         // don't use static cache
 
         $dbFields = Helper::getDbFields($this->tableName, false);
@@ -96,6 +102,8 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
 
     public function testCopyTableRow()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new5',
             'page_type'     => 'ö\'ä"ü',
@@ -139,6 +147,8 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
 
     public function testPhoneticSearch()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new5',
             'page_type'     => 'Moelleken',
@@ -185,6 +195,8 @@ final class SimpleHelperTest extends \PHPUnit\Framework\TestCase
 
     public function testPhoneticSearchWithCache()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new5',
             'page_type'     => 'Moelleken',

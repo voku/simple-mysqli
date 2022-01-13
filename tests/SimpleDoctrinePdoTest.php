@@ -25,7 +25,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
      */
     protected $tableName = 'test_page';
 
-    protected function setUp()
+    protected function setUpNonVoid()
     {
         $connectionParams = [
             'dbname'   => 'mysql_test',
@@ -34,7 +34,6 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
             'host'     => 'localhost',
             'driver'   => 'pdo_mysql',
             'charset'  => 'utf8mb4',
-
         ];
         $config = new \Doctrine\DBAL\Configuration();
         $doctrineConnection = \Doctrine\DBAL\DriverManager::getConnection(
@@ -53,6 +52,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testLogQuery()
     {
+        $this->setUpNonVoid();
+
         $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true, '', 'debug');
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
@@ -93,6 +94,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testEchoOnError1()
     {
+        $this->setUpNonVoid();
+
         $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
@@ -104,6 +107,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testEchoOnError4()
     {
+        $this->setUpNonVoid();
+
         $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
@@ -115,6 +120,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testEchoOnError3()
     {
+        $this->setUpNonVoid();
+
         $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
@@ -127,6 +134,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testEchoOnError2()
     {
+        $this->setUpNonVoid();
+
         $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
@@ -149,6 +158,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testExitOnError1()
     {
+        $this->setUpNonVoid();
+
         $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
@@ -163,6 +174,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testExitOnError2()
     {
+        $this->setUpNonVoid();
+
         $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
@@ -173,6 +186,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testGetFalseInstanceV1()
     {
+        $this->setUpNonVoid();
+
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Error connecting to mysql server: Access denied for user \'root\'@\'localhost\' (using password: YES)');
 
@@ -181,22 +196,36 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testGetFalseInstanceV2()
     {
+        $this->setUpNonVoid();
+
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessageRegExp('#Error connecting to mysql server:.*#');
+        if (method_exists($this, 'expectExceptionMessageMatches')) {
+            $this->expectExceptionMessageMatches('#Error connecting to mysql server:.*#');
+        } else {
+            $this->expectExceptionMessageRegExp('#Error connecting to mysql server:.*#');
+        }
 
         DB::getInstance('localhost_lall', 'root123', '', 'mysql_test', '', '', true, false);
     }
 
     public function testGetFalseInstanceV3()
     {
+        $this->setUpNonVoid();
+
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessageRegExp('#Error connecting to mysql server: Unknown database \'mysql_test_foo\'#');
+        if (method_exists($this, 'expectExceptionMessageMatches')) {
+            $this->expectExceptionMessageMatches('#Error connecting to mysql server: Unknown database \'mysql_test_foo\'#');
+        } else {
+            $this->expectExceptionMessageRegExp('#Error connecting to mysql server: Unknown database \'mysql_test_foo\'#');
+        }
 
         DB::getInstance('localhost', 'root', '', 'mysql_test_foo', null, '', true, false);
     }
 
     public function testGetInstance()
     {
+        $this->setUpNonVoid();
+
         $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
@@ -228,6 +257,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testInsertOnlyAndSimple()
     {
+        $this->setUpNonVoid();
+
         // insert - true
         $pageArray = [
             'page_template' => '<p>foo</p>',
@@ -239,6 +270,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testInsertOnlyViaGetContent()
     {
+        $this->setUpNonVoid();
+
         $html = \file_get_contents(__DIR__ . '/fixtures/sample-simple-html.txt');
 
         // insert - true
@@ -252,6 +285,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testInsertBugPregReplace()
     {
+        $this->setUpNonVoid();
+
         // insert - true
         $pageArray = [
             'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
@@ -298,6 +333,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testInsertAndSelectOnlyUtf84mbV1()
     {
+        $this->setUpNonVoid();
+
         $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
         // insert - true
@@ -314,6 +351,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testInsertAndSelectOnlyUtf84mbV2()
     {
+        $this->setUpNonVoid();
+
         $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
         // insert - true
@@ -331,6 +370,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testInsertAndSelectOnlyUtf84mbV3()
     {
+        $this->setUpNonVoid();
+
         $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
         // insert - true
@@ -349,6 +390,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testGetInstanceHostnameException()
     {
+        $this->setUpNonVoid();
+
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('no-sql-hostname');
 
@@ -357,6 +400,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testGetInstanceUsernameException()
     {
+        $this->setUpNonVoid();
+
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('no-sql-username');
 
@@ -365,6 +410,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testGetInstanceDatabaseException()
     {
+        $this->setUpNonVoid();
+
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('no-sql-database');
 
@@ -373,6 +420,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testCharset()
     {
+        $this->setUpNonVoid();
+
         if (Helper::isUtf8mb4Supported($this->db) === true) {
             static::assertSame('utf8mb4', $this->db->get_charset());
         } else {
@@ -391,6 +440,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testInsertUtf84mb()
     {
+        $this->setUpNonVoid();
+
         $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
 
         // insert - true
@@ -409,6 +460,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testBasics()
     {
+        $this->setUpNonVoid();
+
         // insert - true
         $pageArray = [
             'page_template' => 'tpl_new_中',
@@ -628,6 +681,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testQry()
     {
+        $this->setUpNonVoid();
+
         $sql = 'UPDATE ' . $this->db->escape($this->tableName) . "
       SET
         page_template = '?'
@@ -636,7 +691,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
         /** @noinspection StaticInvocationViaThisInspection */
         /** @noinspection PhpStaticAsDynamicMethodCallInspection */
         $result = $this->db->qry($sql, 'tpl_test_?', 1);
-        static::assertSame(1, $result);
+        static::assertSame(0, $result);
 
         $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
       WHERE page_id = 1
@@ -657,6 +712,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testTableExists()
     {
+        $this->setUpNonVoid();
+
         $result = $this->db->table_exists($this->tableName);
         static::assertTrue($result);
 
@@ -668,6 +725,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testNumRows()
     {
+        $this->setUpNonVoid();
+
         $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
       WHERE page_id = 1
     ';
@@ -685,6 +744,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testEscape()
     {
+        $this->setUpNonVoid();
+
         $date = new DateTimeImmutable('2016-08-15 09:22:18');
 
         static::assertSame($date->format('Y-m-d H:i:s'), $this->db->escape($date));
@@ -895,6 +956,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testFormatQuery()
     {
+        $this->setUpNonVoid();
+
         $result = $this->invokeMethod(
             $this->db,
             '_parseQueryParamsByName',
@@ -968,6 +1031,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testConnector()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new',
         ];
@@ -1077,6 +1142,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testTransactionFalse()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new3',
             'page_type'     => 'öäü',
@@ -1136,6 +1203,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testTransactionTrue()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new3',
             'page_type'     => 'öäü',
@@ -1179,6 +1248,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testRollback()
     {
+        $this->setUpNonVoid();
+
         // start - test a transaction
         $this->db->beginTransaction();
 
@@ -1224,19 +1295,39 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetErrors()
     {
+        $this->setUpNonVoid();
+
         // INFO: run all previous tests and generate some errors
 
         $error = $this->db->lastError();
-        static::assertInternalType('string', $error);
-        static::assertContains('Unknown column \'page_lall\' in \'field list', $error);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('string', $error);
+        } else {
+            static::assertIsString($error);
+        }
+        if (method_exists($this, 'assertStringContainsString')) {
+            static::assertStringContainsString('Unknown column \'page_lall\' in \'field list', $error);
+        } else {
+            static::assertContains('Unknown column \'page_lall\' in \'field list', $error);
+        }
 
         $errors = $this->db->getErrors();
-        static::assertInternalType('array', $errors);
-        static::assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $errors);
+        } else {
+            static::assertIsArray($errors);
+        }
+        if (method_exists($this, 'assertStringContainsString')) {
+            static::assertStringContainsString('Unknown column \'page_lall\' in \'field list', $errors[0]);
+        } else {
+            static::assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);
+        }
     }
 
     public function testCommit()
     {
+        $this->setUpNonVoid();
+
         // start - test a transaction
         $this->db->beginTransaction();
 
@@ -1279,6 +1370,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testTransactionException()
     {
+        $this->setUpNonVoid();
+
         // start - test a transaction - true
         $beginTransaction = $this->db->beginTransaction();
         static::assertTrue($beginTransaction);
@@ -1293,6 +1386,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testFetchColumn()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new5',
             'page_type'     => 'öäü',
@@ -1408,6 +1503,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testIsEmpty()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new5',
             'page_type'     => 'öäü',
@@ -1426,6 +1523,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testJson()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new6',
             'page_type'     => 'öäü',
@@ -1443,6 +1542,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testFetchObject()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new7',
             'page_type'     => 'öäü',
@@ -1459,6 +1560,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testDefaultResultType()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new8',
             'page_type'     => 'öäü',
@@ -1497,6 +1600,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testGetAllTables()
     {
+        $this->setUpNonVoid();
+
         $tableArray = $this->db->getAllTables();
 
         $return = false;
@@ -1515,12 +1620,16 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testPing()
     {
+        $this->setUpNonVoid();
+
         $ping = $this->db->ping();
         static::assertTrue($ping);
     }
 
     public function testMultiQuery()
     {
+        $this->setUpNonVoid();
+
         $sql = '
     INSERT INTO ' . $this->tableName . "
       SET
@@ -1545,13 +1654,21 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
     ';
         // multi_query - true
         $result = $this->db->multi_query($sql);
-        static::assertInternalType('array', $result);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $result);
+        } else {
+            static::assertIsArray($result);
+        }
         /** @noinspection ForeachSourceInspection */
         foreach ($result as $resultForEach) {
             /* @var $resultForEach Result */
             $tmpArray = $resultForEach->fetchArray();
 
-            static::assertInternalType('array', $tmpArray);
+            if (method_exists($this, 'assertInternalType')) {
+                static::assertInternalType('array', $tmpArray);
+            } else {
+                static::assertIsArray($tmpArray);
+            }
             static::assertTrue(\count($tmpArray) > 0);
         }
 
@@ -1581,6 +1698,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testEscapeData()
     {
+        $this->setUpNonVoid();
+
         $dbTmp = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
 
         static::assertSame('NULL', $this->db->escape(null, true));
@@ -1611,6 +1730,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testInvoke()
     {
+        $this->setUpNonVoid();
+
         $db = $this->db;
         static::assertInstanceOf('\\voku\\db\\DB', $db());
         static::assertInstanceOf('\\voku\\db\\Result', $db('SELECT * FROM ' . $this->tableName));
@@ -1618,6 +1739,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testConnector2()
     {
+        $this->setUpNonVoid();
+
         // select - true
         $where = [
             'page_type ='         => 'öäü',
@@ -1657,6 +1780,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testExecSQL()
     {
+        $this->setUpNonVoid();
+
         // execSQL - false
         $sql = 'INSERT INTO ' . $this->tableName . "
       SET
@@ -1673,12 +1798,18 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
         page_type = " . $this->db->secure('öäü') . '
     ';
         $return = DB::execSQL($sql);
-        static::assertInternalType('int', $return);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('int', $return);
+        } else {
+            static::assertIsInt($return);
+        }
         static::assertTrue($return > 0);
     }
 
     public function testSecure()
     {
+        $this->setUpNonVoid();
+
         // --- object: DateTime
 
         $date = new DateTimeImmutable('2016-08-15 09:22:18');
@@ -1746,13 +1877,19 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testUtf8Query()
     {
+        $this->setUpNonVoid();
+
         $sql = 'INSERT INTO ' . $this->tableName . "
       SET
         page_template = '" . $this->db->escape(UTF8::urldecode('D%26%23xFC%3Bsseldorf')) . "',
         page_type = '" . $this->db->escape('DÃ¼sseldorf') . "'
     ";
         $return = DB::execSQL($sql);
-        static::assertInternalType('int', $return);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('int', $return);
+        } else {
+            static::assertIsInt($return);
+        }
         static::assertTrue($return > 0);
 
         $data = $this->db->select($this->tableName, 'page_id=' . (int) $return);
@@ -1763,6 +1900,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testQuery()
     {
+        $this->setUpNonVoid();
         //
         // query - true
         //
@@ -2038,6 +2176,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testCache()
     {
+        $this->setUpNonVoid();
+
         $_GET['testCache'] = 1;
 
         // no-cache
@@ -2078,6 +2218,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testQueryErrorHandling()
     {
+        $this->setUpNonVoid();
+
         $this->db->close();
         static::assertFalse($this->db->isReady());
         $this->invokeMethod(
@@ -2113,6 +2255,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testQuoteString()
     {
+        $this->setUpNonVoid();
+
         $testArray = [
             'NOW()'                                  => '`NOW()`',
             'fooo'                                   => '`fooo`',
@@ -2146,6 +2290,8 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
      */
     public function invokeMethod(&$object, $methodName, array $parameters = [])
     {
+        $this->setUpNonVoid();
+
         $reflection = new \ReflectionClass(\get_class($object));
         $method = $reflection->getMethod($methodName);
         $method->setAccessible(true);
@@ -2155,11 +2301,15 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
 
     public function testInstanceOf()
     {
+        $this->setUpNonVoid();
+
         static::assertInstanceOf('voku\db\DB', DB::getInstance());
     }
 
     public function testTransaction()
     {
+        $this->setUpNonVoid();
+
         $tableName = $this->tableName;
 
         // --------------------

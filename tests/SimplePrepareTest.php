@@ -27,7 +27,7 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
      */
     protected $errorLevelOld;
 
-    protected function setUp()
+    protected function setUpNonVoid()
     {
         $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
 
@@ -35,49 +35,43 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
         $this->errorLevelOld = \error_reporting(\E_ERROR);
     }
 
-    protected function tearDown()
+    protected function tearDownNonVoid()
     {
         \error_reporting($this->errorLevelOld);
     }
 
     public function testInsertErrorWithBindParamHelper()
     {
+        $this->setUpNonVoid();
+
+        $this->expectException(\Exception::class);
+        if (method_exists($this, 'expectExceptionMessageMatches')) {
+            $this->expectExceptionMessageMatches('#.*You have an error in your SQL syntax.*#');
+        } else {
+            $this->expectExceptionMessageRegExp('#.*You have an error in your SQL syntax.*#');
+        }
+
         // INFO: "page_template_error" do not exists
         $query = 'INSERT INTO ' . $this->tableName . ' 
       SET 
-        page_template_error = ?, 
+        page_template = , 
         page_type = ?
     ';
 
         $prepare = new Prepare($this->db, $query);
-
-        // -------------
-
-        $template = 'tpl_new_中';
-        $type = 'lall';
-        $prepare->bind_param_debug('ss', $template, $type);
-
-        $result = $prepare->execute();
-
-        static::assertSame('Unknown column \'page_template_error\' in \'field list\'', $prepare->error);
-        static::assertFalse($result);
-
-        // -------------
-
-        // INFO: "$template" and "$type" are references, since we use "bind_param_debug"
-        /** @noinspection PhpUnusedLocalVariableInspection */
-        $template = 'tpl_new_中_123_?';
-        /** @noinspection PhpUnusedLocalVariableInspection */
-        $type = 'lall_foo';
-
-        static::assertSame('Unknown column \'page_template_error\' in \'field list\'', $prepare->error);
-        $result = $prepare->execute();
-
-        static::assertFalse($result);
     }
 
     public function testInsertErrorWithoutBindParamHelper()
     {
+        $this->setUpNonVoid();
+
+        $this->expectException(\Exception::class);
+        if (method_exists($this, 'expectExceptionMessageMatches')) {
+            $this->expectExceptionMessageMatches('#.*Unknown column \'page_template_error\' in \'field list\'.*#');
+        } else {
+            $this->expectExceptionMessageRegExp('#.*Unknown column \'page_template_error\' in \'field list\'.*#');
+        }
+
         // INFO: "page_template_error" do not exists
         $query = 'INSERT INTO ' . $this->tableName . ' 
       SET 
@@ -85,35 +79,13 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
         page_type = ?
     ';
 
-        $prepare = new Prepare($this->db, $query);
-
-        // -------------
-
-        $template = 'tpl_new_中';
-        $type = 'lall';
-        $prepare->bind_param('ss', $template, $type);
-
-        $result = $prepare->execute();
-
-        static::assertSame('Unknown column \'page_template_error\' in \'field list\'', $prepare->error);
-        static::assertFalse($result);
-
-        // -------------
-
-        // INFO: "$template" and "$type" are references, since we use "bind_param_debug"
-        /** @noinspection PhpUnusedLocalVariableInspection */
-        $template = 'tpl_new_中_123_?';
-        /** @noinspection PhpUnusedLocalVariableInspection */
-        $type = 'lall_foo';
-
-        static::assertSame('Unknown column \'page_template_error\' in \'field list\'', $prepare->error);
-        $result = $prepare->execute();
-
-        static::assertFalse($result);
+        new Prepare($this->db, $query);
     }
 
     public function testInsertWithBindParamHelper()
     {
+        $this->setUpNonVoid();
+
         $query = 'INSERT INTO ' . $this->tableName . ' 
           SET 
             page_template = ?, 
@@ -196,6 +168,8 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     public function testSelectWithBindParamHelperNoStringQuery()
     {
+        $this->setUpNonVoid();
+
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('$query was no string: NULL');
 
@@ -204,6 +178,8 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     public function testSelectWithBindParamHelper()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new123123',
             'page_type'     => 'ö\'ä"ü',
@@ -247,6 +223,8 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     public function testSelectWithBindParam()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new123123',
             'page_type'     => 'ö\'ä"ü',
@@ -290,6 +268,8 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     public function testInsertWithBindParamHelperV2()
     {
+        $this->setUpNonVoid();
+
         $query = 'INSERT INTO ' . $this->tableName . ' 
           SET 
             page_template = ?, 
@@ -325,6 +305,8 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     public function testInsertWithoutBindParamHelper()
     {
+        $this->setUpNonVoid();
+
         $query = 'INSERT INTO ' . $this->tableName . ' 
           SET 
             page_template = ?, 
@@ -369,6 +351,8 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     public function testUpdateWithBindParamHelper()
     {
+        $this->setUpNonVoid();
+
         $query = 'UPDATE ' . $this->tableName . ' 
           SET 
             page_template = ?, 
@@ -432,6 +416,8 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     public function testUpdateWithBindParamHelperV2()
     {
+        $this->setUpNonVoid();
+
         $query = 'UPDATE ' . $this->tableName . ' 
           SET 
             page_template = ?, 

@@ -25,7 +25,25 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
      */
     protected $tableName = 'test_page';
 
-    protected function setUp()
+    /**
+     * Call protected/private method of a class.
+     *
+     * @param object &$object     Instantiated object that we will run method on
+     * @param string  $methodName Method name to call
+     * @param array   $parameters array of parameters to pass into method
+     *
+     * @return mixed method return
+     */
+    public function invokeMethod(&$object, $methodName, array $parameters = [])
+    {
+        $reflection = new \ReflectionClass(\get_class($object));
+        $method = $reflection->getMethod($methodName);
+        $method->setAccessible(true);
+
+        return $method->invokeArgs($object, $parameters);
+    }
+
+    protected function setUpNonVoid()
     {
         $connectionParams = [
             'dbname'   => 'mysql_test',
@@ -56,366 +74,15 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
             '',
             [
                 'doctrine' => $doctrineConnection,
+                're_connect' => true,
             ]
         );
-    }
-
-    public function testLogQuery()
-    {
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true, '', 'debug');
-        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
-
-        // sql - true
-        $pageArray = [
-            'page_template' => 'tpl_new_中',
-            'page_type'     => 'lall',
-        ];
-        $tmpId = $db_1->insert($this->tableName, $pageArray);
-        static::assertTrue($tmpId > 0);
-
-        // sql - true v2
-        $pageArray = [
-            'page_template' => 'this_is_a_new_test',
-            'page_type'     => 'fooooo',
-        ];
-        $tmpId = $db_1->insert($this->tableName, $pageArray);
-        static::assertTrue($tmpId > 0);
-
-        // update - true (affected_rows === 1)
-        $pageArray = [
-            'page_template' => 'this_is_a_new_test__update',
-        ];
-        $affected_rows = $this->db->update($this->tableName, $pageArray, 'page_id = ' . (int) $tmpId);
-        static::assertSame(1, $affected_rows);
-
-        // update - true (affected_rows === 0)
-        $pageArray = [
-            'page_template' => 'this_is_a_new_test__update',
-        ];
-        $affected_rows = $this->db->update($this->tableName, $pageArray, 'page_id = -1');
-        static::assertSame(0, $affected_rows);
-
-        // update - false
-        $false = $this->db->update($this->tableName, [], 'page_id = ' . (int) $tmpId);
-        static::assertFalse($false);
-    }
-
-    public function testEchoOnError1()
-    {
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
-
-        // insert - false
-        $false = $db_1->insert($this->tableName, []);
-        $this->expectOutputRegex('/(.)*Invalid data for INSERT(.)*/');
-        static::assertFalse($false);
-    }
-
-    public function testEchoOnError4()
-    {
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
-
-        // sql - false
-        $false = $db_1->query();
-        $this->expectOutputRegex('/(.)*Can not execute an empty query(.)*/');
-        static::assertFalse($false);
-    }
-
-    public function testEchoOnError3()
-    {
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
-
-        // sql - false
-        $false = $db_1->query();
-        $this->expectOutputRegex('/Error:/');
-        static::assertFalse($false);
-    }
-
-    public function testEchoOnError2()
-    {
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
-        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
-
-        // sql - false
-        $false = $db_1->query();
-        $this->expectOutputRegex('/(.)*Can not execute an empty query(.)*/');
-        static::assertFalse($false);
-
-        // close db-connection
-        static::assertTrue($this->db->isReady());
-        static::assertTrue($this->db->close());
-        static::assertFalse($this->db->isReady());
-        static::assertFalse($this->db->close());
-        static::assertFalse($this->db->isReady());
-
-        // insert - false
-        $false = $db_1->query('INSERT INTO lall SET false = 1');
-        static::assertFalse($false);
-    }
-
-    public function testExitOnError1()
-    {
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
-        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
-
-        // insert - false
-        $pageArray = [
-            'page_template' => 'tpl_new_中',
-            'page_type'     => 'lall',
-        ];
-        $false = $db_1->insert('', $pageArray);
-        static::assertFalse($false);
-    }
-
-    public function testExitOnError2()
-    {
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
-        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
-
-        // insert - false
-        $false = $db_1->insert($this->tableName, []);
-        static::assertFalse($false);
-    }
-
-    public function testGetFalseInstanceV1()
-    {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Error connecting to mysql server: Access denied for user \'root\'@\'localhost\' (using password: YES)');
-
-        DB::getInstance('localhost', 'root', 'test', 'mysql_test', '', '', false, false);
-    }
-
-    public function testGetFalseInstanceV2()
-    {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessageRegExp('#Error connecting to mysql server:.*#');
-
-        DB::getInstance('localhost_lall', 'root123', '', 'mysql_test', '', '', true, false);
-    }
-
-    public function testGetFalseInstanceV3()
-    {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessageRegExp('#Error connecting to mysql server: Unknown database \'mysql_test_foo\'#');
-
-        DB::getInstance('localhost', 'root', '', 'mysql_test_foo', null, '', true, false);
-    }
-
-    public function testGetInstance()
-    {
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
-        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
-
-        $db_2 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
-        static::assertInstanceOf('\\voku\\db\\DB', $db_2);
-
-        $db_3 = DB::getInstance('localhost', 'root', '', 'mysql_test', null, '', true, false);
-        static::assertInstanceOf('\\voku\\db\\DB', $db_3);
-
-        $db_4 = DB::getInstance();
-        static::assertInstanceOf('\\voku\\db\\DB', $db_4);
-        $db_4_serial = \serialize($db_4);
-        unset($db_4);
-        $db_4 = \unserialize($db_4_serial);
-        static::assertInstanceOf('\\voku\\db\\DB', $db_4);
-
-        $true = $this->db->connect();
-        static::assertTrue($true);
-
-        $true = $this->db->connect();
-        static::assertTrue($true);
-
-        $true = $this->db->reconnect(false);
-        static::assertTrue($true);
-
-        $true = $this->db->reconnect(true);
-        static::assertTrue($true);
-    }
-
-    public function testInsertOnlyAndSimple()
-    {
-        // insert - true
-        $pageArray = [
-            'page_template' => '<p>foo</p>',
-            'page_type'     => 'lallll',
-        ];
-        $tmpId = $this->db->insert($this->tableName, $pageArray);
-        static::assertTrue($tmpId > 0);
-    }
-
-    public function testInsertOnlyViaGetContent()
-    {
-        $html = \file_get_contents(__DIR__ . '/fixtures/sample-simple-html.txt');
-
-        // insert - true
-        $pageArray = [
-            'page_template' => $html,
-            'page_type'     => 'lallll',
-        ];
-        $tmpId = $this->db->insert($this->tableName, $pageArray);
-        static::assertTrue($tmpId > 0);
-    }
-
-    public function testInsertBugPregReplace()
-    {
-        // insert - true
-        $pageArray = [
-            'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
-            'page_type'     => 'lall',
-        ];
-        $tmpId = $this->db->insert($this->tableName, $pageArray);
-        static::assertTrue($tmpId > 0);
-
-        // select - true
-        $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
-        $tmpPage = $result->fetchObject();
-        static::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
-
-        // select - true
-        foreach ($result as $resultItem) {
-            static::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $resultItem['page_template']);
-        }
-
-        $tmpPage = $result->fetchObject('', null, true);
-        static::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
-
-        // --
-
-        $sql = 'INSERT INTO ' . $this->tableName . '
-      SET
-        page_template = ?,
-        page_type = ?
-    ';
-        $tmpId = $this->db->query(
-            $sql,
-            [
-                '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
-                '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
-            ]
-        );
-
-        // select - true
-        $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
-        $tmpPage = $result->fetchObject();
-        static::assertSame('$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
-        static::assertSame('$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$', $tmpPage->page_type);
-    }
-
-    public function testInsertAndSelectOnlyUtf84mbV1()
-    {
-        $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
-
-        // insert - true
-        $pageArray = [
-            'page_template' => $html,
-            'page_type'     => 'lallll',
-        ];
-        $tmpId = $this->db->insert($this->tableName, $pageArray);
-        static::assertTrue($tmpId > 0);
-
-        // select - true
-        $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
-    }
-
-    public function testInsertAndSelectOnlyUtf84mbV2()
-    {
-        $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
-
-        // insert - true
-        $pageArray = [
-            'page_template' => $html,
-            'page_type'     => 'lallll',
-        ];
-        $tmpId = $this->db->insert($this->tableName, $pageArray);
-        static::assertTrue($tmpId > 0);
-
-        // select - true
-        $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
-        $result->fetchArray();
-    }
-
-    public function testInsertAndSelectOnlyUtf84mbV3()
-    {
-        $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
-
-        // insert - true
-        $pageArray = [
-            'page_template' => $html,
-            'page_type'     => 'lallll',
-        ];
-        $tmpId = $this->db->insert($this->tableName, $pageArray);
-        static::assertTrue($tmpId > 0);
-
-        // select - true
-        $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
-        $tmpPage = $result->fetchArray();
-        static::assertSame('<li><a href="/">鼦վͼ</a></li>' . "\n", $tmpPage['page_template']);
-    }
-
-    public function testGetInstanceHostnameException()
-    {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('no-sql-hostname');
-
-        DB::getInstance('', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
-    }
-
-    public function testGetInstanceUsernameException()
-    {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('no-sql-username');
-
-        DB::getInstance('localhost', '', '', 'mysql_test', 3306, 'utf8', false, false);
-    }
-
-    public function testGetInstanceDatabaseException()
-    {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('no-sql-database');
-
-        DB::getInstance('localhost', 'root', '', '', 3306, 'utf8', false, false);
-    }
-
-    public function testCharset()
-    {
-        if (Helper::isUtf8mb4Supported($this->db) === true) {
-            static::assertSame('utf8mb4', $this->db->get_charset());
-        } else {
-            static::assertSame('utf8', $this->db->get_charset());
-        }
-
-        $return = $this->db->set_charset('utf8');
-        static::assertTrue($return);
-
-        if (Helper::isUtf8mb4Supported($this->db) === true) {
-            static::assertSame('utf8mb4', $this->db->get_charset());
-        } else {
-            static::assertSame('utf8', $this->db->get_charset());
-        }
-    }
-
-    public function testInsertUtf84mb()
-    {
-        $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
-
-        // insert - true
-        $pageArray = [
-            'page_template' => $html,
-            'page_type'     => 'lall',
-        ];
-        $tmpId = $this->db->insert($this->tableName, $pageArray);
-        static::assertTrue($tmpId > 0);
-
-        // select - true
-        $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
-        $tmpPage = $result->fetchObject();
-        static::assertSame('<li><a href="/">鼦վͼ</a></li>' . "\n", $tmpPage->page_template);
     }
 
     public function testBasics()
     {
+        $this->setUpNonVoid();
+
         // insert - true
         $pageArray = [
             'page_template' => 'tpl_new_中',
@@ -633,65 +300,371 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertSame(1, $delete);
     }
 
-    public function testQry()
+    public function testCache()
     {
-        $sql = 'UPDATE ' . $this->db->escape($this->tableName) . "
-      SET
-        page_template = '?'
-      WHERE page_id = ?
-    ";
-        /** @noinspection StaticInvocationViaThisInspection */
-        /** @noinspection PhpStaticAsDynamicMethodCallInspection */
-        $result = $this->db->qry($sql, 'tpl_test_?', 1);
-        static::assertSame(1, $result);
+        $this->setUpNonVoid();
 
-        $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
-      WHERE page_id = 1
-    ';
-        /** @noinspection StaticInvocationViaThisInspection */
-        /** @noinspection PhpStaticAsDynamicMethodCallInspection */
-        $result = $this->db->qry($sql);
-        static::assertSame('tpl_test_?', $result[0]['page_template']);
+        $_GET['testCache'] = 1;
 
-        $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
-      WHERE page_id_lall = 1
-    ';
-        /** @noinspection StaticInvocationViaThisInspection */
-        /** @noinspection PhpStaticAsDynamicMethodCallInspection */
-        $result = $this->db->qry($sql);
-        static::assertFalse($result);
+        // no-cache
+        $sql = 'SELECT * FROM ' . $this->tableName;
+        $result = DB::execSQL($sql, false);
+        if (\count($result) > 0) {
+            $return = true;
+        } else {
+            $return = false;
+        }
+        static::assertTrue($return);
+
+        // set cache
+        $sql = 'SELECT * FROM ' . $this->tableName;
+        $result = DB::execSQL($sql, true);
+        if (\count($result) > 0) {
+            $return = true;
+        } else {
+            $return = false;
+        }
+        static::assertTrue($return);
+
+        $queryCount = $this->db->query_count;
+
+        // use cache
+        $sql = 'SELECT * FROM ' . $this->tableName;
+        $result = DB::execSQL($sql, true);
+        if (\count($result) > 0) {
+            $return = true;
+        } else {
+            $return = false;
+        }
+        static::assertTrue($return);
+
+        // check cache
+        static::assertSame($queryCount, $this->db->query_count);
     }
 
-    public function testTableExists()
+    public function testCharset()
     {
-        $result = $this->db->table_exists($this->tableName);
-        static::assertTrue($result);
+        $this->setUpNonVoid();
 
-        // ---------
+        if (Helper::isUtf8mb4Supported($this->db) === true) {
+            static::assertSame('utf8mb4', $this->db->get_charset());
+        } else {
+            static::assertSame('utf8', $this->db->get_charset());
+        }
 
-        $result = $this->db->table_exists('no_table_name');
-        static::assertFalse($result);
+        $return = $this->db->set_charset('utf8');
+        static::assertTrue($return);
+
+        if (Helper::isUtf8mb4Supported($this->db) === true) {
+            static::assertSame('utf8mb4', $this->db->get_charset());
+        } else {
+            static::assertSame('utf8', $this->db->get_charset());
+        }
     }
 
-    public function testNumRows()
+    public function testCommit()
     {
-        $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
-      WHERE page_id = 1
-    ';
-        $num_rows = $this->db->num_rows($sql);
-        static::assertSame(1, $num_rows);
+        $this->setUpNonVoid();
 
-        // ---------
+        // start - test a transaction
+        $this->db->beginTransaction();
 
-        $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
-      WHERE page_id = -1
-    ';
-        $num_rows = $this->db->num_rows($sql);
-        static::assertSame(0, $num_rows);
+        $data = [
+            'page_template' => 'tpl_test_new4',
+            'page_type'     => 'öäü',
+        ];
+
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
+
+        $data = [
+            'page_type' => 'lall',
+        ];
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+        $this->db->update($this->tableName, $data, $where);
+
+        $data = [
+            'page_type' => 'lall',
+            'page_lall' => 'öäü',
+            // this will produce a mysql-error and a mysqli-rollback
+        ];
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+        $this->db->update($this->tableName, $data, $where);
+
+        // end - test a transaction, with a commit!
+        $this->db->commit();
+
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+        $resultSelect = $this->db->select($this->tableName, $where);
+        static::assertSame(1, $resultSelect->num_rows);
+    }
+
+    public function testConnector()
+    {
+        $this->setUpNonVoid();
+
+        $data = [
+            'page_template' => 'tpl_test_new',
+        ];
+        $where = [
+            'page_id LIKE' => '1',
+        ];
+
+        // will return the number of effected rows
+        $resultUpdate = $this->db->update($this->tableName, $data, $where);
+        static::assertSame(1, $resultUpdate);
+
+        $data = [
+            'page_template' => 'tpl_test_new2',
+            'page_type'     => 'öäü',
+        ];
+
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
+
+        $where = [
+            'page_type ='        => 'öäü',
+            'page_type NOT LIKE' => '%öäü123',
+            'page_id ='          => $resultInsert,
+        ];
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->fetchArray();
+        static::assertSame('öäü', $resultSelectArray['page_type']);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        foreach ($resultSelect->fetchYield() as $resultSelectArray) {
+            static::assertSame('öäü', $resultSelectArray->page_type);
+        }
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->fetchArrayy();
+        static::assertSame('öäü', $resultSelectArray['page_type']);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->fetchArrayy()->clean()->getArray();
+        static::assertSame('öäü', $resultSelectArray['page_type']);
+
+        $where = [
+            'page_type ='  => 'öäü',
+            'page_type <>' => 'öäü123',
+            'page_id >'    => 0,
+            'page_id >='   => 0,
+            'page_id <'    => 1000000,
+            'page_id <='   => 1000000,
+            'page_id ='    => $resultInsert,
+        ];
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->fetchArrayPair('page_type', 'page_type');
+        static::assertSame('öäü', $resultSelectArray['öäü']);
+
+        $where = [
+            'page_type LIKE'     => 'öäü',
+            'page_type NOT LIKE' => 'öäü123',
+            'page_id ='          => $resultInsert,
+        ];
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->fetch();
+        $getDefaultResultType = $resultSelect->getDefaultResultType();
+        static::assertSame('object', $getDefaultResultType);
+        static::assertSame(Result::RESULT_TYPE_OBJECT, $getDefaultResultType);
+        static::assertSame('öäü', $resultSelectArray->page_type);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelect->setDefaultResultType('array'); // switch default result-type
+        $resultSelectArray = $resultSelect->fetch();
+        $getDefaultResultType = $resultSelect->getDefaultResultType();
+        static::assertSame('array', $getDefaultResultType);
+        static::assertSame(Result::RESULT_TYPE_ARRAY, $getDefaultResultType);
+        /** @noinspection OffsetOperationsInspection */
+        static::assertSame('öäü', $resultSelectArray['page_type']);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->fetchArray();
+        static::assertSame('öäü', $resultSelectArray['page_type']);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->get();
+        static::assertSame('öäü', $resultSelectArray->page_type);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->getAll();
+        static::assertSame('öäü', $resultSelectArray[0]->page_type);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->getArray();
+        static::assertSame('öäü', $resultSelectArray[0]['page_type']);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->getObject();
+        static::assertSame('öäü', $resultSelectArray[0]->page_type);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectTmp = $resultSelect->getColumn('page_type');
+        static::assertSame('öäü', $resultSelectTmp);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        static::assertInstanceOf('\\voku\\db\\Result', $resultSelect);
+    }
+
+    public function testConnector2()
+    {
+        $this->setUpNonVoid();
+
+        // select - true
+        $where = [
+            'page_type ='         => 'öäü',
+            'page_type NOT LIKE'  => '%öäü123',
+            'page_id >='          => 0,
+            'page_id NOT BETWEEN' => [
+                '99997',
+                '99999',
+            ],
+            'page_id NOT IN'      => [
+                'test',
+                'test123',
+            ],
+            'page_type IN'        => [
+                'öäü',
+                '123',
+                'abc',
+            ],
+            'page_type OR'        => [
+                'öäü',
+                '123',
+                'abc',
+            ],
+        ];
+        $resultSelect = $this->db->select($this->tableName, $where);
+        static::assertNotFalse($resultSelect, 'tested: ' . \print_r($where, true));
+        static::assertTrue($resultSelect->num_rows > 0);
+
+        // select - false
+        $where = [
+            'page_type IS NOT' => 'lall',
+            'page_type IS'     => 'öäü',
+        ];
+        $resultSelect = $this->db->select($this->tableName, $where);
+        static::assertFalse($resultSelect);
+    }
+
+    public function testDefaultResultType()
+    {
+        $this->setUpNonVoid();
+
+        $data = [
+            'page_template' => 'tpl_test_new8',
+            'page_type'     => 'öäü',
+        ];
+
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
+
+        $resultSelect = $this->db->select($this->tableName, ['page_id' => $resultInsert]);
+
+        // array
+        $resultSelect->setDefaultResultType('array');
+
+        $columnResult = (array) $resultSelect->fetch(true);
+        static::assertSame('tpl_test_new8', $columnResult['page_template']);
+
+        $columnResult = (array) $resultSelect->fetchAll();
+        static::assertSame('tpl_test_new8', $columnResult[0]['page_template']);
+
+        $columnResult = (array) $resultSelect->fetchAllArray();
+        static::assertSame('tpl_test_new8', $columnResult[0]['page_template']);
+
+        // object
+        $resultSelect->setDefaultResultType('object');
+
+        $columnResult = $resultSelect->fetch(true);
+        static::assertSame('tpl_test_new8', $columnResult->page_template);
+
+        $columnResult = $resultSelect->fetchAll();
+        static::assertSame('tpl_test_new8', $columnResult[0]->page_template);
+
+        $columnResult = $resultSelect->fetchAllObject();
+        static::assertSame('tpl_test_new8', $columnResult[0]->page_template);
+    }
+
+    public function testEchoOnError1()
+    {
+        $this->setUpNonVoid();
+
+        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
+
+        // insert - false
+        $false = $db_1->insert($this->tableName, []);
+        $this->expectOutputRegex('/(.)*Invalid data for INSERT(.)*/');
+        static::assertFalse($false);
+    }
+
+    public function testEchoOnError2()
+    {
+        $this->setUpNonVoid();
+
+        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
+
+        // sql - false
+        $false = $db_1->query();
+        $this->expectOutputRegex('/(.)*Can not execute an empty query(.)*/');
+        static::assertFalse($false);
+
+        // close db-connection
+        static::assertTrue($this->db->isReady());
+        static::assertTrue($this->db->close());
+        static::assertFalse($this->db->isReady());
+        static::assertFalse($this->db->close());
+        static::assertFalse($this->db->isReady());
+
+        // insert - false
+        $false = $db_1->query('INSERT INTO lall SET false = 1');
+        static::assertFalse($false);
+    }
+
+    public function testEchoOnError3()
+    {
+        $this->setUpNonVoid();
+
+        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
+
+        // sql - false
+        $false = $db_1->query();
+        $this->expectOutputRegex('/Error:/');
+        static::assertFalse($false);
+    }
+
+    public function testEchoOnError4()
+    {
+        $this->setUpNonVoid();
+
+        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
+
+        // sql - false
+        $false = $db_1->query();
+        $this->expectOutputRegex('/(.)*Can not execute an empty query(.)*/');
+        static::assertFalse($false);
     }
 
     public function testEscape()
     {
+        $this->setUpNonVoid();
+
         $date = new DateTimeImmutable('2016-08-15 09:22:18');
 
         static::assertSame($date->format('Y-m-d H:i:s'), $this->db->escape($date));
@@ -900,404 +873,96 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertSame('http://foobar.com?test=1', $tested);
     }
 
-    public function testFormatQuery()
+    public function testEscapeData()
     {
-        $result = $this->invokeMethod(
-            $this->db,
-            '_parseQueryParamsByName',
-            [
-                'SELECT * FROM post WHERE id = :id',
-                ['id' => 1],
-            ]
-        );
-        static::assertSame(
-            'SELECT * FROM post WHERE id = 1',
-            $result['sql']
-        );
-        static::assertSame(
-            [],
-            $result['params']
-        );
+        $this->setUpNonVoid();
 
-        $result = $this->invokeMethod(
-            $this->db,
-            '_parseQueryParamsByName',
+        static::assertSame('NULL', $this->db->escape(null, true));
+        static::assertSame(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), $this->db->escape("O'Toole"));
+        static::assertSame(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), $this->db->escape("O'Toole", true));
+        static::assertSame(1, $this->db->escape(true));
+        static::assertSame(0, $this->db->escape(false));
+        static::assertSame(1, $this->db->escape(true, false));
+        static::assertSame(0, $this->db->escape(false, false));
+        static::assertSame('NOW()', $this->db->escape('NOW()'));
+        static::assertSame(
             [
-                'SELECT * FROM post WHERE id=:id',
-                ['id' => 1],
-            ]
+                \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
+                1,
+                'NULL',
+            ],
+            $this->db->escape(["O'Toole", true, null])
         );
         static::assertSame(
-            'SELECT * FROM post WHERE id=1',
-            $result['sql']
-        );
-        static::assertSame(
-            [],
-            $result['params']
-        );
-
-        $result = $this->invokeMethod(
-            $this->db,
-            '_parseQueryParamsByName',
             [
-                'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
-                ['id' => 1],
-            ]
-        );
-        static::assertSame(
-            'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
-            $result['sql']
-        );
-        static::assertSame(
-            [],
-            $result['params']
-        );
-
-        $result = $this->invokeMethod(
-            $this->db,
-            '_parseQueryParamsByName',
-            [
-                'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
-                ['id' => 1, 'foo' => 'bar'],
-            ]
-        );
-        static::assertSame(
-            'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
-            $result['sql']
-        );
-        static::assertSame(
-            ['foo' => 'bar'],
-            $result['params']
+                \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
+                1,
+                'NULL',
+            ],
+            $this->db->escape(["O'Toole", true, null], false)
         );
     }
 
-    public function testConnector()
+    public function testExecSQL()
     {
-        $data = [
-            'page_template' => 'tpl_test_new',
-        ];
-        $where = [
-            'page_id LIKE' => '1',
-        ];
+        $this->setUpNonVoid();
 
-        // will return the number of effected rows
-        $resultUpdate = $this->db->update($this->tableName, $data, $where);
-        static::assertSame(1, $resultUpdate);
+        // execSQL - false
+        $sql = 'INSERT INTO ' . $this->tableName . "
+      SET
+        page_template_lall = '" . $this->db->escape('tpl_test_new7') . "',
+        page_type = " . $this->db->secure('öäü') . '
+    ';
+        $return = DB::execSQL($sql);
+        static::assertFalse($return);
 
-        $data = [
-            'page_template' => 'tpl_test_new2',
-            'page_type'     => 'öäü',
-        ];
-
-        // will return the auto-increment value of the new row
-        $resultInsert = $this->db->insert($this->tableName, $data);
-        static::assertGreaterThan(1, $resultInsert);
-
-        $where = [
-            'page_type ='        => 'öäü',
-            'page_type NOT LIKE' => '%öäü123',
-            'page_id ='          => $resultInsert,
-        ];
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->fetchArray();
-        static::assertSame('öäü', $resultSelectArray['page_type']);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        foreach ($resultSelect->fetchYield() as $resultSelectArray) {
-            static::assertSame('öäü', $resultSelectArray->page_type);
+        // execSQL - true
+        $sql = 'INSERT INTO ' . $this->tableName . "
+      SET
+        page_template = '" . $this->db->escape('tpl_test_new7') . "',
+        page_type = " . $this->db->secure('öäü') . '
+    ';
+        $return = DB::execSQL($sql);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('int', $return);
+        } else {
+            static::assertIsInt($return);
         }
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->fetchArrayy();
-        static::assertSame('öäü', $resultSelectArray['page_type']);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->fetchArrayy()->clean()->getArray();
-        static::assertSame('öäü', $resultSelectArray['page_type']);
-
-        $where = [
-            'page_type ='  => 'öäü',
-            'page_type <>' => 'öäü123',
-            'page_id >'    => 0,
-            'page_id >='   => 0,
-            'page_id <'    => 1000000,
-            'page_id <='   => 1000000,
-            'page_id ='    => $resultInsert,
-        ];
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->fetchArrayPair('page_type', 'page_type');
-        static::assertSame('öäü', $resultSelectArray['öäü']);
-
-        $where = [
-            'page_type LIKE'     => 'öäü',
-            'page_type NOT LIKE' => 'öäü123',
-            'page_id ='          => $resultInsert,
-        ];
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->fetch();
-        $getDefaultResultType = $resultSelect->getDefaultResultType();
-        static::assertSame('object', $getDefaultResultType);
-        static::assertSame(Result::RESULT_TYPE_OBJECT, $getDefaultResultType);
-        static::assertSame('öäü', $resultSelectArray->page_type);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelect->setDefaultResultType('array'); // switch default result-type
-        $resultSelectArray = $resultSelect->fetch();
-        $getDefaultResultType = $resultSelect->getDefaultResultType();
-        static::assertSame('array', $getDefaultResultType);
-        static::assertSame(Result::RESULT_TYPE_ARRAY, $getDefaultResultType);
-        /** @noinspection OffsetOperationsInspection */
-        static::assertSame('öäü', $resultSelectArray['page_type']);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->fetchArray();
-        static::assertSame('öäü', $resultSelectArray['page_type']);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->get();
-        static::assertSame('öäü', $resultSelectArray->page_type);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->getAll();
-        static::assertSame('öäü', $resultSelectArray[0]->page_type);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->getArray();
-        static::assertSame('öäü', $resultSelectArray[0]['page_type']);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->getObject();
-        static::assertSame('öäü', $resultSelectArray[0]->page_type);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectTmp = $resultSelect->getColumn('page_type');
-        static::assertSame('öäü', $resultSelectTmp);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        static::assertInstanceOf('\\voku\\db\\Result', $resultSelect);
+        static::assertTrue($return > 0);
     }
 
-    public function testTransactionFalse()
+    public function testExitOnError1()
     {
-        $data = [
-            'page_template' => 'tpl_test_new3',
-            'page_type'     => 'öäü',
-        ];
+        $this->setUpNonVoid();
 
-        // will return the auto-increment value of the new row
-        $resultInsert = $this->db->insert($this->tableName, $data);
-        static::assertGreaterThan(1, $resultInsert);
+        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
+        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
-        // start - test a transaction - true
-        $beginTransaction = $this->db->beginTransaction();
-        static::assertTrue($beginTransaction);
-
-        $data = [
-            'page_type' => 'lall',
-        ];
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-        $this->db->update($this->tableName, $data, $where);
-
-        $data = [
-            'page_type' => 'lall',
-            'page_lall' => 'öäü',
-            // this will produce a mysql-error and a mysqli-rollback via "db->endTransaction()"
-        ];
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-        $this->db->update($this->tableName, $data, $where);
-
-        // end - test a transaction
-        $this->db->endTransaction();
-
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->fetchAllArray();
-        static::assertSame('öäü', $resultSelectArray[0]['page_type']);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->fetchAllArrayy()->filterBy('page_type', 'öäü')->first();
-        static::assertSame('öäü', $resultSelectArray['page_type']);
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        foreach ($resultSelect->fetchAllYield('Foobar') as $tmpResult) {
-            static::assertSame('öäü', $tmpResult->page_type);
-        }
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        foreach ($resultSelect->fetchAllYield() as $tmpResult) {
-            static::assertSame('öäü', $tmpResult->page_type);
-        }
-    }
-
-    public function testTransactionTrue()
-    {
-        $data = [
-            'page_template' => 'tpl_test_new3',
-            'page_type'     => 'öäü',
-        ];
-
-        // will return the auto-increment value of the new row
-        $resultInsert = $this->db->insert($this->tableName, $data);
-        static::assertGreaterThan(1, $resultInsert);
-
-        // start - test a transaction
-        $this->db->startTransaction();
-
-        $data = [
-            'page_type' => 'lall',
-        ];
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-        $this->db->update($this->tableName, $data, $where);
-
-        $data = [
+        // insert - false
+        $pageArray = [
+            'page_template' => 'tpl_new_中',
             'page_type'     => 'lall',
-            'page_template' => 'öäü',
         ];
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-        $this->db->update($this->tableName, $data, $where);
-
-        // end - test a transaction
-        $this->db->endTransaction();
-
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-
-        $resultSelect = $this->db->select($this->tableName, $where);
-        $resultSelectArray = $resultSelect->fetchAllArray();
-        static::assertSame('lall', $resultSelectArray[0]['page_type']);
+        $false = $db_1->insert('', $pageArray);
+        static::assertFalse($false);
     }
 
-    public function testRollback()
+    public function testExitOnError2()
     {
-        // start - test a transaction
-        $this->db->beginTransaction();
+        $this->setUpNonVoid();
 
-        $data = [
-            'page_template' => 'tpl_test_new4',
-            'page_type'     => 'öäü',
-        ];
+        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
+        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
-        // will return the auto-increment value of the new row
-        $resultInsert = $this->db->insert($this->tableName, $data);
-        static::assertGreaterThan(1, $resultInsert);
-
-        $data = [
-            'page_type' => 'lall',
-        ];
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-        $this->db->update($this->tableName, $data, $where);
-
-        $data = [
-            'page_type' => 'lall',
-            'page_lall' => 'öäü',
-            // this will produce a mysql-error and a mysqli-rollback
-        ];
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-        $this->db->update($this->tableName, $data, $where);
-
-        // end - test a transaction, with a rollback!
-        $this->db->rollback();
-
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-        $resultSelect = $this->db->select($this->tableName, $where);
-        static::assertSame(0, $resultSelect->num_rows);
-    }
-
-    /**
-     * @depends testRollback
-     */
-    public function testGetErrors()
-    {
-        // INFO: run all previous tests and generate some errors
-
-        $error = $this->db->lastError();
-        static::assertInternalType('string', $error);
-        static::assertContains('Unknown column \'page_lall\' in \'field list', $error);
-
-        $errors = $this->db->getErrors();
-        static::assertInternalType('array', $errors);
-        static::assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);
-    }
-
-    public function testCommit()
-    {
-        // start - test a transaction
-        $this->db->beginTransaction();
-
-        $data = [
-            'page_template' => 'tpl_test_new4',
-            'page_type'     => 'öäü',
-        ];
-
-        // will return the auto-increment value of the new row
-        $resultInsert = $this->db->insert($this->tableName, $data);
-        static::assertGreaterThan(1, $resultInsert);
-
-        $data = [
-            'page_type' => 'lall',
-        ];
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-        $this->db->update($this->tableName, $data, $where);
-
-        $data = [
-            'page_type' => 'lall',
-            'page_lall' => 'öäü',
-            // this will produce a mysql-error and a mysqli-rollback
-        ];
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-        $this->db->update($this->tableName, $data, $where);
-
-        // end - test a transaction, with a commit!
-        $this->db->commit();
-
-        $where = [
-            'page_id' => $resultInsert,
-        ];
-        $resultSelect = $this->db->select($this->tableName, $where);
-        static::assertSame(1, $resultSelect->num_rows);
-    }
-
-    public function testTransactionException()
-    {
-        // start - test a transaction - true
-        $beginTransaction = $this->db->beginTransaction();
-        static::assertTrue($beginTransaction);
-
-        // start - test a transaction - false
-        $beginTransaction = $this->db->beginTransaction();
-        static::assertFalse($beginTransaction);
-
-        // reset
-        $this->db->endTransaction();
+        // insert - false
+        $false = $db_1->insert($this->tableName, []);
+        static::assertFalse($false);
     }
 
     public function testFetchColumn()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new5',
             'page_type'     => 'öäü',
@@ -1411,8 +1076,464 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertSame(['tpl_test_new5', 'tpl_test_new5V2'], $columnResult);
     }
 
+    public function testFetchObject()
+    {
+        $this->setUpNonVoid();
+
+        $data = [
+            'page_template' => 'tpl_test_new7',
+            'page_type'     => 'öäü',
+        ];
+
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
+
+        $resultSelect = $this->db->select($this->tableName, ['page_id' => $resultInsert]);
+        $columnResult = $resultSelect->fetchObject();
+        static::assertSame('tpl_test_new7', $columnResult->page_template);
+    }
+
+    public function testFormatQuery()
+    {
+        $this->setUpNonVoid();
+
+        $result = $this->invokeMethod(
+            $this->db,
+            '_parseQueryParamsByName',
+            [
+                'SELECT * FROM post WHERE id = :id',
+                ['id' => 1],
+            ]
+        );
+        static::assertSame(
+            'SELECT * FROM post WHERE id = 1',
+            $result['sql']
+        );
+        static::assertSame(
+            [],
+            $result['params']
+        );
+
+        $result = $this->invokeMethod(
+            $this->db,
+            '_parseQueryParamsByName',
+            [
+                'SELECT * FROM post WHERE id=:id',
+                ['id' => 1],
+            ]
+        );
+        static::assertSame(
+            'SELECT * FROM post WHERE id=1',
+            $result['sql']
+        );
+        static::assertSame(
+            [],
+            $result['params']
+        );
+
+        $result = $this->invokeMethod(
+            $this->db,
+            '_parseQueryParamsByName',
+            [
+                'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
+                ['id' => 1],
+            ]
+        );
+        static::assertSame(
+            'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
+            $result['sql']
+        );
+        static::assertSame(
+            [],
+            $result['params']
+        );
+
+        $result = $this->invokeMethod(
+            $this->db,
+            '_parseQueryParamsByName',
+            [
+                'SELECT * FROM post WHERE id = ' . "\n" . '  :id;',
+                ['id' => 1, 'foo' => 'bar'],
+            ]
+        );
+        static::assertSame(
+            'SELECT * FROM post WHERE id = ' . "\n" . '  1;',
+            $result['sql']
+        );
+        static::assertSame(
+            ['foo' => 'bar'],
+            $result['params']
+        );
+    }
+
+    public function testGetAllTables()
+    {
+        $this->setUpNonVoid();
+
+        $tableArray = $this->db->getAllTables();
+
+        $return = false;
+        foreach ($tableArray as $table) {
+            assert($table instanceof \Arrayy\Arrayy);
+
+            if ($table->contains($this->tableName)) {
+                $return = true;
+
+                break;
+            }
+        }
+
+        static::assertTrue($return);
+    }
+
+    public function testRollback()
+    {
+        $this->setUpNonVoid();
+
+        // start - test a transaction
+        $this->db->beginTransaction();
+
+        $data = [
+            'page_template' => 'tpl_test_new4',
+            'page_type'     => 'öäü',
+        ];
+
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
+
+        $data = [
+            'page_type' => 'lall',
+        ];
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+        $this->db->update($this->tableName, $data, $where);
+
+        $data = [
+            'page_type' => 'lall',
+            'page_lall' => 'öäü',
+            // this will produce a mysql-error and a mysqli-rollback
+        ];
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+        $this->db->update($this->tableName, $data, $where);
+
+        // end - test a transaction, with a rollback!
+        $this->db->rollback();
+
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+        $resultSelect = $this->db->select($this->tableName, $where);
+        static::assertSame(0, $resultSelect->num_rows);
+    }
+
+    /**
+     * @depends testRollback
+     */
+    public function testGetErrors()
+    {
+        $this->setUpNonVoid();
+
+        // INFO: run all previous tests and generate some errors
+
+        $error = $this->db->lastError();
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('string', $error);
+        } else {
+            static::assertIsString($error);
+        }
+        if (method_exists($this, 'assertStringContainsString')) {
+            static::assertStringContainsString('Unknown column \'page_lall\' in \'field list', $error);
+        } else {
+            static::assertContains('Unknown column \'page_lall\' in \'field list', $error);
+        }
+
+        $errors = $this->db->getErrors();
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $errors);
+        } else {
+            static::assertIsArray($errors);
+        }
+        if (method_exists($this, 'assertStringContainsString')) {
+            static::assertStringContainsString('Unknown column \'page_lall\' in \'field list', $errors[0]);
+        } else {
+            static::assertContains('Unknown column \'page_lall\' in \'field list', $errors[0]);
+        }
+    }
+
+    public function testGetFalseInstanceV1()
+    {
+        $this->setUpNonVoid();
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Error connecting to mysql server: Access denied for user \'root\'@\'localhost\' (using password: YES)');
+
+        DB::getInstance('localhost', 'root', 'test', 'mysql_test', '', '', false, false);
+    }
+
+    public function testGetFalseInstanceV2()
+    {
+        $this->setUpNonVoid();
+
+        $this->expectException(\Exception::class);
+        if (method_exists($this, 'expectExceptionMessageMatches')) {
+            $this->expectExceptionMessageMatches('#Error connecting to mysql server:.*#');
+        } else {
+            $this->expectExceptionMessageRegExp('#Error connecting to mysql server:.*#');
+        }
+
+        DB::getInstance('localhost_lall', 'root123', '', 'mysql_test', '', '', true, false);
+    }
+
+    public function testGetFalseInstanceV3()
+    {
+        $this->setUpNonVoid();
+
+        $this->expectException(\Exception::class);
+        if (method_exists($this, 'expectExceptionMessageMatches')) {
+            $this->expectExceptionMessageMatches('#Error connecting to mysql server: Unknown database \'mysql_test_foo\'#');
+        } else {
+            $this->expectExceptionMessageRegExp('#Error connecting to mysql server: Unknown database \'mysql_test_foo\'#');
+        }
+
+        DB::getInstance('localhost', 'root', '', 'mysql_test_foo', null, '', true, false);
+    }
+
+    public function testGetInstance()
+    {
+        $this->setUpNonVoid();
+
+        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
+        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
+
+        $db_2 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
+        static::assertInstanceOf('\\voku\\db\\DB', $db_2);
+
+        $db_3 = DB::getInstance('localhost', 'root', '', 'mysql_test', null, '', true, false);
+        static::assertInstanceOf('\\voku\\db\\DB', $db_3);
+
+        $db_4 = DB::getInstance();
+        static::assertInstanceOf('\\voku\\db\\DB', $db_4);
+        $db_4_serial = \serialize($db_4);
+        unset($db_4);
+        $db_4 = \unserialize($db_4_serial);
+        static::assertInstanceOf('\\voku\\db\\DB', $db_4);
+
+        $true = $this->db->connect();
+        static::assertTrue($true);
+
+        $true = $this->db->connect();
+        static::assertTrue($true);
+
+        $true = $this->db->reconnect(false);
+        static::assertTrue($true);
+
+        $true = $this->db->reconnect(true);
+        static::assertTrue($true);
+    }
+
+    public function testGetInstanceDatabaseException()
+    {
+        $this->setUpNonVoid();
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('no-sql-database');
+
+        DB::getInstance('localhost', 'root', '', '', 3306, 'utf8', false, false);
+    }
+
+    public function testGetInstanceHostnameException()
+    {
+        $this->setUpNonVoid();
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('no-sql-hostname');
+
+        DB::getInstance('', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
+    }
+
+    public function testGetInstanceUsernameException()
+    {
+        $this->setUpNonVoid();
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('no-sql-username');
+
+        DB::getInstance('localhost', '', '', 'mysql_test', 3306, 'utf8', false, false);
+    }
+
+    public function testInsertAndSelectOnlyUtf84mbV1()
+    {
+        $this->setUpNonVoid();
+
+        $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+
+        // insert - true
+        $pageArray = [
+            'page_template' => $html,
+            'page_type'     => 'lallll',
+        ];
+        $tmpId = $this->db->insert($this->tableName, $pageArray);
+        static::assertTrue($tmpId > 0);
+
+        // select - true
+        $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
+    }
+
+    public function testInsertAndSelectOnlyUtf84mbV2()
+    {
+        $this->setUpNonVoid();
+
+        $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+
+        // insert - true
+        $pageArray = [
+            'page_template' => $html,
+            'page_type'     => 'lallll',
+        ];
+        $tmpId = $this->db->insert($this->tableName, $pageArray);
+        static::assertTrue($tmpId > 0);
+
+        // select - true
+        $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
+        $result->fetchArray();
+    }
+
+    public function testInsertAndSelectOnlyUtf84mbV3()
+    {
+        $this->setUpNonVoid();
+        $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+
+        // insert - true
+        $pageArray = [
+            'page_template' => $html,
+            'page_type'     => 'lallll',
+        ];
+        $tmpId = $this->db->insert($this->tableName, $pageArray);
+        static::assertTrue($tmpId > 0);
+
+        // select - true
+        $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
+        $tmpPage = $result->fetchArray();
+        static::assertSame('<li><a href="/">鼦վͼ</a></li>' . "\n", $tmpPage['page_template']);
+    }
+
+    public function testInsertBugPregReplace()
+    {
+        $this->setUpNonVoid();
+
+        // insert - true
+        $pageArray = [
+            'page_template' => '$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
+            'page_type'     => 'lall',
+        ];
+        $tmpId = $this->db->insert($this->tableName, $pageArray);
+        static::assertTrue($tmpId > 0);
+
+        // select - true
+        $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
+        $tmpPage = $result->fetchObject();
+        static::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
+
+        // select - true
+        foreach ($result as $resultItem) {
+            static::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $resultItem['page_template']);
+        }
+
+        $tmpPage = $result->fetchObject('', null, true);
+        static::assertSame('$2y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
+
+        // --
+
+        $sql = 'INSERT INTO ' . $this->tableName . '
+      SET
+        page_template = ?,
+        page_type = ?
+    ';
+        $tmpId = $this->db->query(
+            $sql,
+            [
+                '$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC',
+                '$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$',
+            ]
+        );
+
+        // select - true
+        $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
+        $tmpPage = $result->fetchObject();
+        static::assertSame('$2y$10$HURk5OhFbsJV5G?mLHtBgKeD1Ul86Saa4YnWE4vhlc79kWlCpeiHBC', $tmpPage->page_template);
+        static::assertSame('$0y$10$HURk5OhFbsJV5GmLHtBgKeD1Ul86Saa4YnWE4v?hlc79kWlCpeiHBC$', $tmpPage->page_type);
+    }
+
+    public function testInsertOnlyAndSimple()
+    {
+        $this->setUpNonVoid();
+
+        // insert - true
+        $pageArray = [
+            'page_template' => '<p>foo</p>',
+            'page_type'     => 'lallll',
+        ];
+        $tmpId = $this->db->insert($this->tableName, $pageArray);
+        static::assertTrue($tmpId > 0);
+    }
+
+    public function testInsertOnlyViaGetContent()
+    {
+        $this->setUpNonVoid();
+
+        $html = \file_get_contents(__DIR__ . '/fixtures/sample-simple-html.txt');
+
+        // insert - true
+        $pageArray = [
+            'page_template' => $html,
+            'page_type'     => 'lallll',
+        ];
+        $tmpId = $this->db->insert($this->tableName, $pageArray);
+        static::assertTrue($tmpId > 0);
+    }
+
+    public function testInsertUtf84mb()
+    {
+        $this->setUpNonVoid();
+
+        $html = UTF8::clean(\file_get_contents(__DIR__ . '/fixtures/sample-html.txt'), true, true, true);
+
+        // insert - true
+        $pageArray = [
+            'page_template' => $html,
+            'page_type'     => 'lall',
+        ];
+        $tmpId = $this->db->insert($this->tableName, $pageArray);
+        static::assertTrue($tmpId > 0);
+
+        // select - true
+        $result = $this->db->select($this->tableName, 'page_id = ' . (int) $tmpId);
+        $tmpPage = $result->fetchObject();
+        static::assertSame('<li><a href="/">鼦վͼ</a></li>' . "\n", $tmpPage->page_template);
+    }
+
+    public function testInstanceOf()
+    {
+        $this->setUpNonVoid();
+
+        static::assertInstanceOf('voku\db\DB', DB::getInstance());
+    }
+
+    public function testInvoke()
+    {
+        $this->setUpNonVoid();
+
+        $db = $this->db;
+        static::assertInstanceOf('\\voku\\db\\DB', $db());
+        static::assertInstanceOf('\\voku\\db\\Result', $db('SELECT * FROM ' . $this->tableName));
+    }
+
     public function testIsEmpty()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new5',
             'page_type'     => 'öäü',
@@ -1431,6 +1552,8 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
 
     public function testJson()
     {
+        $this->setUpNonVoid();
+
         $data = [
             'page_template' => 'tpl_test_new6',
             'page_type'     => 'öäü',
@@ -1446,86 +1569,52 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertSame('tpl_test_new6', $columnResultDecode[0]['page_template']);
     }
 
-    public function testFetchObject()
+    public function testLogQuery()
     {
-        $data = [
-            'page_template' => 'tpl_test_new7',
-            'page_type'     => 'öäü',
+        $this->setUpNonVoid();
+
+        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true, '', 'debug');
+        static::assertInstanceOf('\\voku\\db\\DB', $db_1);
+
+        // sql - true
+        $pageArray = [
+            'page_template' => 'tpl_new_中',
+            'page_type'     => 'lall',
         ];
+        $tmpId = $db_1->insert($this->tableName, $pageArray);
+        static::assertTrue($tmpId > 0);
 
-        // will return the auto-increment value of the new row
-        $resultInsert = $this->db->insert($this->tableName, $data);
-        static::assertGreaterThan(1, $resultInsert);
-
-        $resultSelect = $this->db->select($this->tableName, ['page_id' => $resultInsert]);
-        $columnResult = $resultSelect->fetchObject();
-        static::assertSame('tpl_test_new7', $columnResult->page_template);
-    }
-
-    public function testDefaultResultType()
-    {
-        $data = [
-            'page_template' => 'tpl_test_new8',
-            'page_type'     => 'öäü',
+        // sql - true v2
+        $pageArray = [
+            'page_template' => 'this_is_a_new_test',
+            'page_type'     => 'fooooo',
         ];
+        $tmpId = $db_1->insert($this->tableName, $pageArray);
+        static::assertTrue($tmpId > 0);
 
-        // will return the auto-increment value of the new row
-        $resultInsert = $this->db->insert($this->tableName, $data);
-        static::assertGreaterThan(1, $resultInsert);
+        // update - true (affected_rows === 1)
+        $pageArray = [
+            'page_template' => 'this_is_a_new_test__update',
+        ];
+        $affected_rows = $this->db->update($this->tableName, $pageArray, 'page_id = ' . (int) $tmpId);
+        static::assertSame(1, $affected_rows);
 
-        $resultSelect = $this->db->select($this->tableName, ['page_id' => $resultInsert]);
+        // update - true (affected_rows === 0)
+        $pageArray = [
+            'page_template' => 'this_is_a_new_test__update',
+        ];
+        $affected_rows = $this->db->update($this->tableName, $pageArray, 'page_id = -1');
+        static::assertSame(0, $affected_rows);
 
-        // array
-        $resultSelect->setDefaultResultType('array');
-
-        $columnResult = (array) $resultSelect->fetch(true);
-        static::assertSame('tpl_test_new8', $columnResult['page_template']);
-
-        $columnResult = (array) $resultSelect->fetchAll();
-        static::assertSame('tpl_test_new8', $columnResult[0]['page_template']);
-
-        $columnResult = (array) $resultSelect->fetchAllArray();
-        static::assertSame('tpl_test_new8', $columnResult[0]['page_template']);
-
-        // object
-        $resultSelect->setDefaultResultType('object');
-
-        $columnResult = $resultSelect->fetch(true);
-        static::assertSame('tpl_test_new8', $columnResult->page_template);
-
-        $columnResult = $resultSelect->fetchAll();
-        static::assertSame('tpl_test_new8', $columnResult[0]->page_template);
-
-        $columnResult = $resultSelect->fetchAllObject();
-        static::assertSame('tpl_test_new8', $columnResult[0]->page_template);
-    }
-
-    public function testGetAllTables()
-    {
-        $tableArray = $this->db->getAllTables();
-
-        $return = false;
-        foreach ($tableArray as $table) {
-            assert($table instanceof \Arrayy\Arrayy);
-
-            if ($table->contains($this->tableName)) {
-                $return = true;
-
-                break;
-            }
-        }
-
-        static::assertTrue($return);
-    }
-
-    public function testPing()
-    {
-        $ping = $this->db->ping();
-        static::assertTrue($ping);
+        // update - false
+        $false = $this->db->update($this->tableName, [], 'page_id = ' . (int) $tmpId);
+        static::assertFalse($false);
     }
 
     public function testMultiQuery()
     {
+        $this->setUpNonVoid();
+
         $sql = '
     INSERT INTO ' . $this->tableName . "
       SET
@@ -1550,13 +1639,21 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
     ';
         // multi_query - true
         $result = $this->db->multi_query($sql);
-        static::assertInternalType('array', $result);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('array', $result);
+        } else {
+            static::assertIsArray($result);
+        }
         /** @noinspection ForeachSourceInspection */
         foreach ($result as $resultForEach) {
             /* @var $resultForEach Result */
             $tmpArray = $resultForEach->fetchArray();
 
-            static::assertInternalType('array', $tmpArray);
+            if (method_exists($this, 'assertInternalType')) {
+                static::assertInternalType('array', $tmpArray);
+            } else {
+                static::assertIsArray($tmpArray);
+            }
             static::assertTrue(\count($tmpArray) > 0);
         }
 
@@ -1584,188 +1681,68 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertFalse($result);
     }
 
-    public function testEscapeData()
+    public function testNumRows()
     {
-        static::assertSame('NULL', $this->db->escape(null, true));
-        static::assertSame(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), $this->db->escape("O'Toole"));
-        static::assertSame(\mysqli_real_escape_string($this->db->getLink(), "O'Toole"), $this->db->escape("O'Toole", true));
-        static::assertSame(1, $this->db->escape(true));
-        static::assertSame(0, $this->db->escape(false));
-        static::assertSame(1, $this->db->escape(true, false));
-        static::assertSame(0, $this->db->escape(false, false));
-        static::assertSame('NOW()', $this->db->escape('NOW()'));
-        static::assertSame(
-            [
-                \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
-                1,
-                'NULL',
-            ],
-            $this->db->escape(["O'Toole", true, null])
-        );
-        static::assertSame(
-            [
-                \mysqli_real_escape_string($this->db->getLink(), "O'Toole"),
-                1,
-                'NULL',
-            ],
-            $this->db->escape(["O'Toole", true, null], false)
-        );
-    }
+        $this->setUpNonVoid();
 
-    public function testInvoke()
-    {
-        $db = $this->db;
-        static::assertInstanceOf('\\voku\\db\\DB', $db());
-        static::assertInstanceOf('\\voku\\db\\Result', $db('SELECT * FROM ' . $this->tableName));
-    }
-
-    public function testConnector2()
-    {
-        // select - true
-        $where = [
-            'page_type ='         => 'öäü',
-            'page_type NOT LIKE'  => '%öäü123',
-            'page_id >='          => 0,
-            'page_id NOT BETWEEN' => [
-                '99997',
-                '99999',
-            ],
-            'page_id NOT IN' => [
-                'test',
-                'test123',
-            ],
-            'page_type IN' => [
-                'öäü',
-                '123',
-                'abc',
-            ],
-            'page_type OR' => [
-                'öäü',
-                '123',
-                'abc',
-            ],
-        ];
-        $resultSelect = $this->db->select($this->tableName, $where);
-        static::assertNotFalse($resultSelect, 'tested: ' . \print_r($where, true));
-        static::assertTrue($resultSelect->num_rows > 0);
-
-        // select - false
-        $where = [
-            'page_type IS NOT' => 'lall',
-            'page_type IS'     => 'öäü',
-        ];
-        $resultSelect = $this->db->select($this->tableName, $where);
-        static::assertFalse($resultSelect);
-    }
-
-    public function testExecSQL()
-    {
-        // execSQL - false
-        $sql = 'INSERT INTO ' . $this->tableName . "
-      SET
-        page_template_lall = '" . $this->db->escape('tpl_test_new7') . "',
-        page_type = " . $this->db->secure('öäü') . '
+        $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
+      WHERE page_id = 1
     ';
-        $return = DB::execSQL($sql);
-        static::assertFalse($return);
+        $num_rows = $this->db->num_rows($sql);
+        static::assertSame(1, $num_rows);
 
-        // execSQL - true
-        $sql = 'INSERT INTO ' . $this->tableName . "
-      SET
-        page_template = '" . $this->db->escape('tpl_test_new7') . "',
-        page_type = " . $this->db->secure('öäü') . '
+        // ---------
+
+        $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
+      WHERE page_id = -1
     ';
-        $return = DB::execSQL($sql);
-        static::assertInternalType('int', $return);
-        static::assertTrue($return > 0);
+        $num_rows = $this->db->num_rows($sql);
+        static::assertSame(0, $num_rows);
     }
 
-    public function testSecure()
+    public function testPing()
     {
-        // --- object: DateTime
+        $this->setUpNonVoid();
 
-        $date = new DateTimeImmutable('2016-08-15 09:22:18');
-
-        static::assertSame("'" . $date->format('Y-m-d H:i:s') . "'", $this->db->secure($date));
-
-        // --- object: stdClass
-
-        $object = new stdClass();
-        $object->bar = 'foo';
-
-        $errorCatch = false;
-
-        try {
-            $this->db->secure($object);
-        } catch (InvalidArgumentException $e) {
-            $errorCatch = true;
-        }
-        static::assertTrue($errorCatch);
-
-        // --- object: Arrayy
-
-        $object = new Arrayy(['foo', 123, 'öäü']);
-
-        static::assertSame('\'foo,123,öäü\'', $this->db->secure($object));
-
-        // --- 0.0
-
-        static::assertSame(0.0, $this->db->secure(0.0));
-        static::assertSame("'0,0'", $this->db->secure('0,0'));
-
-        // --- empty string
-
-        static::assertSame("''", $this->db->secure(''));
-
-        // --- '' string
-
-        static::assertSame("''", $this->db->secure("''"));
-
-        // --- NULL
-
-        $this->db->set_convert_null_to_empty_string(true);
-        static::assertSame("''", $this->db->secure(null));
-
-        $this->db->set_convert_null_to_empty_string(false);
-        static::assertSame('NULL', $this->db->secure(null));
-
-        // --- array
-
-        $testArray = [
-            'NOW()'                                  => 'NOW()',
-            'fooo'                                   => '\'fooo\'',
-            123                                      => 123,
-            'κόσμε'                                  => '\'κόσμε\'',
-            '&lt;abcd&gt;\'$1\'(&quot;&amp;2&quot;)' => '\'&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)\'',
-            '&#246;&#228;&#252;'                     => '\'&#246;&#228;&#252;\'',
-        ];
-
-        foreach ($testArray as $before => $after) {
-            static::assertSame($after, $this->db->secure($before));
-        }
-
-        static::assertSame('NOW(),\'fooo\',123,\'κόσμε\',\'&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)\',\'&#246;&#228;&#252;\'', $this->db->secure(\array_keys($testArray)));
+        $ping = $this->db->ping();
+        static::assertTrue($ping);
     }
 
-    public function testUtf8Query()
+    public function testQry()
     {
-        $sql = 'INSERT INTO ' . $this->tableName . "
+        $this->setUpNonVoid();
+
+        $sql = 'UPDATE ' . $this->db->escape($this->tableName) . "
       SET
-        page_template = '" . $this->db->escape(UTF8::urldecode('D%26%23xFC%3Bsseldorf')) . "',
-        page_type = '" . $this->db->escape('DÃ¼sseldorf') . "'
+        page_template = '?'
+      WHERE page_id = ?
     ";
-        $return = DB::execSQL($sql);
-        static::assertInternalType('int', $return);
-        static::assertTrue($return > 0);
+        /** @noinspection StaticInvocationViaThisInspection */
+        /** @noinspection PhpStaticAsDynamicMethodCallInspection */
+        $result = $this->db->qry($sql, 'tpl_test_?', 1);
+        static::assertSame(1, $result);
 
-        $data = $this->db->select($this->tableName, 'page_id=' . (int) $return);
-        $dataArray = $data->fetchArray();
-        static::assertSame('Düsseldorf', $dataArray['page_template']);
-        static::assertSame('Düsseldorf', $dataArray['page_type']);
+        $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
+      WHERE page_id = 1
+    ';
+        /** @noinspection StaticInvocationViaThisInspection */
+        /** @noinspection PhpStaticAsDynamicMethodCallInspection */
+        $result = $this->db->qry($sql);
+        static::assertSame('tpl_test_?', $result[0]['page_template']);
+
+        $sql = 'SELECT * FROM ' . $this->db->escape($this->tableName) . '
+      WHERE page_id_lall = 1
+    ';
+        /** @noinspection StaticInvocationViaThisInspection */
+        /** @noinspection PhpStaticAsDynamicMethodCallInspection */
+        $result = $this->db->qry($sql);
+        static::assertFalse($result);
     }
 
     public function testQuery()
     {
+        $this->setUpNonVoid();
+
         //
         // query - true
         //
@@ -2039,48 +2016,10 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertFalse($return);
     }
 
-    public function testCache()
-    {
-        $_GET['testCache'] = 1;
-
-        // no-cache
-        $sql = 'SELECT * FROM ' . $this->tableName;
-        $result = DB::execSQL($sql, false);
-        if (\count($result) > 0) {
-            $return = true;
-        } else {
-            $return = false;
-        }
-        static::assertTrue($return);
-
-        // set cache
-        $sql = 'SELECT * FROM ' . $this->tableName;
-        $result = DB::execSQL($sql, true);
-        if (\count($result) > 0) {
-            $return = true;
-        } else {
-            $return = false;
-        }
-        static::assertTrue($return);
-
-        $queryCount = $this->db->query_count;
-
-        // use cache
-        $sql = 'SELECT * FROM ' . $this->tableName;
-        $result = DB::execSQL($sql, true);
-        if (\count($result) > 0) {
-            $return = true;
-        } else {
-            $return = false;
-        }
-        static::assertTrue($return);
-
-        // check cache
-        static::assertSame($queryCount, $this->db->query_count);
-    }
-
     public function testQueryErrorHandling()
     {
+        $this->setUpNonVoid();
+
         $this->db->close();
         static::assertFalse($this->db->isReady());
         $this->invokeMethod(
@@ -2095,27 +2034,10 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         static::assertTrue($this->db->isReady());
     }
 
-    // not working with doctrine? -> need some more testing
-    /*
-    public function testSerializable()
-    {
-      $dbSerializable = serialize($this->db);
-      $dbTmp = unserialize($dbSerializable);
-      self::assertTrue($dbTmp->isReady());
-
-      // query - true
-      $sql = 'INSERT INTO ' . $this->tableName . "
-        SET
-          page_template = '1.1',
-          page_type = '1'
-      ";
-      $return = $dbTmp->query($sql);
-      self::assertTrue($return > 1);
-    }
-     */
-
     public function testQuoteString()
     {
+        $this->setUpNonVoid();
+
         $testArray = [
             'NOW()'                                  => '`NOW()`',
             'fooo'                                   => '`fooo`',
@@ -2138,31 +2060,92 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * Call protected/private method of a class.
-     *
-     * @param object &$object    Instantiated object that we will run method on
-     * @param string $methodName Method name to call
-     * @param array  $parameters array of parameters to pass into method
-     *
-     * @return mixed method return
-     */
-    public function invokeMethod(&$object, $methodName, array $parameters = [])
+    public function testSecure()
     {
-        $reflection = new \ReflectionClass(\get_class($object));
-        $method = $reflection->getMethod($methodName);
-        $method->setAccessible(true);
+        $this->setUpNonVoid();
 
-        return $method->invokeArgs($object, $parameters);
+        // --- object: DateTime
+
+        $date = new DateTimeImmutable('2016-08-15 09:22:18');
+
+        static::assertSame("'" . $date->format('Y-m-d H:i:s') . "'", $this->db->secure($date));
+
+        // --- object: stdClass
+
+        $object = new stdClass();
+        $object->bar = 'foo';
+
+        $errorCatch = false;
+
+        try {
+            $this->db->secure($object);
+        } catch (InvalidArgumentException $e) {
+            $errorCatch = true;
+        }
+        static::assertTrue($errorCatch);
+
+        // --- object: Arrayy
+
+        $object = new Arrayy(['foo', 123, 'öäü']);
+
+        static::assertSame('\'foo,123,öäü\'', $this->db->secure($object));
+
+        // --- 0.0
+
+        static::assertSame(0.0, $this->db->secure(0.0));
+        static::assertSame("'0,0'", $this->db->secure('0,0'));
+
+        // --- empty string
+
+        static::assertSame("''", $this->db->secure(''));
+
+        // --- '' string
+
+        static::assertSame("''", $this->db->secure("''"));
+
+        // --- NULL
+
+        $this->db->set_convert_null_to_empty_string(true);
+        static::assertSame("''", $this->db->secure(null));
+
+        $this->db->set_convert_null_to_empty_string(false);
+        static::assertSame('NULL', $this->db->secure(null));
+
+        // --- array
+
+        $testArray = [
+            'NOW()'                                  => 'NOW()',
+            'fooo'                                   => '\'fooo\'',
+            123                                      => 123,
+            'κόσμε'                                  => '\'κόσμε\'',
+            '&lt;abcd&gt;\'$1\'(&quot;&amp;2&quot;)' => '\'&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)\'',
+            '&#246;&#228;&#252;'                     => '\'&#246;&#228;&#252;\'',
+        ];
+
+        foreach ($testArray as $before => $after) {
+            static::assertSame($after, $this->db->secure($before));
+        }
+
+        static::assertSame('NOW(),\'fooo\',123,\'κόσμε\',\'&lt;abcd&gt;\\\'$1\\\'(&quot;&amp;2&quot;)\',\'&#246;&#228;&#252;\'', $this->db->secure(\array_keys($testArray)));
     }
 
-    public function testInstanceOf()
+    public function testTableExists()
     {
-        static::assertInstanceOf('voku\db\DB', DB::getInstance());
+        $this->setUpNonVoid();
+
+        $result = $this->db->table_exists($this->tableName);
+        static::assertTrue($result);
+
+        // ---------
+
+        $result = $this->db->table_exists('no_table_name');
+        static::assertFalse($result);
     }
 
     public function testTransaction()
     {
+        $this->setUpNonVoid();
+
         $tableName = $this->tableName;
 
         // --------------------
@@ -2237,5 +2220,169 @@ final class SimpleDoctrineMySQLiTest extends \PHPUnit\Framework\TestCase
         );
 
         // --------------------
+    }
+
+    // not working with doctrine? -> need some more testing
+    /*
+    public function testSerializable()
+    {
+      $dbSerializable = serialize($this->db);
+      $dbTmp = unserialize($dbSerializable);
+      self::assertTrue($dbTmp->isReady());
+
+      // query - true
+      $sql = 'INSERT INTO ' . $this->tableName . "
+        SET
+          page_template = '1.1',
+          page_type = '1'
+      ";
+      $return = $dbTmp->query($sql);
+      self::assertTrue($return > 1);
+    }
+     */
+
+    public function testTransactionException()
+    {
+        $this->setUpNonVoid();
+
+        // start - test a transaction - true
+        $beginTransaction = $this->db->beginTransaction();
+        static::assertTrue($beginTransaction);
+
+        // start - test a transaction - false
+        $beginTransaction = $this->db->beginTransaction();
+        static::assertFalse($beginTransaction);
+
+        // reset
+        $this->db->endTransaction();
+    }
+
+    public function testTransactionFalse()
+    {
+        $this->setUpNonVoid();
+
+        $data = [
+            'page_template' => 'tpl_test_new3',
+            'page_type'     => 'öäü',
+        ];
+
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
+
+        // start - test a transaction - true
+        $beginTransaction = $this->db->beginTransaction();
+        static::assertTrue($beginTransaction);
+
+        $data = [
+            'page_type' => 'lall',
+        ];
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+        $this->db->update($this->tableName, $data, $where);
+
+        $data = [
+            'page_type' => 'lall',
+            'page_lall' => 'öäü',
+            // this will produce a mysql-error and a mysqli-rollback via "db->endTransaction()"
+        ];
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+        $this->db->update($this->tableName, $data, $where);
+
+        // end - test a transaction
+        $this->db->endTransaction();
+
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->fetchAllArray();
+        static::assertSame('öäü', $resultSelectArray[0]['page_type']);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->fetchAllArrayy()->filterBy('page_type', 'öäü')->first();
+        static::assertSame('öäü', $resultSelectArray['page_type']);
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        foreach ($resultSelect->fetchAllYield('Foobar') as $tmpResult) {
+            static::assertSame('öäü', $tmpResult->page_type);
+        }
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        foreach ($resultSelect->fetchAllYield() as $tmpResult) {
+            static::assertSame('öäü', $tmpResult->page_type);
+        }
+    }
+
+    public function testTransactionTrue()
+    {
+        $this->setUpNonVoid();
+
+        $data = [
+            'page_template' => 'tpl_test_new3',
+            'page_type'     => 'öäü',
+        ];
+
+        // will return the auto-increment value of the new row
+        $resultInsert = $this->db->insert($this->tableName, $data);
+        static::assertGreaterThan(1, $resultInsert);
+
+        // start - test a transaction
+        $this->db->startTransaction();
+
+        $data = [
+            'page_type' => 'lall',
+        ];
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+        $this->db->update($this->tableName, $data, $where);
+
+        $data = [
+            'page_type'     => 'lall',
+            'page_template' => 'öäü',
+        ];
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+        $this->db->update($this->tableName, $data, $where);
+
+        // end - test a transaction
+        $this->db->endTransaction();
+
+        $where = [
+            'page_id' => $resultInsert,
+        ];
+
+        $resultSelect = $this->db->select($this->tableName, $where);
+        $resultSelectArray = $resultSelect->fetchAllArray();
+        static::assertSame('lall', $resultSelectArray[0]['page_type']);
+    }
+
+    public function testUtf8Query()
+    {
+        $this->setUpNonVoid();
+
+        $sql = 'INSERT INTO ' . $this->tableName . "
+      SET
+        page_template = '" . $this->db->escape(UTF8::urldecode('D%26%23xFC%3Bsseldorf')) . "',
+        page_type = '" . $this->db->escape('DÃ¼sseldorf') . "'
+    ";
+        $return = DB::execSQL($sql);
+        if (method_exists($this, 'assertInternalType')) {
+            static::assertInternalType('int', $return);
+        } else {
+            static::assertIsInt($return);
+        }
+        static::assertTrue($return > 0);
+
+        $data = $this->db->select($this->tableName, 'page_id=' . (int) $return);
+        $dataArray = $data->fetchArray();
+        static::assertSame('Düsseldorf', $dataArray['page_template']);
+        static::assertSame('Düsseldorf', $dataArray['page_type']);
     }
 }

@@ -1,10 +1,11 @@
 Changelog
 =========
 
-UNRELEASED
+8.3.0 (2022-01-13)
 
 - remove get_magic_quotes_gpc() -> fix for php8 (thanks @etlam)
 - "Prepare" -> throw exception on sql prepare errors
+- more fixes for php8
 
 8.2.10 (2021-11-12)
 

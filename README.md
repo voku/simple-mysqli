@@ -10,7 +10,7 @@
 
 # :gem: Simple MySQLi Class
 
-This is a simple MySQL Abstraction Layer compatible with PHP 7+ that provides a simple 
+This is a simple MySQL Abstraction Layer compatible with PHP 7+ & PHP 8.0 that provides a simple 
 and _secure_ interaction with your database using mysqli_* functions at 
 its core. This is perfect for small scale applications such as cron jobs, 
 facebook canvas campaigns or micro frameworks or sites. 

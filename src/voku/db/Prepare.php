@@ -28,7 +28,9 @@ final class Prepare extends \mysqli_stmt
     private $_use_bound_parameters_interpolated = false;
 
     /**
-     * @var array - array of arrays containing values that have been bound to the query as parameters
+     * Array of arrays containing values that have been bound to the query as parameters.
+     *
+     * @var array<int, array{type: string, value: scalar|null}>
      */
     private $_boundParams = [];
 
@@ -63,23 +65,28 @@ final class Prepare extends \mysqli_stmt
      */
     public function __destruct()
     {
-        $this->close();
+        try {
+            /** @noinspection PhpUsageOfSilenceOperatorInspection */
+            @$this->close();
+        } catch (\Throwable $e) {
+            // ignore
+        }
     }
 
     /**
      * Combines the values stored in $this->boundParams into one array suitable for pushing as the input arguments to
      * parent::bind_param when used with call_user_func_array
      *
-     * @return array
+     * @return array{type: string, values: array<int, scalar|null>}
      */
     private function _buildArguments(): array
     {
         $arguments = [];
-        $arguments[0] = '';
+        $arguments['type'] = '';
 
         foreach ($this->_boundParams as $param) {
-            $arguments[0] .= $param['type'];
-            $arguments[] = &$param['value'];
+            $arguments['type'] .= $param['type'];
+            $arguments['values'][] = &$param['value'];
         }
 
         return $arguments;
@@ -133,30 +140,26 @@ final class Prepare extends \mysqli_stmt
      *
      * INFO: We have to explicitly declare all parameters as references, otherwise it does not seem possible to pass
      * them on without losing the reference property
-     * @param mixed  ...$v
+     * @param mixed  ...$args
      *
      * @return bool
      */
-    public function bind_param_debug(string $types, &...$v): bool
+    public function bind_param_debug(string $types, &...$args): bool
     {
         $this->_use_bound_parameters_interpolated = true;
 
-        // debug_backtrace returns arguments by reference, see comments at http://php.net/manual/de/function.func-get-args.php
-        $trace = \debug_backtrace(\DEBUG_BACKTRACE_PROVIDE_OBJECT, 1);
-
-        $args = &$trace[0]['args'];
         $typesArray = \str_split($types);
 
-        $args_count = \count($args) - 1;
+        $args_count = \count($args);
         $types_count = \count($typesArray);
 
         if ($args_count !== $types_count) {
-            \trigger_error('Number of variables do not match number of parameters in prepared statement', \E_WARNING);
+            \trigger_error('Number of variables do not match number of parameters in prepared statement', \E_USER_WARNING);
 
             return false;
         }
 
-        $arg = 1;
+        $arg = 0;
         foreach ($typesArray as $typeInner) {
             $val = &$args[$arg];
             $this->_boundParams[] = [
@@ -194,7 +197,8 @@ final class Prepare extends \mysqli_stmt
     {
         if ($this->_use_bound_parameters_interpolated === true) {
             $this->interpolateQuery();
-            \call_user_func_array(['parent', 'bind_param'], $this->_buildArguments());
+            $args = $this->_buildArguments();
+            $this->bind_param($args['type'], ...$args['values']);
         }
 
         $query_start_time = \microtime(true);
@@ -308,7 +312,7 @@ final class Prepare extends \mysqli_stmt
         $bool = parent::prepare($query);
 
         if ($bool === false) {
-            $this->_debug->displayError('Can not prepare query: ' . $query . ' | ' . $this->error, false);
+            $this->_debug->displayError('Can not prepare query: ' . $query . ' | ' . $this->error, true);
         }
 
         return $bool;
@@ -367,9 +371,9 @@ final class Prepare extends \mysqli_stmt
                 // set new values
                 $param['value'] = $values[0];
                 // we need to replace the question mark "?" here
-                $values[1] = \str_replace('?', '###simple_mysqli__prepare_question_mark###', $values[1]);
+                $values[1] = \str_replace('?', '###simple_mysqli__prepare_question_mark###', (string)$values[1]);
                 // build the query (only for debugging)
-                $testQuery = (string) \preg_replace("/\?/", $values[1], $testQuery, 1);
+                $testQuery = (string) \preg_replace("/\?/", (string)$values[1], $testQuery, 1);
             }
             $testQuery = \str_replace('###simple_mysqli__prepare_question_mark###', '?', $testQuery);
         }

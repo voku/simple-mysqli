@@ -4,6 +4,7 @@ Changelog
 UNRELEASED
 
 - remove get_magic_quotes_gpc() -> fix for php8 (thanks @etlam)
+- "Prepare" -> throw exception on sql prepare errors
 
 8.2.10 (2021-11-12)
 

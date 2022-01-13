@@ -556,7 +556,7 @@ final class DB
 
             unset($params[$key]);
 
-            $sql = \substr_replace($sql, $replacement, $offset, 1);
+            $sql = \substr_replace($sql, (string) $replacement, $offset, 1);
             $offset = \strpos($sql, '?', $offset + \strlen((string) $replacement));
         }
 
@@ -614,7 +614,7 @@ final class DB
 
             unset($params[$name]);
 
-            $sql = \substr_replace($sql, $replacement, $offset, \strlen($nameTmp));
+            $sql = \substr_replace($sql, (string) $replacement, $offset, \strlen($nameTmp));
         }
 
         return ['sql' => $sql, 'params' => $params];

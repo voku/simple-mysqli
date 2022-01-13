@@ -183,7 +183,8 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
      */
     public function __destruct()
     {
-        $this->free();
+        /** @noinspection PhpUsageOfSilenceOperatorInspection */
+        @$this->free();
     }
 
     /**
@@ -1264,8 +1265,12 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
     public function free()
     {
         if ($this->_result instanceof \mysqli_result) {
-            /** @noinspection PhpUsageOfSilenceOperatorInspection */
-            @\mysqli_free_result($this->_result);
+            try {
+                /** @noinspection PhpUsageOfSilenceOperatorInspection */
+                @\mysqli_free_result($this->_result);
+            } catch (\Throwable $e) {
+                return false;
+            }
 
             return true;
         }

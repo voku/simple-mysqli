@@ -1,6 +1,11 @@
 Changelog
 =========
 
+8.3.1 (2022-07-29)
+
+- fix sql syntax of "BETWEEN" queries
+- update "symfony/property-access"
+
 8.3.0 (2022-01-13)
 
 - remove get_magic_quotes_gpc() -> fix for php8 (thanks @etlam)

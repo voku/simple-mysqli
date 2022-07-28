@@ -575,6 +575,18 @@ final class SimpleDbTest extends \PHPUnit\Framework\TestCase
         static::assertNotFalse($resultSelect, 'tested: ' . \print_r($where, true));
         static::assertTrue($resultSelect->num_rows > 0);
 
+        // select - true
+        $where = [
+            'page_id BETWEEN' => [
+                '0',
+                '99999',
+            ],
+
+        ];
+        $resultSelect = $this->db->select($this->tableName, $where);
+        static::assertNotFalse($resultSelect, 'tested: ' . \print_r($where, true));
+        static::assertTrue($resultSelect->num_rows > 0);
+
         // select - false
         $where = [
             'page_type IS NOT' => 'lall',

@@ -459,7 +459,7 @@ final class DB
                 if ($_connector === 'NOT IN' || $_connector === 'IN') {
                     $_value = '(' . \implode(',', $_value) . ')';
                 } elseif ($_connector === 'NOT BETWEEN' || $_connector === 'BETWEEN') {
-                    $_value = '(' . \implode(' AND ', $_value) . ')';
+                    $_value = \implode(' AND ', $_value);
                 } elseif ($firstKey && $firstValue) {
                     if (\strpos((string) $firstKey, ' +') !== false) {
                         $firstKey = \str_replace(' +', '', (string) $firstKey);

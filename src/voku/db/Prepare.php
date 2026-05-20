@@ -73,8 +73,7 @@ final class Prepare
      */
     public function __destruct()
     {
-        /** @noinspection PhpUsageOfSilenceOperatorInspection */
-        @$this->close();
+        $this->close();
     }
 
     /**
@@ -205,7 +204,15 @@ final class Prepare
      */
     public function close(): bool
     {
-        return $this->_stmt->close();
+        if (!$this->_stmt instanceof \mysqli_stmt) {
+            return false;
+        }
+
+        try {
+            return $this->_stmt->close();
+        } catch (\Throwable $throwable) {
+            return false;
+        }
     }
 
     /**
@@ -452,8 +459,7 @@ final class Prepare
      */
     private function resetStatement()
     {
-        /** @noinspection PhpUsageOfSilenceOperatorInspection */
-        @$this->close();
+        $this->close();
         $this->initializeStatement();
         $this->prepare($this->_sql);
 
@@ -517,6 +523,7 @@ final class Prepare
      */
     private function storeBoundParams(string $types, array &$args): bool
     {
+        // Re-binding should replace the previous parameter set for this statement instance.
         $this->_boundParams = [];
 
         $typesArray = \str_split($types);

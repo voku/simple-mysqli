@@ -287,7 +287,7 @@ class Helper
                 \uasort(
                     $return,
                     static function ($a, $b) {
-                        if ($a == $b) {
+                        if ($a === $b) {
                             return 1;
                         }
 

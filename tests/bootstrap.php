@@ -16,3 +16,10 @@ CREATE TABLE test_page (
   PRIMARY KEY (page_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  */
+
+function simple_mysqli_test_db_host(): string
+{
+    $host = \getenv('DB_HOST');
+
+    return $host !== false ? $host : 'localhost';
+}

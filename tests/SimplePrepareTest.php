@@ -24,7 +24,7 @@ final class SimplePrepareTest extends \PHPUnit\Framework\TestCase
 
     protected function setUpNonVoid()
     {
-        $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
+        $this->db = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', 3306, 'utf8', false, false);
     }
 
     public function testInsertErrorWithBindParamHelper()

@@ -266,7 +266,36 @@ class Helper
         }
 
         $phonetic = new \voku\helper\Phonetic($language);
-        $return = $phonetic->phonetic_matches($searchString, $dataToSearchIn);
+
+        try {
+            $return = $phonetic->phonetic_matches($searchString, $dataToSearchIn);
+        } catch (\Throwable $throwable) {
+            $return = [];
+            foreach ($dataToSearchIn as $searchId => $searchValue) {
+                try {
+                    $matches = $phonetic->phonetic_matches($searchString, [$searchId => $searchValue]);
+                } catch (\Throwable $innerThrowable) {
+                    continue;
+                }
+
+                if ($matches !== []) {
+                    $return = \array_replace($return, $matches);
+                }
+            }
+
+            if (\count($return) > 0) {
+                \uasort(
+                    $return,
+                    static function ($a, $b) {
+                        if ($a == $b) {
+                            return 1;
+                        }
+
+                        return (\count($a) > \count($b)) ? -1 : 1;
+                    }
+                );
+            }
+        }
 
         // save into the cache
         if (

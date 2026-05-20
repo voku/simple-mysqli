@@ -253,7 +253,16 @@ class Helper
         $dataToSearchIn = [];
         /** @noinspection PhpAssignmentInConditionInspection */
         while ($tmpArray = $result->fetchArray()) {
-            $dataToSearchIn[$tmpArray[$idFieldName]] = $tmpArray[$searchFieldName];
+            $searchValue = (string) $tmpArray[$searchFieldName];
+            if (\voku\helper\UTF8::str_to_words($searchValue, '', true, 2) === []) {
+                continue;
+            }
+
+            $dataToSearchIn[$tmpArray[$idFieldName]] = $searchValue;
+        }
+
+        if ($dataToSearchIn === []) {
+            return [];
         }
 
         $phonetic = new \voku\helper\Phonetic($language);

@@ -10,7 +10,7 @@ use voku\db\exceptions\QueryException;
 /**
  * Prepare: This class can handle the prepare-statement from the "DB"-class.
  */
-final class Prepare extends \mysqli_stmt
+final class Prepare
 {
     /**
      * @var string - the unchanged query string provided to the constructor
@@ -45,6 +45,11 @@ final class Prepare extends \mysqli_stmt
     private $_debug;
 
     /**
+     * @var \mysqli_stmt
+     */
+    private $_stmt;
+
+    /**
      * Prepare constructor.
      *
      * @param DB     $db
@@ -59,8 +64,7 @@ final class Prepare extends \mysqli_stmt
             throw new \InvalidArgumentException('Can not prepare an empty query.');
         }
 
-        parent::__construct($db->getLink(), $query);
-
+        $this->initializeStatement();
         $this->prepare($query);
     }
 
@@ -69,13 +73,43 @@ final class Prepare extends \mysqli_stmt
      */
     public function __destruct()
     {
-        /** @noinspection PhpUsageOfSilenceOperatorInspection */
-        @$this->close();
+        $this->close();
+    }
+
+    /**
+     * @param string $name
+     * @param array  $arguments
+     *
+     * @return mixed
+     */
+    public function __call(string $name, array $arguments)
+    {
+        return $this->_stmt->{$name}(...$arguments);
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return mixed
+     */
+    public function __get(string $name)
+    {
+        return $this->_stmt->{$name};
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function __isset(string $name): bool
+    {
+        return isset($this->_stmt->{$name});
     }
 
     /**
      * Combines the values stored in $this->boundParams into one array suitable for pushing as the input arguments to
-     * parent::bind_param when used with call_user_func_array
+     * bind_param when used with call_user_func_array.
      *
      * @return array{type: string, values: array<int, scalar|null>}
      */
@@ -83,6 +117,7 @@ final class Prepare extends \mysqli_stmt
     {
         $arguments = [];
         $arguments['type'] = '';
+        $arguments['values'] = [];
 
         foreach ($this->_boundParams as $param) {
             $arguments['type'] .= $param['type'];
@@ -126,7 +161,20 @@ final class Prepare extends \mysqli_stmt
      */
     public function affected_rows()
     {
-        return $this->affected_rows;
+        return $this->_stmt->affected_rows;
+    }
+
+    /**
+     * @param string $types
+     * @param mixed  ...$args
+     *
+     * @return bool
+     */
+    public function bind_param(string $types, &...$args): bool
+    {
+        $this->storeBoundParams($types, $args);
+
+        return $this->_stmt->bind_param($types, ...$args);
     }
 
     /**
@@ -148,28 +196,23 @@ final class Prepare extends \mysqli_stmt
     {
         $this->_use_bound_parameters_interpolated = true;
 
-        $typesArray = \str_split($types);
+        return $this->storeBoundParams($types, $args);
+    }
 
-        $args_count = \count($args);
-        $types_count = \count($typesArray);
-
-        if ($args_count !== $types_count) {
-            \trigger_error('Number of variables do not match number of parameters in prepared statement', \E_USER_WARNING);
-
+    /**
+     * @return bool
+     */
+    public function close(): bool
+    {
+        if (!$this->_stmt instanceof \mysqli_stmt) {
             return false;
         }
 
-        $arg = 0;
-        foreach ($typesArray as $typeInner) {
-            $val = &$args[$arg];
-            $this->_boundParams[] = [
-                'type'  => $typeInner,
-                'value' => &$val,
-            ];
-            $arg++;
+        try {
+            return $this->_stmt->close();
+        } catch (\Throwable $throwable) {
+            return false;
         }
-
-        return true;
     }
 
     /**
@@ -179,7 +222,7 @@ final class Prepare extends \mysqli_stmt
      */
     public function execute_raw(): bool
     {
-        return parent::execute();
+        return $this->_stmt->execute();
     }
 
     /**
@@ -193,24 +236,23 @@ final class Prepare extends \mysqli_stmt
      *                           "true" by e.g. "DROP"-queries<br />
      *                           "false" on error
      */
-    #[\ReturnTypeWillChange]
-    public function execute() // TODO: php 8.1 use "?array $params = null" here
+    public function execute()
     {
         if ($this->_use_bound_parameters_interpolated === true) {
             $this->interpolateQuery();
             $args = $this->_buildArguments();
-            $this->bind_param($args['type'], ...$args['values']);
+            $this->_stmt->bind_param($args['type'], ...$args['values']);
         }
 
         $query_start_time = \microtime(true);
-        $result = parent::execute();
+        $result = $this->_stmt->execute();
         $query_duration = \microtime(true) - $query_start_time;
 
         if ($result === true) {
 
             // "INSERT" || "REPLACE"
             if (\preg_match('/^\s*"?(INSERT|REPLACE)\s+/i', $this->_sql)) {
-                $insert_id = (int) $this->insert_id;
+                $insert_id = (int) $this->_stmt->insert_id;
                 $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $insert_id);
 
                 return $insert_id;
@@ -218,7 +260,7 @@ final class Prepare extends \mysqli_stmt
 
             // "UPDATE" || "DELETE"
             if (\preg_match('/^\s*"?(UPDATE|DELETE)\s+/i', $this->_sql)) {
-                $affected_rows = (int) $this->affected_rows;
+                $affected_rows = (int) $this->_stmt->affected_rows;
                 $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, $affected_rows);
 
                 return $affected_rows;
@@ -226,13 +268,13 @@ final class Prepare extends \mysqli_stmt
 
             // "SELECT"
             if (\preg_match('/^\s*"?(SELECT)\s+/i', $this->_sql)) {
-                $select_result = $this->get_result();
+                $select_result = $this->_stmt->get_result();
 
                 if ($select_result === false) {
                     // log the error query
                     $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, 0, true);
 
-                    return $this->queryErrorHandling($this->error, $this->_sql_with_bound_parameters);
+                    return $this->queryErrorHandling($this->_stmt->error, $this->_sql_with_bound_parameters);
                 }
 
                 $num_rows = (int) $select_result->num_rows;
@@ -250,7 +292,15 @@ final class Prepare extends \mysqli_stmt
         // log the error query
         $this->_debug->logQuery($this->_sql_with_bound_parameters, $query_duration, 0, true);
 
-        return $this->queryErrorHandling($this->error, $this->_sql_with_bound_parameters);
+        return $this->queryErrorHandling($this->_stmt->error, $this->_sql_with_bound_parameters);
+    }
+
+    /**
+     * @return \mysqli_result|false
+     */
+    public function get_result()
+    {
+        return $this->_stmt->get_result();
     }
 
     /**
@@ -310,10 +360,10 @@ final class Prepare extends \mysqli_stmt
             return false;
         }
 
-        $bool = parent::prepare($query);
+        $bool = $this->_stmt->prepare($query);
 
         if ($bool === false) {
-            $this->_debug->displayError('Can not prepare query: ' . $query . ' | ' . $this->error, true);
+            $this->_debug->displayError('Can not prepare query: ' . $query . ' | ' . $this->_stmt->error, true);
         }
 
         return $bool;
@@ -352,7 +402,15 @@ final class Prepare extends \mysqli_stmt
      */
     public function insert_id()
     {
-        return $this->insert_id;
+        return $this->_stmt->insert_id;
+    }
+
+    /**
+     * @return \mysqli_stmt
+     */
+    public function stmt()
+    {
+        return $this->_stmt;
     }
 
     /**
@@ -372,15 +430,43 @@ final class Prepare extends \mysqli_stmt
                 // set new values
                 $param['value'] = $values[0];
                 // we need to replace the question mark "?" here
-                $values[1] = \str_replace('?', '###simple_mysqli__prepare_question_mark###', (string)$values[1]);
+                $values[1] = \str_replace('?', '###simple_mysqli__prepare_question_mark###', (string) $values[1]);
                 // build the query (only for debugging)
-                $testQuery = (string) \preg_replace("/\?/", (string)$values[1], $testQuery, 1);
+                $testQuery = (string) \preg_replace('/\?/', (string) $values[1], $testQuery, 1);
             }
             $testQuery = \str_replace('###simple_mysqli__prepare_question_mark###', '?', $testQuery);
         }
         $this->_sql_with_bound_parameters = $testQuery;
 
         return $testQuery;
+    }
+
+    /**
+     * @return void
+     */
+    private function initializeStatement()
+    {
+        $stmt = \mysqli_stmt_init($this->_db->getLink());
+        if (!$stmt instanceof \mysqli_stmt) {
+            throw new QueryException('Can not initialize mysqli statement.');
+        }
+
+        $this->_stmt = $stmt;
+    }
+
+    /**
+     * @return void
+     */
+    private function resetStatement()
+    {
+        $this->close();
+        $this->initializeStatement();
+        $this->prepare($this->_sql);
+
+        if ($this->_boundParams && $this->_use_bound_parameters_interpolated === false) {
+            $args = $this->_buildArguments();
+            $this->_stmt->bind_param($args['type'], ...$args['values']);
+        }
     }
 
     /**
@@ -415,6 +501,7 @@ final class Prepare extends \mysqli_stmt
             // reconnect
             $RECONNECT_COUNTER++;
             $this->_db->reconnect(true);
+            $this->resetStatement();
 
             // re-run the current query
             return $this->execute();
@@ -426,5 +513,39 @@ final class Prepare extends \mysqli_stmt
         $this->_debug->displayError($errorMsg . ' | ' . $sql);
 
         return false;
+    }
+
+    /**
+     * @param string $types
+     * @param array  $args
+     *
+     * @return bool
+     */
+    private function storeBoundParams(string $types, array &$args): bool
+    {
+        // Re-binding should replace the previous parameter set for this statement instance.
+        $this->_boundParams = [];
+
+        $typesArray = \str_split($types);
+        $args_count = \count($args);
+        $types_count = \count($typesArray);
+
+        if ($args_count !== $types_count) {
+            \trigger_error('Number of variables do not match number of parameters in prepared statement', \E_USER_WARNING);
+
+            return false;
+        }
+
+        $arg = 0;
+        foreach ($typesArray as $typeInner) {
+            $val = &$args[$arg];
+            $this->_boundParams[] = [
+                'type'  => $typeInner,
+                'value' => &$val,
+            ];
+            $arg++;
+        }
+
+        return true;
     }
 }

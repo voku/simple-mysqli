@@ -1503,7 +1503,7 @@ final class Result implements \Countable, \SeekableIterator, \ArrayAccess
             return $this->fetchCallable($offset);
         }
 
-        throw new \OutOfBoundsException("undefined offset (${offset})");
+        throw new \OutOfBoundsException("undefined offset ({$offset})");
     }
 
     /**

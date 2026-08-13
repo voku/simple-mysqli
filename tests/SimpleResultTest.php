@@ -17,17 +17,17 @@ final class SimpleResultTest extends \PHPUnit\Framework\TestCase
 
     protected function setUpNonVoid()
     {
-        $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, true);
+        $this->db = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', 3306, 'utf8', false, true);
 
         $this->db->query('DROP TABLE IF EXISTS post ');
 
         $sql = <<<SQL
 CREATE TABLE post (
-    id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL DEFAULT '',
     body TEXT NOT NULL,
-    comments_count INT(11) NOT NULL DEFAULT 0,
-    instrument_id INT(11) NOT NULL DEFAULT 0,
+    comments_count INT NOT NULL DEFAULT 0,
+    instrument_id INT NOT NULL DEFAULT 0,
     `when` DATETIME DEFAULT NULL,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4

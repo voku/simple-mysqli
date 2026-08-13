@@ -253,11 +253,49 @@ class Helper
         $dataToSearchIn = [];
         /** @noinspection PhpAssignmentInConditionInspection */
         while ($tmpArray = $result->fetchArray()) {
-            $dataToSearchIn[$tmpArray[$idFieldName]] = $tmpArray[$searchFieldName];
+            $searchValue = (string) $tmpArray[$searchFieldName];
+            if (\voku\helper\UTF8::str_to_words($searchValue, '', true, 2) === []) {
+                continue;
+            }
+
+            $dataToSearchIn[$tmpArray[$idFieldName]] = $searchValue;
+        }
+
+        if ($dataToSearchIn === []) {
+            return [];
         }
 
         $phonetic = new \voku\helper\Phonetic($language);
-        $return = $phonetic->phonetic_matches($searchString, $dataToSearchIn);
+
+        try {
+            $return = $phonetic->phonetic_matches($searchString, $dataToSearchIn);
+        } catch (\Throwable $throwable) {
+            $return = [];
+            foreach ($dataToSearchIn as $searchId => $searchValue) {
+                try {
+                    $matches = $phonetic->phonetic_matches($searchString, [$searchId => $searchValue]);
+                } catch (\Throwable $innerThrowable) {
+                    continue;
+                }
+
+                if ($matches !== []) {
+                    $return = \array_replace($return, $matches);
+                }
+            }
+
+            if (\count($return) > 0) {
+                \uasort(
+                    $return,
+                    static function ($a, $b) {
+                        if ($a === $b) {
+                            return 0;
+                        }
+
+                        return (\count($a) > \count($b)) ? -1 : 1;
+                    }
+                );
+            }
+        }
 
         // save into the cache
         if (

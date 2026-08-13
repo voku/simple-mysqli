@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/voku/simple-mysqli.svg?branch=master)](https://travis-ci.org/voku/simple-mysqli)
+[![CI](https://github.com/voku/simple-mysqli/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/voku/simple-mysqli/actions/workflows/ci.yml)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli?ref=badge_shield)
 [![Coverage Status](https://coveralls.io/repos/github/voku/simple-mysqli/badge.svg?branch=master)](https://coveralls.io/github/voku/simple-mysqli?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/797ba3ba657d4e0e86f0bade6923fdec)](https://www.codacy.com/app/voku/simple-mysqli)
@@ -722,7 +722,7 @@ For professional support please contact [me](https://about.me/voku).
 
 - Thanks to [GitHub](https://github.com) (Microsoft) for hosting the code and a good infrastructure including Issues-Managment, etc.
 - Thanks to [IntelliJ](https://www.jetbrains.com) as they make the best IDEs for PHP and they gave me an open source license for PhpStorm!
-- Thanks to [Travis CI](https://travis-ci.com/) for being the most awesome, easiest continous integration tool out there!
+- Thanks to [GitHub Actions](https://github.com/features/actions) for providing the CI pipeline for this project!
 - Thanks to [StyleCI](https://styleci.io/) for the simple but powerfull code style check.
 - Thanks to [PHPStan](https://github.com/phpstan/phpstan) && [Psalm](https://github.com/vimeo/psalm) for relly great Static analysis tools and for discover bugs in the code!
 

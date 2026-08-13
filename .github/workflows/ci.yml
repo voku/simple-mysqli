@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '7.0'
+            composer-version: v1
+          - php: '7.1'
+            composer-version: v1
+          - php: '7.2'
+            composer-version: v2
+          - php: '7.3'
+            composer-version: v2
+          - php: '7.4'
+            composer-version: v2
+          - php: '8.0'
+            composer-version: v2
+          - php: '8.1'
+            composer-version: v2
+          - php: '8.2'
+            composer-version: v2
+          - php: '8.3'
+            composer-version: v2
+          - php: '8.4'
+            composer-version: v2
+          - php: '8.5'
+            composer-version: v2
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
+          MARIADB_DATABASE: mysql_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DB_HOST: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: xdebug
+          extensions: mysqli, pdo_mysql
+          tools: composer:${{ matrix.composer-version }}
+
+      - name: Install dependencies
+        run: composer update --no-interaction --prefer-dist
+
+      - name: Prepare database
+        run: |
+          mysql -h 127.0.0.1 -u root -e 'CREATE DATABASE IF NOT EXISTS mysql_test;'
+          mysql -h 127.0.0.1 -u root -e 'USE mysql_test; CREATE TABLE IF NOT EXISTS test_page ( page_id int(16) NOT NULL auto_increment, page_template varchar(255), page_type varchar(255), PRIMARY KEY (page_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
+
+      - name: Run PHPUnit
+        env:
+          XDEBUG_MODE: coverage
+        run: |
+          mkdir -p build/logs
+          php vendor/bin/phpunit --verbose -c phpunit.xml
+
+  static-analysis:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+          extensions: mysqli, pdo_mysql
+
+      - name: Install dependencies
+        run: |
+          composer update --no-interaction --prefer-dist
+          composer require --dev phpstan/phpstan --no-interaction --prefer-dist
+
+      - name: Run PHPStan
+        run: php vendor/bin/phpstan analyse

@@ -31,7 +31,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
             'dbname'   => 'mysql_test',
             'user'     => 'root',
             'password' => '',
-            'host'     => 'localhost',
+            'host'     => simple_mysqli_test_db_host(),
             'driver'   => 'pdo_mysql',
             'charset'  => 'utf8mb4',
         ];
@@ -54,7 +54,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
     {
         $this->setUpNonVoid();
 
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true, '', 'debug');
+        $db_1 = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', '', '', false, true, '', 'debug');
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
         // sql - true
@@ -96,7 +96,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
     {
         $this->setUpNonVoid();
 
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+        $db_1 = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', '', '', false, true);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
         // insert - false
@@ -109,7 +109,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
     {
         $this->setUpNonVoid();
 
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+        $db_1 = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', '', '', false, true);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
         // sql - false
@@ -122,7 +122,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
     {
         $this->setUpNonVoid();
 
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+        $db_1 = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', '', '', false, true);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
         // sql - false
@@ -136,7 +136,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
     {
         $this->setUpNonVoid();
 
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, true);
+        $db_1 = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', '', '', false, true);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
         // sql - false
@@ -160,7 +160,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
     {
         $this->setUpNonVoid();
 
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
+        $db_1 = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', '', '', true, false);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
         // insert - false
@@ -176,7 +176,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
     {
         $this->setUpNonVoid();
 
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
+        $db_1 = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', '', '', true, false);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
         // insert - false
@@ -191,7 +191,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Error connecting to mysql server: Access denied for user \'root\'@\'localhost\' (using password: YES)');
 
-        DB::getInstance('localhost', 'root', 'test', 'mysql_test', '', '', false, false);
+        DB::getInstance(simple_mysqli_test_db_host(), 'root', 'test', 'mysql_test', '', '', false, false);
     }
 
     public function testGetFalseInstanceV2()
@@ -219,20 +219,20 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
             $this->expectExceptionMessageRegExp('#Error connecting to mysql server: Unknown database \'mysql_test_foo\'#');
         }
 
-        DB::getInstance('localhost', 'root', '', 'mysql_test_foo', null, '', true, false);
+        DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test_foo', null, '', true, false);
     }
 
     public function testGetInstance()
     {
         $this->setUpNonVoid();
 
-        $db_1 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', false, false);
+        $db_1 = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', '', '', false, false);
         static::assertInstanceOf('\\voku\\db\\DB', $db_1);
 
-        $db_2 = DB::getInstance('localhost', 'root', '', 'mysql_test', '', '', true, false);
+        $db_2 = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', '', '', true, false);
         static::assertInstanceOf('\\voku\\db\\DB', $db_2);
 
-        $db_3 = DB::getInstance('localhost', 'root', '', 'mysql_test', null, '', true, false);
+        $db_3 = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', null, '', true, false);
         static::assertInstanceOf('\\voku\\db\\DB', $db_3);
 
         $db_4 = DB::getInstance();
@@ -405,7 +405,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('no-sql-username');
 
-        DB::getInstance('localhost', '', '', 'mysql_test', 3306, 'utf8', false, false);
+        DB::getInstance(simple_mysqli_test_db_host(), '', '', 'mysql_test', 3306, 'utf8', false, false);
     }
 
     public function testGetInstanceDatabaseException()
@@ -415,7 +415,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('no-sql-database');
 
-        DB::getInstance('localhost', 'root', '', '', 3306, 'utf8', false, false);
+        DB::getInstance(simple_mysqli_test_db_host(), 'root', '', '', 3306, 'utf8', false, false);
     }
 
     public function testCharset()
@@ -1700,7 +1700,7 @@ final class SimpleDoctrinePdoTest extends \PHPUnit\Framework\TestCase
     {
         $this->setUpNonVoid();
 
-        $dbTmp = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, false);
+        $dbTmp = DB::getInstance(simple_mysqli_test_db_host(), 'root', '', 'mysql_test', 3306, 'utf8', false, false);
 
         static::assertSame('NULL', $this->db->escape(null, true));
         static::assertSame(\mysqli_real_escape_string($dbTmp->getLink(), "O'Toole"), $dbTmp->escape("O'Toole"));
